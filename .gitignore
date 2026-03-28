@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.uv/
+dist/
+*.egg-info/
+node_modules/
+.nuxt/
+.output/
+dist/
+front/node_modules

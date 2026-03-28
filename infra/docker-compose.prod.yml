@@ -1,0 +1,21 @@
+services:
+
+  front:
+    build:
+      context: ../front
+      dockerfile: Dockerfile
+    container_name: front
+    ports:
+      - "5173:80"
+    depends_on: [llm-gateway, observability, evaluation]
+    restart: unless-stopped
+
+  # In prod, microservices use built images — no volume mounts, no --reload
+  llm-gateway:
+    restart: always
+
+  observability:
+    restart: always
+
+  evaluation:
+    restart: always

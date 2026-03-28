@@ -1,0 +1,21 @@
+[project]
+name = "back"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=3.8.9",
+    "uvicorn>=0.41.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "shared",
+    "llm-gateway",
+    "observability",
+    "evaluation",
+]
+
+[tool.uv.sources]
+shared = { workspace = true }

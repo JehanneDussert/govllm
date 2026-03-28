@@ -1,0 +1,26 @@
+:80 {
+    handle /chat* {
+        reverse_proxy llm-gateway:8001
+    }
+    handle /metrics* {
+        reverse_proxy observability:8002
+    }
+    handle /traces* {
+        reverse_proxy observability:8002
+    }
+    handle /grafana* {
+        reverse_proxy observability:8002
+    }
+    handle /ab* {
+        reverse_proxy evaluation:8003
+    }
+    handle /health/gateway {
+        reverse_proxy llm-gateway:8001/health
+    }
+    handle /health/observability {
+        reverse_proxy observability:8002/health
+    }
+    handle /health/evaluation {
+        reverse_proxy evaluation:8003/health
+    }
+}

@@ -1,0 +1,182 @@
+services:
+
+  # Infrastructure
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    depends_on: [ollama]
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_API_KEY}
+    restart: unless-stopped
+
+  langfuse-db:
+    image: postgres:16-alpine
+    container_name: langfuse-db
+    environment:
+      POSTGRES_USER: ${LANGFUSE_DB_USER}
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD}
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  langfuse-server:
+    image: langfuse/langfuse:2
+    container_name: langfuse
+    depends_on: [langfuse-db]
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${LANGFUSE_DB_USER}:${LANGFUSE_DB_PASSWORD}@langfuse-db:5432/langfuse
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${LANGFUSE_NEXTAUTH_URL}
+      SALT: ${LANGFUSE_SALT}
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on: [prometheus]
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    restart: unless-stopped
+
+  # Microservices
+
+  llm-gateway:
+    build:
+      context: ../back
+      dockerfile: llm-gateway/Dockerfile
+    container_name: llm-gateway
+    depends_on: [litellm, redis]
+    ports:
+      - "8001:8001"
+    environment:
+      LITELLM_API_KEY: ${LITELLM_API_KEY}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      DEFAULT_MODEL: ${DEFAULT_MODEL}
+      AB_MODELS: ${AB_MODELS}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    restart: unless-stopped
+
+  observability:
+    build:
+      context: ../back
+      dockerfile: observability/Dockerfile
+    container_name: observability
+    depends_on: [prometheus, langfuse-server, grafana]
+    ports:
+      - "8002:8002"
+    environment:
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST}
+      PROMETHEUS_URL: ${PROMETHEUS_URL}
+      GRAFANA_URL: ${GRAFANA_URL}
+      GRAFANA_SERVICE_TOKEN: ${GRAFANA_SERVICE_TOKEN}
+      AB_MODELS: ${AB_MODELS}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    restart: unless-stopped
+
+  evaluation:
+    build:
+      context: ../back
+      dockerfile: evaluation/Dockerfile
+    container_name: evaluation
+    depends_on: [redis, langfuse-server]
+    ports:
+      - "8003:8003"
+    environment:
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_HOST: ${LANGFUSE_HOST}
+      REDIS_URL: ${REDIS_URL}
+      AB_MODELS: ${AB_MODELS}
+      EVAL_INTERVAL_SECONDS: ${EVAL_INTERVAL_SECONDS}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL}
+      LITELLM_API_KEY: ${LITELLM_API_KEY}
+    restart: unless-stopped
+
+  # Frontend
+
+  front:
+    build:
+      context: ../front
+      dockerfile: Dockerfile
+      args:
+        VITE_AVAILABLE_MODELS: ${VITE_AVAILABLE_MODELS}
+    container_name: front
+    ports:
+      - "5173:80"
+    depends_on: [llm-gateway, observability, evaluation]
+    restart: unless-stopped
+
+  # Reverse proxy
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    depends_on: [llm-gateway, observability, evaluation]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: ./caddy/Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  ollama_data:
+  langfuse_db_data:
+  prometheus_data:
+  grafana_data:
+  caddy_data:
+  caddy_config:
