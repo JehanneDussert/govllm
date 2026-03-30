@@ -32,7 +32,7 @@ async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
 @router.get("")
 async def get_matrix():
     config = await get_judge_config()
-    models = settings.ab_models
+    models = settings.benchmark_models
     
     r = await aioredis.from_url(settings.redis_url, decode_responses=True)
     matrix = {}
@@ -56,7 +56,7 @@ async def get_routing():
     with scores for all models and the active criteria breakdown.
     """
     config = await get_judge_config()
-    models = settings.ab_models
+    models = settings.benchmark_models
     use_case_id = config.active_use_case_id or "general"
     active_criteria = [c for c in config.criteria if c.enabled]
 

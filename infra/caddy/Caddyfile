@@ -11,7 +11,7 @@
     handle /grafana* {
         reverse_proxy observability:8002
     }
-    handle /ab* {
+    handle /benchmark* {
         reverse_proxy evaluation:8003
     }
     handle /health/gateway {

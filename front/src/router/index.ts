@@ -7,7 +7,7 @@ export default createRouter({
     { path: '/', component: ChatView },
     { path: '/metrics', component: () => import('@/views/MetricsView.vue') },
     { path: '/traces', component: () => import('@/views/TracesView.vue') },
-    { path: '/ab', component: () => import('@/views/ABTestView.vue') },
+    { path: '/benchmark', component: () => import('@/views/BenchmarkView.vue') },
     { path: '/settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/matrix', component: () => import('@/views/MatrixView.vue') },
   ],

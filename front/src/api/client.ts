@@ -4,16 +4,15 @@ const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:8001'
 const OBSERVABILITY_URL = import.meta.env.VITE_OBSERVABILITY_URL ?? 'http://localhost:8002'
 const EVALUATION_URL = import.meta.env.VITE_EVALUATION_URL ?? 'http://localhost:8003'
 
-export const DEFAULT_MODELS = import.meta.env.VITE_AVAILABLE_MODELS
-  ? JSON.parse(import.meta.env.VITE_AVAILABLE_MODELS)
-  : ['ollama/qwen2.5:1.5b', 'ollama/llama3.2:3b']
-
 export const gateway = axios.create({ baseURL: GATEWAY_URL })
 export const observability = axios.create({ baseURL: OBSERVABILITY_URL })
 export const evaluation = axios.create({ baseURL: EVALUATION_URL })
 
-// Types
+export const BENCHMARK_MODELS = import.meta.env.VITE_BENCHMARK_MODELS
+  ? JSON.parse(import.meta.env.VITE_BENCHMARK_MODELS)
+  : ['ollama/qwen2.5:1.5b', 'ollama/llama3.2:3b']
 
+// Types
 export interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -47,14 +46,13 @@ export interface TraceItem {
   timestamp: string
 }
 
-export interface ABTestResponse {
-  model_a: ModelABStats
-  model_b: ModelABStats
-  window: string
+export interface BenchmarkResponse {
+  models: ModelBenchmarkStats[]
   winner: string | null
+  window: string
 }
 
-export interface ModelABStats {
+export interface ModelBenchmarkStats {
   model: string
   sample_size: number
   avg_latency_ms: number
@@ -147,39 +145,35 @@ export type MatrixResponse = Record<string, MatrixUseCase>
 // API calls
 
 export const api = {
-  metrics: (window = '1h') => observability.get<MetricsResponse>(`/metrics?window=${window}`),
+  metrics: (window = '1h') =>
+    observability.get<MetricsResponse>(`/metrics?window=${window}`),
 
   traces: (limit = 50, model?: string) =>
     observability.get<TracesResponse>(`/traces?limit=${limit}${model ? `&model=${model}` : ''}`),
 
-  abResults: (limit = 50) => evaluation.get<ABTestResponse>(`/ab/results?limit=${limit}`),
+  benchmarkResults: (limit = 50) =>
+    evaluation.get<BenchmarkResponse>('/benchmark/results'),
 
-  health: () =>
-    Promise.all([
-      gateway
-        .get('/health')
-        .then(() => true)
-        .catch(() => false),
-      observability
-        .get('/health')
-        .then(() => true)
-        .catch(() => false),
-      evaluation
-        .get('/health')
-        .then(() => true)
-        .catch(() => false),
-    ]),
+  health: () => Promise.all([
+    gateway.get('/health').then(() => true).catch(() => false),
+    observability.get('/health').then(() => true).catch(() => false),
+    evaluation.get('/health').then(() => true).catch(() => false),
+  ]),
 
   // Judge config
-  getJudgeConfig: () => evaluation.get<JudgeConfig>('/config/judge'),
+  getJudgeConfig: () =>
+    evaluation.get<JudgeConfig>('/config/judge'),
 
-  saveJudgeConfig: (config: JudgeConfig) => evaluation.put<JudgeConfig>('/config/judge', config),
+  saveJudgeConfig: (config: JudgeConfig) =>
+    evaluation.put<JudgeConfig>('/config/judge', config),
 
   // Matrix
-  getMatrix: () => evaluation.get<MatrixResponse>('/matrix'),
+  getMatrix: () =>
+    evaluation.get<MatrixResponse>('/matrix'),
 
   // Routing
-  getRouting: () => evaluation.get<RoutingResult>('/matrix/routing'),
+  getRouting: () =>
+    evaluation.get<RoutingResult>('/matrix/routing'),
 
   // Profile activation
   activateProfile: (profileId: string) =>
@@ -189,5 +183,6 @@ export const api = {
   triggerEval: (payload: { trace_id: string; model: string; question: string; answer: string }) =>
     evaluation.post('/eval/score', payload),
 
-  getEvalResult: (traceId: string) => evaluation.get<EvalResult | null>(`/eval/result/${traceId}`),
+  getEvalResult: (traceId: string) =>
+    evaluation.get<EvalResult | null>(`/eval/result/${traceId}`),
 }

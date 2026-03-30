@@ -38,7 +38,7 @@
           <span class="nav-icon">⊞</span>
           <span>Matrix</span>
         </RouterLink>
-        <RouterLink to="/ab" class="nav-item">
+        <RouterLink to="/benchmark" class="nav-item">
           <span class="nav-icon">⊕</span>
           <span>Benchmark</span>
         </RouterLink>

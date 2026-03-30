@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class ModelABStats(BaseModel):
+class ModelBenchmarkStats(BaseModel):
     model: str
     sample_size: int
     avg_latency_ms: float
@@ -10,8 +10,8 @@ class ModelABStats(BaseModel):
     avg_tokens: float
 
 
-class ABTestResponse(BaseModel):
-    model_a: ModelABStats
-    model_b: ModelABStats
+class BenchmarkResponse(BaseModel):
+    model_a: ModelBenchmarkStats
+    model_b: ModelBenchmarkStats
     window: str
     winner: str | None

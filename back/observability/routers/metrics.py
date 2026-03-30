@@ -12,7 +12,7 @@ async def get_metrics(
     settings: ObservabilitySettings = Depends(get_observability_settings),
 ):
     results = []
-    models = settings.ab_models or []
+    models = settings.benchmark_models or []
     for model in models:
         try:
             raw = await prometheus_client.get_model_metrics(model=model, window=window)

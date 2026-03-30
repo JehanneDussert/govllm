@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers.ab import router as ab_router
+from routers.benchmark import router as benchmark_router
 from routers.config import router as config_router
 from routers.eval import router as eval_router
 from routers.matrix import router as matrix_router
@@ -43,7 +43,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(ab_router)
+app.include_router(benchmark_router)
 app.include_router(config_router)
 app.include_router(eval_router)
 app.include_router(matrix_router)

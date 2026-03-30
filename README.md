@@ -151,7 +151,7 @@ Administrative writing  0.88           0.74
 Send traffic to two models, then compare:
 
 ```bash
-curl http://localhost:8003/ab/results
+curl http://localhost:8003/benchmark/results
 ```
 
 ```json
@@ -199,7 +199,7 @@ GET /grafana/dashboards    # Grafana dashboard links
 
 ### evaluation — :8003
 ```
-GET  /ab/results?limit=50          # A/B comparison between two models
+GET  /benchmark/results?limit=50   # Benchmark between models
 GET  /matrix                       # use case × model score matrix
 GET  /config/judge                 # judge configuration
 PUT  /config/judge                 # update judge configuration
@@ -222,7 +222,7 @@ govllm/
 │   └── evaluation/          # judge, benchmark, matrix, eval runner
 ├── front/
 │   └── src/
-│       ├── views/           # Chat, Metrics, Traces, ABTest, Matrix, Settings
+│       ├── views/           # Chat, Metrics, Traces, Benchmark, Matrix, Settings
 │       ├── components/      # MessageScore (async judge display)
 │       ├── stores/          # chat.ts, judge.ts
 │       └── api/client.ts
@@ -259,7 +259,7 @@ govllm/
 
 **Infrastructure**
 - [ ] asyncio.gather — parallelize observation fetches
-- [ ] Redis cache — 30s TTL on /metrics and /ab/results
+- [ ] Redis cache — 30s TTL on /metrics and /benchmark/results
 - [ ] EvalAP integration — push traces to Etalab's evaluation platform
 - [ ] Regulatory benchmark alignment — coverage mapping against [COMPL-AI](https://compl-ai.org) for AI Act compliance assessment
 
