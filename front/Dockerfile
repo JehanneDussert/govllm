@@ -1,12 +1,9 @@
 # Build
 FROM node:20-alpine AS builder
-
-ARG VITE_BENCHMARK_MODELS
-ENV VITE_BENCHMARK_MODELS=$VITE_BENCHMARK_MODELS
-
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts
+RUN npm rebuild esbuild
 COPY . .
 RUN npm run build-only
 
