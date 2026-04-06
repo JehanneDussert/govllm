@@ -2,6 +2,8 @@
   SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
   SPDX-License-Identifier: EUPL-1.2
 -->
+
+// Imports
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
@@ -9,11 +11,17 @@ import type { MatrixResponse } from '@/api/client'
 import { useJudgeStore } from '@/stores/judge'
 import { useIntervalFn } from '@vueuse/core'
 
+// Stores
+const judgeStore = useJudgeStore()
+
+// Constants
+const SPARK_COLORS = ['#00e5ff', '#a78bfa']
+
+// Reactive state
 const matrix = ref<MatrixResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const lastUpdated = ref<string | null>(null)
-const judgeStore = useJudgeStore()
 
 const models = computed(() => {
   if (!matrix.value) return []
@@ -21,8 +29,6 @@ const models = computed(() => {
   if (!first) return []
   return Object.keys(first.models)
 })
-
-const SPARK_COLORS = ['#00e5ff', '#a78bfa']
 
 async function refresh() {
   loading.value = true

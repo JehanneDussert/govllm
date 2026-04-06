@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 from fastapi import APIRouter, Query, Depends
 from shared.schemas.metrics import MetricsResponse, ModelMetrics, LatencyStats
 from shared.config import get_observability_settings, ObservabilitySettings

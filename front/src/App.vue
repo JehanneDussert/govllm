@@ -4,10 +4,12 @@
 -->
 
 <script setup lang="ts">
+// Imports
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/client'
 import { useIntervalFn } from '@vueuse/core'
 
+// Reactive states
 const health = ref([false, false, false])
 
 async function checkHealth() {

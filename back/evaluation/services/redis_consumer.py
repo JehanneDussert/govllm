@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 import asyncio
 import json
 import logging
@@ -15,8 +16,8 @@ CHANNEL = "llm.events"
 
 async def consume_events(handler) -> None:
     """
-    S'abonne au canal Redis llm.events et appelle handler(event)
-    pour chaque message reçu. Reconnexion automatique en cas d'erreur.
+    Subscribes to the Redis channel `llm.events` and calls `handler(event)`
+    for each message received. Automatic reconnection in the event of an error.
     """
     while True:
         try:

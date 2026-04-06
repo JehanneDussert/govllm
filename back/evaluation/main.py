@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager
@@ -18,7 +19,7 @@ settings = get_evaluation_settings()
 
 
 async def handle_event(event: LLMEvent) -> None:
-    """Handler appelé pour chaque event Redis reçu."""
+    """Handler called for each redis event."""
     pass  # Scoring is triggered from the front end via a POST request to /eval/score
 
 

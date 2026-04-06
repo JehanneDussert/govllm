@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 from shared.schemas.evaluation import EvalResult
@@ -17,7 +18,7 @@ class EvalRequest(BaseModel):
 
 @router.post("/score", status_code=202)
 async def trigger_eval(req: EvalRequest, background_tasks: BackgroundTasks):
-    """Déclenche l'évaluation en arrière-plan. Retourne 202 immédiatement."""
+    """Set evaluation as a background task."""
     background_tasks.add_task(
         evaluate_trace,
         trace_id=req.trace_id,
@@ -30,5 +31,5 @@ async def trigger_eval(req: EvalRequest, background_tasks: BackgroundTasks):
 
 @router.get("/result/{trace_id}", response_model=EvalResult | None)
 async def get_result(trace_id: str):
-    """Poll ce endpoint après /score pour récupérer le résultat."""
+    """Poll this endpoint after /score to get the result."""
     return await get_eval_result(trace_id)

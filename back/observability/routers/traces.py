@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 from fastapi import APIRouter, Query
 from shared.schemas.traces import TracesResponse, TraceItem
 from services.langfuse_client import get_traces_with_scores

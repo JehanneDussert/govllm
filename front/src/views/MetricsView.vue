@@ -2,7 +2,9 @@
   SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
   SPDX-License-Identifier: EUPL-1.2
 -->
+
 <script setup lang="ts">
+// Imports
 import { ref, computed, onMounted } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -15,14 +17,17 @@ import { useIntervalFn } from '@vueuse/core'
 
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
 
+// Constants
+const windows = ['1h', '6h', '24h', '7d']
+const MODEL_COLORS = ['#00e5ff', '#a78bfa', '#3fb950', '#f0883e']
+const COLORS = { axis: '#484f58', grid: '#21262d' }
+
+// Reactive states
 const data = ref<MetricsResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const window = ref('24h')
 const lastUpdated = ref<string | null>(null)
-const windows = ['1h', '6h', '24h', '7d']
-const MODEL_COLORS = ['#00e5ff', '#a78bfa', '#3fb950', '#f0883e']
-const COLORS = { axis: '#484f58', grid: '#21262d' }
 
 async function refresh() {
   loading.value = true

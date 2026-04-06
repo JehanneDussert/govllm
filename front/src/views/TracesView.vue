@@ -2,24 +2,28 @@
   SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
   SPDX-License-Identifier: EUPL-1.2
 -->
+
 <script setup lang="ts">
+// Imports
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/client'
 import type { TracesResponse, TraceItem } from '@/api/client'
 
-const data = ref<TracesResponse | null>(null)
-const loading = ref(false)
-const error = ref<string | null>(null)
-const modelFilter = ref('')
-const limitFilter = ref(50)
-const selected = ref<TraceItem | null>(null)
-
+// Constants
 const BENCHMARK_MODELS = [
   'ollama/qwen2.5:1.5b',
   'ollama/gemma3:1b',
   'ollama/llama3.2:3b',
   'ollama/deepseek-r1:1.5b',
 ]
+
+// Reactive states
+const data = ref<TracesResponse | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
+const modelFilter = ref('')
+const limitFilter = ref(50)
+const selected = ref<TraceItem | null>(null)
 
 async function refresh() {
   loading.value = true
@@ -71,17 +75,17 @@ function scoreClass(score: number) {
 
 function extractText(raw: string): string {
   if (!raw) return '—'
-  // Extraire le contenu utilisateur depuis le format Python dict
+  // Extract user content from dict
   try {
-    // Tenter de parser le message utilisateur
+    // Try to parse user content
     const userMatch =
       raw.match(/'role':\s*'user',\s*'content':\s*'([^']+)'/i) ||
       raw.match(/"role":\s*"user",\s*"content":\s*"([^"]+)"/i)
-    if (userMatch) return userMatch[1]
+    if (userMatch) return userMatch?.[1] ?? ''
 
     const contentMatch =
       raw.match(/'content':\s*'([^']{3,120})'/i) || raw.match(/"content":\s*"([^"]{3,120})"/i)
-    if (contentMatch) return contentMatch[1]
+    if (contentMatch) return contentMatch?.[1] ?? ''
   } catch {}
   return raw.slice(0, 120)
 }
@@ -91,7 +95,8 @@ function extractOutput(raw: string): string {
   try {
     const contentMatch =
       raw.match(/'content':\s*["']([^"']{3,200})/i) || raw.match(/"content":\s*["']([^"']{3,200})/i)
-    if (contentMatch) return contentMatch[1].slice(0, 200)
+    if (contentMatch && contentMatch[1]) return contentMatch[1].slice(0, 200)
+    else return ''
   } catch {}
   return raw.slice(0, 200)
 }

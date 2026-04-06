@@ -2,25 +2,24 @@
   SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
   SPDX-License-Identifier: EUPL-1.2
 -->
+
 <script setup lang="ts">
-import { ref, computed, nextTick, watch, onMounted } from 'vue'
+// Imports
+import { ref, nextTick, watch, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useJudgeStore } from '@/stores/judge'
 import MessageScore from '@/components/MessageScore.vue'
-import { api, type RoutingResult } from '@/api/client'
+import { api } from '@/api/client'
+import type { RoutingResult } from '@/api/client'
 
+// Stores
 const store = useChatStore()
 const judgeStore = useJudgeStore()
+
+// Reactive state
 const input = ref('')
 const messagesEl = ref<HTMLElement>()
 const inputEl = ref<HTMLTextAreaElement>()
-
-const latencyClass = computed(() => {
-  if (!store.lastLatency) return ''
-  if (store.lastLatency < 3000) return 'green'
-  if (store.lastLatency < 8000) return 'yellow'
-  return 'red'
-})
 
 // Routing
 const routing = ref<RoutingResult | null>(null)
@@ -30,8 +29,16 @@ async function fetchRouting() {
   try {
     const res = await api.getRouting()
     routing.value = res.data
+    // Auto-select: prefer recommended if it meets threshold, else first model that does
     if (res.data?.recommended) {
-      store.currentModel = res.data.recommended
+      const recommended = res.data.models.find((m) => m.model === res.data.recommended)
+      if (!recommended || recommended.meets_threshold !== false) {
+        store.currentModel = res.data.recommended
+      } else {
+        // Recommended fails threshold — pick first model that passes
+        const firstValid = res.data.models.find((m) => m.meets_threshold === true)
+        if (firstValid) store.currentModel = firstValid.model
+      }
     }
   } catch {}
 }
@@ -88,14 +95,12 @@ watch(
         </div>
         <div class="header-right">
           <span v-if="judgeStore.config?.active_profile_id" class="profile-badge">
-            Governance profile:
             {{
               judgeStore.config.profiles.find((p) => p.id === judgeStore.config!.active_profile_id)
                 ?.label ?? judgeStore.config.active_profile_id
             }}
           </span>
           <span v-if="judgeStore.config?.active_use_case_id" class="usecase-badge">
-            Use case:
             {{
               judgeStore.config.use_cases.find(
                 (u) => u.id === judgeStore.config!.active_use_case_id,
@@ -130,6 +135,9 @@ watch(
           MODEL SCORES ·
           {{ judgeStore.config?.active_profile_id?.toUpperCase().replace('_', ' ') }} ·
           {{ judgeStore.config?.active_use_case_id?.toUpperCase() }}
+          <span v-if="routing?.min_threshold" class="threshold-label"
+            >· min {{ routing.min_threshold.toFixed(2) }}</span
+          >
         </div>
         <div class="scoreboard-grid">
           <div
@@ -137,8 +145,9 @@ watch(
             :key="m.model"
             class="score-card"
             :class="{
-              winner: i === 0 && m.avg_score !== null,
+              winner: i === 0 && m.avg_score !== null && m.meets_threshold !== false,
               selected: store.currentModel === m.model,
+              'below-threshold': m.meets_threshold === false,
             }"
           >
             <div class="score-card-badge">
@@ -267,7 +276,6 @@ watch(
   align-items: center;
   gap: 16px;
 }
-
 .header-right {
   display: flex;
   align-items: center;
@@ -282,7 +290,6 @@ watch(
   color: var(--accent);
   border: 1px solid rgba(0, 229, 255, 0.2);
 }
-
 .usecase-badge {
   font-size: 11px;
   color: var(--text-dim);
@@ -300,45 +307,37 @@ watch(
   user-select: none;
   transition: background 0.15s;
 }
-
 .routing-bar:hover {
   background: var(--bg-4);
 }
-
 .routing-bar-left {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .routing-label {
   font-size: 10px;
   letter-spacing: 0.06em;
   color: var(--text-dim);
 }
-
 .routing-model {
   font-size: 12px;
   font-weight: 500;
   color: var(--text);
 }
-
 .routing-score {
   font-size: 11px;
   color: var(--green);
 }
-
 .routing-score-empty {
   font-size: 11px;
   color: var(--text-dim);
   font-style: italic;
 }
-
 .routing-reason {
   font-size: 11px;
   color: var(--text-dim);
 }
-
 .routing-toggle {
   font-size: 11px;
   color: var(--text-dim);
@@ -350,20 +349,17 @@ watch(
   border-top: 1px solid var(--border);
   padding: 10px 28px 14px;
 }
-
 .scoreboard-label {
   font-size: 10px;
   letter-spacing: 0.06em;
   color: var(--text-dim);
   margin-bottom: 10px;
 }
-
 .scoreboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 8px;
 }
-
 .score-card {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -374,68 +370,63 @@ watch(
   gap: 4px;
   transition: border-color 0.15s;
 }
-
 .score-card.winner {
   border-color: var(--green);
   background: rgba(63, 185, 80, 0.06);
 }
-
+.score-card.below-threshold {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.threshold-label {
+  color: var(--red);
+  margin-left: 4px;
+}
 .score-card.selected {
   border-color: var(--accent);
 }
-
 .score-card-badge {
   font-size: 9px;
   letter-spacing: 0.06em;
   color: var(--text-dim);
 }
-
 .score-card.winner .score-card-badge {
   color: var(--green);
 }
-
 .score-card-name {
   font-size: 12px;
   font-weight: 500;
   color: var(--text);
 }
-
 .score-card-avg {
   font-size: 18px;
   font-weight: 500;
   color: var(--text-dim);
 }
-
 .score-card.winner .score-card-avg {
   color: var(--green);
 }
-
 .score-na {
   color: var(--text-dim);
   opacity: 0.5;
 }
-
 .score-card-criteria {
   display: flex;
   flex-direction: column;
   gap: 2px;
   margin-top: 4px;
 }
-
 .criterion-row {
   display: flex;
   justify-content: space-between;
   font-size: 10px;
 }
-
 .criterion-name {
   color: var(--text-dim);
 }
-
 .criterion-val {
   color: var(--text);
 }
-
 .score-card-btn {
   margin-top: 6px;
   width: 100%;
@@ -448,12 +439,10 @@ watch(
   cursor: pointer;
   transition: all 0.15s;
 }
-
 .score-card-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
-
 .score-card-btn.btn-recommended {
   background: rgba(63, 185, 80, 0.1);
   color: var(--green);
@@ -478,7 +467,6 @@ watch(
   cursor: pointer;
   outline: none;
 }
-
 .model-select:focus {
   border-color: var(--accent);
 }
@@ -498,27 +486,21 @@ watch(
   padding: 4px 10px;
   font-size: 11px;
 }
-
 .stat-label {
   color: var(--text-dim);
 }
-
 .stat-value {
   color: var(--text);
 }
-
 .stat-value.accent {
   color: var(--accent);
 }
-
 .stat-value.green {
   color: var(--green);
 }
-
 .stat-value.yellow {
   color: var(--yellow);
 }
-
 .stat-value.red {
   color: var(--red);
 }
@@ -534,7 +516,6 @@ watch(
   cursor: pointer;
   transition: all 0.15s;
 }
-
 .clear-btn:hover {
   border-color: var(--red);
   color: var(--red);
@@ -557,14 +538,12 @@ watch(
   flex-direction: column;
   gap: 8px;
 }
-
 .empty-icon {
   font-size: 32px;
   color: var(--accent);
   opacity: 0.4;
   margin-bottom: 8px;
 }
-
 .empty-sub {
   font-size: 11px;
   color: var(--text-dim);
@@ -576,7 +555,6 @@ watch(
   animation: fadeIn 0.2s ease;
   margin-top: 16px;
 }
-
 .message.user {
   flex-direction: row-reverse;
 }
@@ -590,7 +568,6 @@ watch(
   flex-shrink: 0;
   text-align: right;
 }
-
 .message.user .message-role {
   text-align: left;
   color: var(--accent);
@@ -607,7 +584,6 @@ watch(
   white-space: pre-wrap;
   word-break: break-word;
 }
-
 .message.user .message-content {
   background: var(--accent-dim);
   border-color: rgba(0, 229, 255, 0.2);
@@ -650,16 +626,13 @@ watch(
   line-height: 1.5;
   transition: border-color 0.15s;
 }
-
 .chat-input:focus {
   border-color: var(--accent);
 }
-
 .chat-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
 .chat-input::placeholder {
   color: var(--text-dim);
 }
@@ -679,11 +652,9 @@ watch(
   align-items: center;
   justify-content: center;
 }
-
 .send-btn:hover:not(:disabled) {
   background: #33eaff;
 }
-
 .send-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -712,7 +683,6 @@ watch(
     transform: translateY(0);
   }
 }
-
 @keyframes blink {
   0%,
   100% {
@@ -722,7 +692,6 @@ watch(
     opacity: 0;
   }
 }
-
 @keyframes pulse {
   0%,
   100% {
