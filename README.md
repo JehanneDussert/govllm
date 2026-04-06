@@ -267,6 +267,7 @@ govllm/
 - [ ] Audit log export — consolidated compliance report (`/audit/export`) for CISO review
 - [ ] Judge specialisation — assign different judge models per regulatory criterion
 - [ ] Policy-as-code — define enforcement rules in YAML (block model if score < threshold)
+- [ ] Global alert thresholds with visual dashboard indicators
 
 **Infrastructure**
 - [ ] asyncio.gather — parallelize Langfuse observation fetches

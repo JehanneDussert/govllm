@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 from fastapi import APIRouter, HTTPException
 from shared.schemas.judge import JudgeConfig
 from services.judge_config import get_judge_config, save_judge_config, apply_profile
@@ -14,6 +15,22 @@ async def get_config():
 
 @router.put("/judge", response_model=JudgeConfig)
 async def update_config(config: JudgeConfig):
+    await save_judge_config(config)
+    return config
+
+
+@router.post("/judge/use-case/{use_case_id}", response_model=JudgeConfig)
+async def activate_use_case(use_case_id: str):
+    """Switch active use case and auto-apply its default governance profile."""
+    config = await get_judge_config()
+    uc = next((uc for uc in config.use_cases if uc.id == use_case_id), None)
+    if not uc:
+        raise HTTPException(
+            status_code=404, detail=f"Use case '{use_case_id}' not found"
+        )
+    config = config.model_copy(update={"active_use_case_id": use_case_id})
+    if uc.default_profile_id:
+        config = apply_profile(config, uc.default_profile_id)
     await save_judge_config(config)
     return config
 

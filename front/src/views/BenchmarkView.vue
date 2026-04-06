@@ -3,11 +3,13 @@
   SPDX-License-Identifier: EUPL-1.2
 -->
 <script setup lang="ts">
+// Imports
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
 import type { BenchmarkResponse } from '@/api/client'
 import { useIntervalFn } from '@vueuse/core'
 
+// Reactive state
 const data = ref<BenchmarkResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)

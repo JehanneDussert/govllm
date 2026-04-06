@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 import base64
 import httpx
 from shared.config import get_observability_settings
@@ -26,7 +27,7 @@ async def get_traces(limit: int = 50) -> list[dict]:
 
 
 async def get_model_from_observation(trace_id: str) -> str:
-    """Lit la première observation pour extraire le modèle réel."""
+    """Reads the first observation to extract the actual model."""
     async with httpx.AsyncClient(timeout=15) as client:
         r = await client.get(
             f"{settings.langfuse_host}/api/public/observations",

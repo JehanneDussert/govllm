@@ -1,5 +1,8 @@
 // SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 // SPDX-License-Identifier: EUPL-1.2
+
+// TODO: split & extract types
+
 import axios from 'axios'
 
 const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:8001'
@@ -10,11 +13,8 @@ export const gateway = axios.create({ baseURL: GATEWAY_URL })
 export const observability = axios.create({ baseURL: OBSERVABILITY_URL })
 export const evaluation = axios.create({ baseURL: EVALUATION_URL })
 
-export const BENCHMARK_MODELS = import.meta.env.VITE_BENCHMARK_MODELS
-  ? JSON.parse(import.meta.env.VITE_BENCHMARK_MODELS)
-  : ['ollama/qwen2.5:1.5b', 'ollama/llama3.2:3b']
-
 // Types
+
 export interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -75,6 +75,11 @@ export interface UseCase {
   id: string
   label: string
   description: string
+  default_profile_id: string | null
+  preferred_model: string | null
+  expected_language: string | null
+  min_score_threshold: number
+  judge_system_prompt: string | null
 }
 
 export interface ModelRoutingScore {
@@ -83,12 +88,14 @@ export interface ModelRoutingScore {
   sample_size: number
   trend: 'up' | 'down' | 'stable' | null
   criteria_scores: Record<string, number | null>
+  meets_threshold: boolean | null // null = no threshold set or no data
 }
 
 export interface RoutingResult {
   recommended: string
   use_case_id: string
   profile_id: string | null
+  min_threshold: number | null
   models: ModelRoutingScore[]
   active_criteria: { id: string; label: string }[]
 }
@@ -97,8 +104,8 @@ export interface GovernanceProfile {
   id: string
   label: string
   description: string
-  criteria_weights: Record<string, number>
   criteria_enabled: string[]
+  criteria_weights: Record<string, number>
 }
 
 export interface JudgeConfig {
@@ -152,7 +159,7 @@ export const api = {
   traces: (limit = 50, model?: string) =>
     observability.get<TracesResponse>(`/traces?limit=${limit}${model ? `&model=${model}` : ''}`),
 
-  benchmarkResults: (limit = 50) => evaluation.get<BenchmarkResponse>('/benchmark/results'),
+  benchmarkResults: () => evaluation.get<BenchmarkResponse>('/benchmark/results'),
 
   health: () =>
     Promise.all([
@@ -184,6 +191,10 @@ export const api = {
   // Profile activation
   activateProfile: (profileId: string) =>
     evaluation.post<JudgeConfig>(`/config/judge/profile/${profileId}`),
+
+  // Use case activation (auto-applies default profile)
+  activateUseCase: (useCaseId: string) =>
+    evaluation.post<JudgeConfig>(`/config/judge/use-case/${useCaseId}`),
 
   // Eval scoring
   triggerEval: (payload: { trace_id: string; model: string; question: string; answer: string }) =>

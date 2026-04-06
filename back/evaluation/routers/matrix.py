@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
+
 from fastapi import APIRouter
 import json
 import redis.asyncio as aioredis
@@ -13,21 +14,17 @@ settings = get_evaluation_settings()
 async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
     key = f"eval:scores:{model}:{use_case_id}"
     raw = await r.get(key)
-
     if not raw:
         return {"avg_score": None, "sample_size": 0, "trend": None, "scores": []}
-
     values = [s["score"] for s in json.loads(raw)]
     avg = round(sum(values) / len(values), 3) if values else None
     trend = None
-
     if len(values) >= 4:
         mid = len(values) // 2
         first_half = sum(values[:mid]) / mid
         second_half = sum(values[mid:]) / (len(values) - mid)
         diff = second_half - first_half
         trend = "up" if diff > 0.05 else "down" if diff < -0.05 else "stable"
-
     return {
         "avg_score": avg,
         "sample_size": len(values),
@@ -40,10 +37,8 @@ async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
 async def get_matrix():
     config = await get_judge_config()
     models = settings.benchmark_models
-
     r = await aioredis.from_url(settings.redis_url, decode_responses=True)
     matrix = {}
-
     try:
         for use_case in config.use_cases:
             matrix[use_case.id] = {"label": use_case.label, "models": {}}
@@ -51,10 +46,8 @@ async def get_matrix():
                 matrix[use_case.id]["models"][model] = await _get_scores_for_model(
                     r, model, use_case.id
                 )
-
     finally:
         await r.aclose()
-
     return matrix
 
 
@@ -98,14 +91,24 @@ async def get_routing():
                     "criteria_scores": criteria_scores,
                 }
             )
-
     finally:
         await r.aclose()
+
+    # Get use case min_score_threshold if set
+    active_uc = next((uc for uc in config.use_cases if uc.id == use_case_id), None)
+    min_threshold = active_uc.min_score_threshold if active_uc else None
 
     # Sort by avg_score descending, None last
     model_scores.sort(
         key=lambda x: x["avg_score"] if x["avg_score"] is not None else -1, reverse=True
     )
+
+    # Flag models that meet the threshold
+    for m in model_scores:
+        if min_threshold is not None and m["avg_score"] is not None:
+            m["meets_threshold"] = m["avg_score"] >= min_threshold
+        else:
+            m["meets_threshold"] = None  # no threshold set or no data
 
     recommended = (
         model_scores[0]["model"]
@@ -117,6 +120,7 @@ async def get_routing():
         "recommended": recommended,
         "use_case_id": use_case_id,
         "profile_id": config.active_profile_id,
+        "min_threshold": min_threshold,
         "models": model_scores,
         "active_criteria": [{"id": c.id, "label": c.label} for c in active_criteria],
     }
