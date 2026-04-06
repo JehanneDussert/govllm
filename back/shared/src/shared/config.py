@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 from functools import lru_cache
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +22,7 @@ class GatewaySettings(BaseSettings):
             v = v.strip()
             if v.startswith("["):
                 import json
+
                 return json.loads(v)
             return [item.strip() for item in v.split(",")]
         return v
@@ -44,6 +47,7 @@ class ObservabilitySettings(BaseSettings):
             v = v.strip()
             if v.startswith("["):
                 import json
+
                 return json.loads(v)
             return [item.strip() for item in v.split(",")]
         return v
@@ -69,6 +73,7 @@ class EvaluationSettings(BaseSettings):
             v = v.strip()
             if v.startswith("["):
                 import json
+
                 return json.loads(v)
             return [item.strip() for item in v.split(",")]
         return v

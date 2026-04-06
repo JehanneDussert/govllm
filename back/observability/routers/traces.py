@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 from fastapi import APIRouter, Query
 from shared.schemas.traces import TracesResponse, TraceItem
 from services.langfuse_client import get_traces_with_scores
@@ -39,17 +41,19 @@ async def get_traces(
             ):
                 continue
 
-        detected_model = t.get('_model') or _extract_model(t)
+        detected_model = t.get("_model") or _extract_model(t)
         if model and model not in detected_model:
             continue
-        traces.append(TraceItem(
-            trace_id=t["id"],
-            model=detected_model,
-            input_preview=str(t.get("input", ""))[:100],
-            output_preview=str(t.get("output", ""))[:100],
-            latency_ms=t.get("latency") or 0,
-            eval_score=t.get("eval_score"),
-            timestamp=t.get("timestamp", ""),
-        ))
+        traces.append(
+            TraceItem(
+                trace_id=t["id"],
+                model=detected_model,
+                input_preview=str(t.get("input", ""))[:100],
+                output_preview=str(t.get("output", ""))[:100],
+                latency_ms=t.get("latency") or 0,
+                eval_score=t.get("eval_score"),
+                timestamp=t.get("timestamp", ""),
+            )
+        )
 
     return TracesResponse(traces=traces, total=len(traces))

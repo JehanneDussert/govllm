@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+// SPDX-License-Identifier: EUPL-1.2
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '@/api/client'

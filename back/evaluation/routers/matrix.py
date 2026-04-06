@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 from fastapi import APIRouter
 import json
 import redis.asyncio as aioredis
@@ -11,14 +13,14 @@ settings = get_evaluation_settings()
 async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
     key = f"eval:scores:{model}:{use_case_id}"
     raw = await r.get(key)
-    
+
     if not raw:
         return {"avg_score": None, "sample_size": 0, "trend": None, "scores": []}
-    
+
     values = [s["score"] for s in json.loads(raw)]
     avg = round(sum(values) / len(values), 3) if values else None
     trend = None
-    
+
     if len(values) >= 4:
         mid = len(values) // 2
         first_half = sum(values[:mid]) / mid
@@ -26,14 +28,19 @@ async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
         diff = second_half - first_half
         trend = "up" if diff > 0.05 else "down" if diff < -0.05 else "stable"
 
-    return {"avg_score": avg, "sample_size": len(values), "trend": trend, "scores": values[-10:]}
+    return {
+        "avg_score": avg,
+        "sample_size": len(values),
+        "trend": trend,
+        "scores": values[-10:],
+    }
 
 
 @router.get("")
 async def get_matrix():
     config = await get_judge_config()
     models = settings.benchmark_models
-    
+
     r = await aioredis.from_url(settings.redis_url, decode_responses=True)
     matrix = {}
 
@@ -41,8 +48,10 @@ async def get_matrix():
         for use_case in config.use_cases:
             matrix[use_case.id] = {"label": use_case.label, "models": {}}
             for model in models:
-                matrix[use_case.id]["models"][model] = await _get_scores_for_model(r, model, use_case.id)
-    
+                matrix[use_case.id]["models"][model] = await _get_scores_for_model(
+                    r, model, use_case.id
+                )
+
     finally:
         await r.aclose()
 
@@ -74,25 +83,35 @@ async def get_routing():
                 craw = await r.get(ckey)
                 if craw:
                     cvals = [s["score"] for s in json.loads(craw)]
-                    criteria_scores[criterion.id] = round(sum(cvals) / len(cvals), 3) if cvals else None
+                    criteria_scores[criterion.id] = (
+                        round(sum(cvals) / len(cvals), 3) if cvals else None
+                    )
                 else:
                     criteria_scores[criterion.id] = None
 
-            model_scores.append({
-                "model": model,
-                "avg_score": data["avg_score"],
-                "sample_size": data["sample_size"],
-                "trend": data["trend"],
-                "criteria_scores": criteria_scores,
-            })
-    
+            model_scores.append(
+                {
+                    "model": model,
+                    "avg_score": data["avg_score"],
+                    "sample_size": data["sample_size"],
+                    "trend": data["trend"],
+                    "criteria_scores": criteria_scores,
+                }
+            )
+
     finally:
         await r.aclose()
 
     # Sort by avg_score descending, None last
-    model_scores.sort(key=lambda x: x["avg_score"] if x["avg_score"] is not None else -1, reverse=True)
+    model_scores.sort(
+        key=lambda x: x["avg_score"] if x["avg_score"] is not None else -1, reverse=True
+    )
 
-    recommended = model_scores[0]["model"] if model_scores and model_scores[0]["avg_score"] is not None else models[0]
+    recommended = (
+        model_scores[0]["model"]
+        if model_scores and model_scores[0]["avg_score"] is not None
+        else models[0]
+    )
 
     return {
         "recommended": recommended,

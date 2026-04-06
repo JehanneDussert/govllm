@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 import httpx
 from shared.config import get_observability_settings
 
@@ -26,24 +28,32 @@ def _scalar(results: list[dict], default: float = 0.0) -> float:
 async def get_model_metrics(model: str, window: str = "24h") -> dict:
     label = f'requested_model="{model}"'
 
-    request_count = _scalar(await query(
-        f'sum(litellm_proxy_total_requests_metric_total{{{label}}})'
-    ))
-    error_count = _scalar(await query(
-        f'sum(litellm_deployment_failure_responses_total{{{label}}})'
-    ))
-    p50 = _scalar(await query(
-        f'histogram_quantile(0.50, sum(rate(litellm_request_total_latency_metric_bucket{{{label}}}[{window}])) by (le))'
-    ))
-    p95 = _scalar(await query(
-        f'histogram_quantile(0.95, sum(rate(litellm_request_total_latency_metric_bucket{{{label}}}[{window}])) by (le))'
-    ))
-    p99 = _scalar(await query(
-        f'histogram_quantile(0.99, sum(rate(litellm_request_total_latency_metric_bucket{{{label}}}[{window}])) by (le))'
-    ))
-    avg_tokens = _scalar(await query(
-        f'sum(litellm_total_tokens_metric_total{{{label}}}) / sum(litellm_proxy_total_requests_metric_total{{{label}}})'
-    ))
+    request_count = _scalar(
+        await query(f"sum(litellm_proxy_total_requests_metric_total{{{label}}})")
+    )
+    error_count = _scalar(
+        await query(f"sum(litellm_deployment_failure_responses_total{{{label}}})")
+    )
+    p50 = _scalar(
+        await query(
+            f"histogram_quantile(0.50, sum(rate(litellm_request_total_latency_metric_bucket{{{label}}}[{window}])) by (le))"
+        )
+    )
+    p95 = _scalar(
+        await query(
+            f"histogram_quantile(0.95, sum(rate(litellm_request_total_latency_metric_bucket{{{label}}}[{window}])) by (le))"
+        )
+    )
+    p99 = _scalar(
+        await query(
+            f"histogram_quantile(0.99, sum(rate(litellm_request_total_latency_metric_bucket{{{label}}}[{window}])) by (le))"
+        )
+    )
+    avg_tokens = _scalar(
+        await query(
+            f"sum(litellm_total_tokens_metric_total{{{label}}}) / sum(litellm_proxy_total_requests_metric_total{{{label}}})"
+        )
+    )
 
     error_rate = (error_count / request_count) if request_count > 0 else 0.0
 

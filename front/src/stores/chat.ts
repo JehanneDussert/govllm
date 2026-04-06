@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+// SPDX-License-Identifier: EUPL-1.2
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Message } from '@/api/client'
@@ -6,8 +8,8 @@ const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:8001'
 
 export interface ChatMessage extends Message {
   traceId?: string
-  question?: string // original input to the judge 
-  model?: string // model used for this response 
+  question?: string // original input to the judge
+  model?: string // model used for this response
 }
 
 export const useChatStore = defineStore('chat', () => {
@@ -57,7 +59,7 @@ export const useChatStore = defineStore('chat', () => {
         if (done) break
 
         const chunk = decoder.decode(value)
-        const lines = chunk.split('\n').filter((l) => l.startsWith('data: '))
+        const lines = chunk.split('').filter((l) => l.startsWith('data: '))
 
         for (const line of lines) {
           const data = line.slice(6)

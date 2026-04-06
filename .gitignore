@@ -10,3 +10,4 @@ node_modules/
 .output/
 dist/
 front/node_modules
+add_license_headers.sh

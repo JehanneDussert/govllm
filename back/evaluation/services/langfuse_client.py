@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 import base64
 import httpx
 from shared.config import get_evaluation_settings
@@ -39,7 +41,9 @@ async def _get_model_from_observation(trace_id: str) -> str:
     return "unknown"
 
 
-async def push_score(trace_id: str, score: float, name: str = "answer_relevancy") -> None:
+async def push_score(
+    trace_id: str, score: float, name: str = "answer_relevancy"
+) -> None:
     async with httpx.AsyncClient(timeout=10) as client:
         await client.post(
             f"{settings.langfuse_host}/api/public/scores",
@@ -64,7 +68,11 @@ async def get_traces_with_scores(limit: int = 50) -> list[dict]:
             r.raise_for_status()
             scores = r.json().get("data", [])
         trace["eval_score"] = next(
-            (s["value"] for s in scores if s.get("name") in ("answer_relevancy", "hallucination", "overall")),
+            (
+                s["value"]
+                for s in scores
+                if s.get("name") in ("answer_relevancy", "hallucination", "overall")
+            ),
             None,
         )
     return traces

@@ -1,3 +1,7 @@
+<!--
+  SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+  SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
@@ -36,10 +40,10 @@ async function refresh() {
 }
 
 const gridStyle = computed(() => ({
-    gridTemplateColumns: `180px repeat(${models.value.length}, 1fr)`,
-  }))
+  gridTemplateColumns: `180px repeat(${models.value.length}, 1fr)`,
+}))
 
-  function shortName(model: string) {
+function shortName(model: string) {
   return model.split('/').pop() ?? model
 }
 
@@ -65,15 +69,19 @@ function trendIcon(trend: string | null) {
 
 function sparklinePoints(scores: number[]) {
   if (!scores.length) return ''
-  const w = 60, h = 20, pad = 2
+  const w = 60,
+    h = 20,
+    pad = 2
   const min = Math.min(...scores)
   const max = Math.max(...scores)
   const range = max - min || 1
-  return scores.map((s, i) => {
-    const x = pad + (i / (scores.length - 1 || 1)) * (w - pad * 2)
-    const y = h - pad - ((s - min) / range) * (h - pad * 2)
-    return `${x},${y}`
-  }).join(' ')
+  return scores
+    .map((s, i) => {
+      const x = pad + (i / (scores.length - 1 || 1)) * (w - pad * 2)
+      const y = h - pad - ((s - min) / range) * (h - pad * 2)
+      return `${x},${y}`
+    })
+    .join(' ')
 }
 
 function sparklineColor(modelIndex: number) {
@@ -121,13 +129,12 @@ useIntervalFn(refresh, 60000)
     </p>
 
     <div v-if="loading && !matrix" class="loading-state">
-      <div class="loading-dots"><span/><span/><span/></div>
+      <div class="loading-dots"><span /><span /><span /></div>
     </div>
 
     <div v-else-if="error" class="error-state">{{ error }}</div>
 
     <div v-else-if="matrix" class="matrix-content">
-
       <!-- Légende -->
       <div class="legend">
         <div class="legend-item" v-for="(model, i) in models" :key="model">
@@ -168,7 +175,12 @@ useIntervalFn(refresh, 60000)
             :key="model"
             :class="cellClass(data.models[model])"
           >
-            <template v-if="data.models[model]?.avg_score !== null && data.models[model]?.avg_score !== undefined">
+            <template
+              v-if="
+                data.models[model]?.avg_score !== null &&
+                data.models[model]?.avg_score !== undefined
+              "
+            >
               <div class="score-main">
                 <span class="score-num" :class="scoreClass(data.models[model].avg_score!)">
                   {{ data.models[model].avg_score!.toFixed(2) }}
@@ -202,11 +214,7 @@ useIntervalFn(refresh, 60000)
       <div class="recommendations">
         <div class="section-title">ROUTING RECOMMENDATIONS</div>
         <div class="reco-grid">
-          <div
-            v-for="(data, useCaseId) in matrixWithWinner"
-            :key="useCaseId"
-            class="reco-card"
-          >
+          <div v-for="(data, useCaseId) in matrixWithWinner" :key="useCaseId" class="reco-card">
             <div class="reco-usecase">{{ data.label }}</div>
             <div v-if="data.winner" class="reco-winner">
               <span class="reco-arrow">→</span>
@@ -224,22 +232,60 @@ useIntervalFn(refresh, 60000)
 </template>
 
 <style scoped>
-.matrix-view { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
+.matrix-view {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 
-.page-header { display: flex; align-items: center; justify-content: space-between; }
-.page-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.last-updated { font-size: 11px; color: var(--text-dim); }
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.last-updated {
+  font-size: 11px;
+  color: var(--text-dim);
+}
 
 .refresh-btn {
-  background: none; border: 1px solid var(--border); border-radius: 5px;
-  color: var(--text-muted); font-size: 14px; width: 28px; height: 28px;
-  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-muted);
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
-.refresh-btn.spinning { animation: spin 1s linear infinite; }
+.refresh-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.refresh-btn.spinning {
+  animation: spin 1s linear infinite;
+}
 
-.page-desc { font-size: 12px; color: var(--text-dim); margin-top: -12px; }
+.page-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: -12px;
+}
 
 /* Legend */
 .legend {
@@ -251,18 +297,45 @@ useIntervalFn(refresh, 60000)
   margin-bottom: 24px;
 }
 .legend-dot {
-  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }
-.legend-dot.color-0 { background: var(--accent); }
-.legend-dot.color-1 { background: #a78bfa; }
-.legend-dot.color-2 { background: var(--green); }
-.legend-dot.color-3 { background: #f0883e; }
-.legend-item { display: flex; align-items: center; gap: 5px; }
-.legend-sep { width: 1px; height: 16px; background: var(--border); }
-.trend-icon { font-size: 12px; }
-.trend-icon.up { color: var(--green); }
-.trend-icon.down { color: var(--red); }
-.trend-icon.stable { color: var(--text-dim); }
+.legend-dot.color-0 {
+  background: var(--accent);
+}
+.legend-dot.color-1 {
+  background: #a78bfa;
+}
+.legend-dot.color-2 {
+  background: var(--green);
+}
+.legend-dot.color-3 {
+  background: #f0883e;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+.trend-icon {
+  font-size: 12px;
+}
+.trend-icon.up {
+  color: var(--green);
+}
+.trend-icon.down {
+  color: var(--red);
+}
+.trend-icon.stable {
+  color: var(--text-dim);
+}
 
 /* Matrix table */
 .matrix-table {
@@ -283,8 +356,12 @@ useIntervalFn(refresh, 60000)
   border-bottom: 1px solid var(--border);
   transition: background 0.1s;
 }
-.matrix-row:last-child { border-bottom: none; }
-.matrix-row:hover { background: var(--bg-3); }
+.matrix-row:last-child {
+  border-bottom: none;
+}
+.matrix-row:hover {
+  background: var(--bg-3);
+}
 
 .cell {
   padding: 14px 16px;
@@ -293,7 +370,9 @@ useIntervalFn(refresh, 60000)
   flex-direction: column;
   gap: 4px;
 }
-.cell:last-child { border-right: none; }
+.cell:last-child {
+  border-right: none;
+}
 
 .cell-label {
   font-size: 10px;
@@ -308,31 +387,82 @@ useIntervalFn(refresh, 60000)
   align-items: center;
 }
 
-.uc-label { font-size: 12px; color: var(--text); }
-.uc-id { font-size: 10px; color: var(--text-dim); }
+.uc-label {
+  font-size: 12px;
+  color: var(--text);
+}
+.uc-id {
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
-.score-main { display: flex; align-items: center; gap: 6px; }
-.score-num { font-size: 20px; font-weight: 500; }
-.score-num.green { color: var(--green); }
-.score-num.yellow { color: var(--yellow); }
-.score-num.red { color: var(--red); }
+.score-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.score-num {
+  font-size: 20px;
+  font-weight: 500;
+}
+.score-num.green {
+  color: var(--green);
+}
+.score-num.yellow {
+  color: var(--yellow);
+}
+.score-num.red {
+  color: var(--red);
+}
 
-.score-sub { font-size: 10px; color: var(--text-dim); }
+.score-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
-.sparkline { width: 60px; height: 20px; margin-top: 4px; }
+.sparkline {
+  width: 60px;
+  height: 20px;
+  margin-top: 4px;
+}
 
-.no-data { font-size: 18px; color: var(--text-dim); }
-.no-data-sub { font-size: 10px; color: var(--text-dim); }
+.no-data {
+  font-size: 18px;
+  color: var(--text-dim);
+}
+.no-data-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
-.cell-good { background: rgba(63, 185, 80, 0.03); }
-.cell-bad { background: rgba(248, 81, 73, 0.03); }
-.cell-empty { opacity: 0.5; }
+.cell-good {
+  background: rgba(63, 185, 80, 0.03);
+}
+.cell-bad {
+  background: rgba(248, 81, 73, 0.03);
+}
+.cell-empty {
+  opacity: 0.5;
+}
 
 /* Recommendations */
-.recommendations { display: flex; flex-direction: column; gap: 12px; margin: 32px 0 24px 0; }
-.section-title { font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim); }
+.recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 32px 0 24px 0;
+}
+.section-title {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+}
 
-.reco-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.reco-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
 
 .reco-card {
   background: var(--bg-2);
@@ -344,15 +474,37 @@ useIntervalFn(refresh, 60000)
   gap: 8px;
 }
 
-.reco-usecase { font-size: 11px; color: var(--text-muted); }
+.reco-usecase {
+  font-size: 11px;
+  color: var(--text-muted);
+}
 
-.reco-winner { display: flex; align-items: center; gap: 8px; }
-.reco-arrow { color: var(--text-dim); font-size: 12px; }
-.reco-model { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
-.reco-model.model-color-0 { color: var(--accent); }
-.reco-model.model-color-1 { color: #a78bfa; }
-.reco-model.model-color-2 { color: var(--green); }
-.reco-model.model-color-3 { color: #f0883e; }
+.reco-winner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reco-arrow {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.reco-model {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+}
+.reco-model.model-color-0 {
+  color: var(--accent);
+}
+.reco-model.model-color-1 {
+  color: #a78bfa;
+}
+.reco-model.model-color-2 {
+  color: var(--green);
+}
+.reco-model.model-color-3 {
+  color: #f0883e;
+}
 .reco-score {
   font-size: 11px;
   color: var(--text-dim);
@@ -362,24 +514,52 @@ useIntervalFn(refresh, 60000)
   padding: 1px 8px;
 }
 
-.reco-nodata { font-size: 11px; color: var(--text-dim); font-style: italic; }
+.reco-nodata {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+}
 
 /* States */
-.loading-state, .error-state {
-  display: flex; justify-content: center; padding: 60px 0; color: var(--text-dim);
+.loading-state,
+.error-state {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--text-dim);
 }
-.loading-dots { display: flex; gap: 6px; }
+.loading-dots {
+  display: flex;
+  gap: 6px;
+}
 .loading-dots span {
-  width: 6px; height: 6px; border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: var(--accent);
   animation: bounce 1.2s ease infinite;
 }
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); opacity: 0.4; }
-  50% { transform: translateY(-6px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
 }
 </style>

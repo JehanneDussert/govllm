@@ -1,89 +1,93 @@
+<!--
+  SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+  SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { api } from '@/api/client'
-  import type { EvalResult } from '@/api/client'
-  import { useJudgeStore } from '@/stores/judge'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { api } from '@/api/client'
+import type { EvalResult } from '@/api/client'
+import { useJudgeStore } from '@/stores/judge'
 
-  const props = defineProps<{
-    traceId: string
-    model: string
-    question: string
-    answer: string
-  }>()
+const props = defineProps<{
+  traceId: string
+  model: string
+  question: string
+  answer: string
+}>()
 
-  const judgeStore = useJudgeStore()
-  const result = ref<EvalResult | null>(null)
-  const state = ref<'evaluating' | 'done' | 'error'>('evaluating')
-  const visibleScores = computed(() => result.value?.criteria_scores ?? [])
-  const flaggedCriteria = computed(() => result.value?.criteria_scores.filter((cs) => cs.flag) ?? [])
-  let pollInterval: ReturnType<typeof setInterval> | null = null
+const judgeStore = useJudgeStore()
+const result = ref<EvalResult | null>(null)
+const state = ref<'evaluating' | 'done' | 'error'>('evaluating')
+const visibleScores = computed(() => result.value?.criteria_scores ?? [])
+const flaggedCriteria = computed(() => result.value?.criteria_scores.filter((cs) => cs.flag) ?? [])
+let pollInterval: ReturnType<typeof setInterval> | null = null
 
-  function labelFor(id: string) {
-    return judgeStore.config?.criteria.find((c) => c.id === id)?.label ?? id
+function labelFor(id: string) {
+  return judgeStore.config?.criteria.find((c) => c.id === id)?.label ?? id
+}
+
+function scoreClass(score: number) {
+  if (score >= 0.7) return 'green'
+  if (score >= 0.4) return 'yellow'
+  return 'red'
+}
+
+async function triggerAndPoll() {
+  // Vérifier d'abord si le résultat existe déjà
+  try {
+    const existing = await api.getEvalResult(props.traceId)
+    if (existing.data?.evaluated_at) {
+      result.value = existing.data
+      state.value = 'done'
+      return
+    }
+  } catch {}
+
+  try {
+    await api.triggerEval({
+      trace_id: props.traceId,
+      model: props.model,
+      question: props.question,
+      answer: props.answer,
+    })
+  } catch {
+    state.value = 'error'
+    return
   }
 
-  function scoreClass(score: number) {
-    if (score >= 0.7) return 'green'
-    if (score >= 0.4) return 'yellow'
-    return 'red'
-  }
+  // Wait 5 seconds before starting to poll (the judge takes a while)
+  await new Promise((resolve) => setTimeout(resolve, 5000))
 
-  async function triggerAndPoll() {
-    // Vérifier d'abord si le résultat existe déjà
+  // Poll every 3 seconds, up to a maximum of 2 minutes
+  let attempts = 0
+  pollInterval = setInterval(async () => {
+    attempts++
     try {
-      const existing = await api.getEvalResult(props.traceId)
-      if (existing.data?.evaluated_at) {
-        result.value = existing.data
+      const res = await api.getEvalResult(props.traceId)
+      // null = not ready yet, continue polling
+      // object = result available
+      if (res.data && res.data.composite_score !== undefined && res.data.evaluated_at) {
+        result.value = res.data
         state.value = 'done'
+        clearInterval(pollInterval!)
         return
       }
     } catch {}
-
-    try {
-      await api.triggerEval({
-        trace_id: props.traceId,
-        model: props.model,
-        question: props.question,
-        answer: props.answer,
-      })
-    } catch {
+    // Timeout after 2 minutes (40 * 3s)
+    if (attempts >= 40) {
       state.value = 'error'
-      return
+      clearInterval(pollInterval!)
     }
+  }, 3000)
+}
 
-    // Wait 5 seconds before starting to poll (the judge takes a while)
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-
-    // Poll every 3 seconds, up to a maximum of 2 minutes
-    let attempts = 0
-    pollInterval = setInterval(async () => {
-      attempts++
-      try {
-        const res = await api.getEvalResult(props.traceId)
-        // null = not ready yet, continue polling
-        // object = result available 
-        if (res.data && res.data.composite_score !== undefined && res.data.evaluated_at) {
-          result.value = res.data
-          state.value = 'done'
-          clearInterval(pollInterval!)
-          return
-        }
-      } catch {}
-      // Timeout after 2 minutes (40 * 3s)
-      if (attempts >= 40) {
-        state.value = 'error'
-        clearInterval(pollInterval!)
-      }
-    }, 3000)
-  }
-
-  onMounted(async () => {
-    if (!judgeStore.config) await judgeStore.fetchConfig()
-    triggerAndPoll()
-  })
-  onUnmounted(() => {
-    if (pollInterval) clearInterval(pollInterval)
-  })
+onMounted(async () => {
+  if (!judgeStore.config) await judgeStore.fetchConfig()
+  triggerAndPoll()
+})
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval)
+})
 </script>
 
 <template>

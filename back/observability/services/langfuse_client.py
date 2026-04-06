@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 import base64
 import httpx
 from shared.config import get_observability_settings
@@ -62,7 +64,11 @@ async def get_traces_with_scores(
         # Scores
         scores = await get_trace_scores(trace["id"])
         trace["eval_score"] = next(
-            (s["value"] for s in scores if s.get("name") in ("composite", "hallucination", "overall")),
+            (
+                s["value"]
+                for s in scores
+                if s.get("name") in ("composite", "hallucination", "overall")
+            ),
             None,
         )
     return traces

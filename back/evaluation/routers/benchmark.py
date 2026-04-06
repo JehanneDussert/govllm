@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 from fastapi import APIRouter, Query, Depends
 from statistics import mean
 from shared.config import get_evaluation_settings, EvaluationSettings
@@ -10,14 +12,21 @@ def _compute_stats(model: str, traces: list[dict]) -> dict:
     model_traces = [t for t in traces if t.get("_model") == model]
     if not model_traces:
         return {
-            "model": model, "sample_size": 0,
-            "avg_latency_ms": 0, "error_rate": 0,
-            "avg_tokens": 0, "avg_eval_score": None,
+            "model": model,
+            "sample_size": 0,
+            "avg_latency_ms": 0,
+            "error_rate": 0,
+            "avg_tokens": 0,
+            "avg_eval_score": None,
         }
     latencies = [t.get("latency") or 0 for t in model_traces]
     scores = [t["eval_score"] for t in model_traces if t.get("eval_score") is not None]
     errors = [t for t in model_traces if t.get("level") == "ERROR"]
-    tokens = [t.get("usage", {}).get("total_tokens", 0) for t in model_traces if t.get("usage")]
+    tokens = [
+        t.get("usage", {}).get("total_tokens", 0)
+        for t in model_traces
+        if t.get("usage")
+    ]
     return {
         "model": model,
         "sample_size": len(model_traces),
