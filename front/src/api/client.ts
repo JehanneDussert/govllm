@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+// SPDX-License-Identifier: EUPL-1.2
 import axios from 'axios'
 
 const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:8001'
@@ -145,35 +147,39 @@ export type MatrixResponse = Record<string, MatrixUseCase>
 // API calls
 
 export const api = {
-  metrics: (window = '1h') =>
-    observability.get<MetricsResponse>(`/metrics?window=${window}`),
+  metrics: (window = '1h') => observability.get<MetricsResponse>(`/metrics?window=${window}`),
 
   traces: (limit = 50, model?: string) =>
     observability.get<TracesResponse>(`/traces?limit=${limit}${model ? `&model=${model}` : ''}`),
 
-  benchmarkResults: (limit = 50) =>
-    evaluation.get<BenchmarkResponse>('/benchmark/results'),
+  benchmarkResults: (limit = 50) => evaluation.get<BenchmarkResponse>('/benchmark/results'),
 
-  health: () => Promise.all([
-    gateway.get('/health').then(() => true).catch(() => false),
-    observability.get('/health').then(() => true).catch(() => false),
-    evaluation.get('/health').then(() => true).catch(() => false),
-  ]),
+  health: () =>
+    Promise.all([
+      gateway
+        .get('/health')
+        .then(() => true)
+        .catch(() => false),
+      observability
+        .get('/health')
+        .then(() => true)
+        .catch(() => false),
+      evaluation
+        .get('/health')
+        .then(() => true)
+        .catch(() => false),
+    ]),
 
   // Judge config
-  getJudgeConfig: () =>
-    evaluation.get<JudgeConfig>('/config/judge'),
+  getJudgeConfig: () => evaluation.get<JudgeConfig>('/config/judge'),
 
-  saveJudgeConfig: (config: JudgeConfig) =>
-    evaluation.put<JudgeConfig>('/config/judge', config),
+  saveJudgeConfig: (config: JudgeConfig) => evaluation.put<JudgeConfig>('/config/judge', config),
 
   // Matrix
-  getMatrix: () =>
-    evaluation.get<MatrixResponse>('/matrix'),
+  getMatrix: () => evaluation.get<MatrixResponse>('/matrix'),
 
   // Routing
-  getRouting: () =>
-    evaluation.get<RoutingResult>('/matrix/routing'),
+  getRouting: () => evaluation.get<RoutingResult>('/matrix/routing'),
 
   // Profile activation
   activateProfile: (profileId: string) =>
@@ -183,6 +189,5 @@ export const api = {
   triggerEval: (payload: { trace_id: string; model: string; question: string; answer: string }) =>
     evaluation.post('/eval/score', payload),
 
-  getEvalResult: (traceId: string) =>
-    evaluation.get<EvalResult | null>(`/eval/result/${traceId}`),
+  getEvalResult: (traceId: string) => evaluation.get<EvalResult | null>(`/eval/result/${traceId}`),
 }

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 from fastapi import APIRouter, HTTPException
 from shared.schemas.judge import JudgeConfig
 from services.judge_config import get_judge_config, save_judge_config, apply_profile

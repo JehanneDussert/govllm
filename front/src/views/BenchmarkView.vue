@@ -1,3 +1,7 @@
+<!--
+  SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+  SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
@@ -47,7 +51,7 @@ function scoreClass(score: number | null) {
 }
 
 const maxLatency = computed(() =>
-  Math.max(...(data.value?.models.map(m => m.avg_latency_ms) ?? [1]))
+  Math.max(...(data.value?.models.map((m) => m.avg_latency_ms) ?? [1])),
 )
 
 function latencyBarWidth(ms: number) {
@@ -71,8 +75,8 @@ const sortedModels = computed(() => {
 
 const winnerReason = computed(() => {
   if (!data.value?.winner || !sortedModels.value.length) return ''
-  const winner = sortedModels.value.find(m => m.model === data.value!.winner)
-  const second = sortedModels.value.find(m => m.model !== data.value!.winner)
+  const winner = sortedModels.value.find((m) => m.model === data.value!.winner)
+  const second = sortedModels.value.find((m) => m.model !== data.value!.winner)
   if (!winner || !second) return ''
   if (winner.avg_eval_score !== null && second.avg_eval_score !== null) {
     return `best eval score (${winner.avg_eval_score.toFixed(3)} vs ${second.avg_eval_score.toFixed(3)})`
@@ -156,7 +160,9 @@ useIntervalFn(refresh, 30000)
             </div>
             <div class="stat">
               <div class="stat-label">AVG TOKENS</div>
-              <div class="stat-value">{{ model.avg_tokens ? model.avg_tokens.toFixed(0) : '—' }}</div>
+              <div class="stat-value">
+                {{ model.avg_tokens ? model.avg_tokens.toFixed(0) : '—' }}
+              </div>
             </div>
           </div>
 
@@ -184,31 +190,85 @@ useIntervalFn(refresh, 30000)
 </template>
 
 <style scoped>
-.benchmark-view { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
-.page-header { display: flex; align-items: center; justify-content: space-between; }
-.page-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.last-updated { font-size: 11px; color: var(--text-dim); }
-.refresh-btn {
-  background: none; border: 1px solid var(--border); border-radius: 5px;
-  color: var(--text-muted); font-size: 14px; width: 28px; height: 28px;
-  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+.benchmark-view {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
-.refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
-.refresh-btn.spinning { animation: spin 1s linear infinite; }
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.last-updated {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-muted);
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.refresh-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.refresh-btn.spinning {
+  animation: spin 1s linear infinite;
+}
 
 .winner-banner {
-  display: flex; align-items: center; gap: 12px;
-  background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.3);
-  border-radius: 8px; padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(63, 185, 80, 0.08);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  border-radius: 8px;
+  padding: 14px 20px;
   margin-bottom: 24px;
 }
-.winner-label { font-size: 10px; letter-spacing: 1.5px; color: var(--green); }
-.winner-model { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--green); }
-.winner-reason { font-size: 12px; color: var(--text-muted); }
+.winner-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--green);
+}
+.winner-model {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green);
+}
+.winner-reason {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 .no-winner-banner {
-  background: var(--bg-2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 14px 20px; font-size: 12px; color: var(--text-dim);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 12px;
+  color: var(--text-dim);
   margin-bottom: 24px;
 }
 
@@ -219,55 +279,152 @@ useIntervalFn(refresh, 30000)
 }
 
 .model-card {
-  background: var(--bg-2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 20px;
-  display: flex; flex-direction: column; gap: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   transition: border-color 0.2s;
 }
-.model-card.card-winner { border-color: rgba(63,185,80,0.4); }
-.model-card.card-loser { opacity: 0.75; }
+.model-card.card-winner {
+  border-color: rgba(63, 185, 80, 0.4);
+}
+.model-card.card-loser {
+  opacity: 0.75;
+}
 
-.card-header { display: flex; align-items: center; justify-content: space-between; }
-.card-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
 .winner-badge {
-  font-size: 10px; color: var(--green);
-  background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3);
-  border-radius: 20px; padding: 2px 10px;
+  font-size: 10px;
+  color: var(--green);
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  border-radius: 20px;
+  padding: 2px 10px;
 }
-.rank-badge { font-size: 11px; color: var(--text-dim); }
-.rank-badge.muted { opacity: 0.5; }
-
-.card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.stat { display: flex; flex-direction: column; gap: 3px; }
-.stat-label { font-size: 10px; letter-spacing: .8px; color: var(--text-dim); }
-.stat-value { font-size: 18px; color: var(--text); }
-.stat-value.green { color: var(--green); }
-.stat-value.yellow { color: var(--yellow); }
-.stat-value.red { color: var(--red); }
-
-.latency-bar-section { display: flex; flex-direction: column; gap: 5px; }
-.bar-label { font-size: 10px; color: var(--text-dim); }
-.bar-track { height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-
-.summary { display: flex; align-items: center; gap: 8px; }
-.summary-label { font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim); }
-.summary-value { font-size: 12px; color: var(--text-muted); }
-
-.loading-state, .error-state {
-  display: flex; justify-content: center; padding: 60px 0; color: var(--text-dim);
+.rank-badge {
+  font-size: 11px;
+  color: var(--text-dim);
 }
-.loading-dots { display: flex; gap: 6px; }
+.rank-badge.muted {
+  opacity: 0.5;
+}
+
+.card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stat-label {
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+}
+.stat-value {
+  font-size: 18px;
+  color: var(--text);
+}
+.stat-value.green {
+  color: var(--green);
+}
+.stat-value.yellow {
+  color: var(--yellow);
+}
+.stat-value.red {
+  color: var(--red);
+}
+
+.latency-bar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bar-label {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.bar-track {
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.summary-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+}
+.summary-value {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--text-dim);
+}
+.loading-dots {
+  display: flex;
+  gap: 6px;
+}
 .loading-dots span {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); animation: bounce 1.2s ease infinite;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: bounce 1.2s ease infinite;
 }
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); opacity: 0.4; }
-  50% { transform: translateY(-6px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
 }
 </style>

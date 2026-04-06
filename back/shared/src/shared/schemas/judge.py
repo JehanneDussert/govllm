@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 from pydantic import BaseModel
 
 
@@ -20,8 +22,8 @@ class GovernanceProfile(BaseModel):
     id: str
     label: str
     description: str
-    criteria_weights: dict[str, float]   # criterion_id: weight override
-    criteria_enabled: list[str]          # criterion ids to enable
+    criteria_weights: dict[str, float]  # criterion_id: weight override
+    criteria_enabled: list[str]  # criterion ids to enable
 
 
 class JudgeConfig(BaseModel):

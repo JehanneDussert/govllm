@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+# SPDX-License-Identifier: EUPL-1.2
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
@@ -20,14 +22,15 @@ async def chat(
     messages = [m.model_dump() for m in request.messages]
 
     if request.stream:
+
         async def event_generator():
             chunks = []
             async for chunk in await litellm_client.chat_completion(
                 messages=messages, model=model, stream=True
             ):
                 chunks.append(chunk)
-                yield f"data: {chunk}\n\n"
-            yield "data: [DONE]\n\n"
+                yield f"data: {chunk}"
+            yield "data: [DONE]"
 
         return StreamingResponse(
             event_generator(),

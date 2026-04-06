@@ -1,148 +1,152 @@
+<!--
+  SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
+  SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
-  import { use } from 'echarts/core'
-  import { CanvasRenderer } from 'echarts/renderers'
-  import { BarChart } from 'echarts/charts'
-  import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
-  import VChart from 'vue-echarts'
-  import { api } from '@/api/client'
-  import type { MetricsResponse } from '@/api/client'
-  import { useIntervalFn } from '@vueuse/core'
+import { ref, computed, onMounted } from 'vue'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import VChart from 'vue-echarts'
+import { api } from '@/api/client'
+import type { MetricsResponse } from '@/api/client'
+import { useIntervalFn } from '@vueuse/core'
 
-  use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
 
-  const data = ref<MetricsResponse | null>(null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const window = ref('24h')
-  const lastUpdated = ref<string | null>(null)
-  const windows = ['1h', '6h', '24h', '7d']
-  const MODEL_COLORS = ['#00e5ff', '#a78bfa', '#3fb950', '#f0883e']
-  const COLORS = { axis: '#484f58', grid: '#21262d' }
+const data = ref<MetricsResponse | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
+const window = ref('24h')
+const lastUpdated = ref<string | null>(null)
+const windows = ['1h', '6h', '24h', '7d']
+const MODEL_COLORS = ['#00e5ff', '#a78bfa', '#3fb950', '#f0883e']
+const COLORS = { axis: '#484f58', grid: '#21262d' }
 
-  async function refresh() {
-    loading.value = true
-    error.value = null
-    try {
-      const res = await api.metrics(window.value)
-      data.value = res.data
-      lastUpdated.value = new Date().toLocaleTimeString()
-    } catch {
-      error.value = 'Failed to fetch metrics — is observability running?'
-    } finally {
-      loading.value = false
-    }
+async function refresh() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await api.metrics(window.value)
+    data.value = res.data
+    lastUpdated.value = new Date().toLocaleTimeString()
+  } catch {
+    error.value = 'Failed to fetch metrics — is observability running?'
+  } finally {
+    loading.value = false
   }
+}
 
-  function shortName(model: string) {
-    return model.split('/').pop() ?? model
-  }
+function shortName(model: string) {
+  return model.split('/').pop() ?? model
+}
 
-  function latencyClass(ms: number) {
-    if (ms < 3000) return 'green'
-    if (ms < 8000) return 'yellow'
-    return 'red'
-  }
+function latencyClass(ms: number) {
+  if (ms < 3000) return 'green'
+  if (ms < 8000) return 'yellow'
+  return 'red'
+}
 
-  function errorClass(rate: number) {
-    if (rate === 0) return 'green'
-    if (rate < 0.05) return 'yellow'
-    return 'red'
-  }
+function errorClass(rate: number) {
+  if (rate === 0) return 'green'
+  if (rate < 0.05) return 'yellow'
+  return 'red'
+}
 
-  const modelColor = (model: string) => {
-    const idx = (data.value?.models ?? []).findIndex((m) => m.model === model)
-    return MODEL_COLORS[idx % MODEL_COLORS.length] ?? '#00e5ff'
-  }
+const modelColor = (model: string) => {
+  const idx = (data.value?.models ?? []).findIndex((m) => m.model === model)
+  return MODEL_COLORS[idx % MODEL_COLORS.length] ?? '#00e5ff'
+}
 
-  const latencyChartOption = computed(() => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#161b22',
-      borderColor: '#30363d',
-      textStyle: { color: '#e6edf3', fontFamily: 'DM Mono', fontSize: 12 },
-      formatter: (params: any[]) =>
-        params
-          .map((p: any) => `<span style="color:${p.color}">●</span> ${p.seriesName}: ${p.value}ms`)
-          .join('<br/>'),
-    },
-    legend: {
-      data: data.value?.models.map((m) => shortName(m.model)) ?? [],
-      textStyle: { color: '#7d8590', fontFamily: 'DM Mono', fontSize: 11 },
-      bottom: 0,
-    },
-    grid: { top: 16, right: 16, bottom: 40, left: 60 },
-    xAxis: {
-      type: 'category',
-      data: ['p50', 'p95', 'p99'],
-      axisLine: { lineStyle: { color: COLORS.grid } },
-      axisLabel: { color: COLORS.axis, fontFamily: 'DM Mono', fontSize: 11 },
-    },
-    yAxis: {
-      type: 'value',
-      name: 'ms',
-      nameTextStyle: { color: COLORS.axis, fontSize: 10 },
-      axisLine: { show: false },
-      splitLine: { lineStyle: { color: COLORS.grid } },
-      axisLabel: { color: COLORS.axis, fontFamily: 'DM Mono', fontSize: 11 },
-    },
-    series:
-      data.value?.models.map((m) => ({
-        name: shortName(m.model),
-        type: 'bar',
-        barMaxWidth: 40,
-        data: [m.latency.p50_ms, m.latency.p95_ms, m.latency.p99_ms],
-        itemStyle: { color: modelColor(m.model), borderRadius: [3, 3, 0, 0] },
-      })) ?? [],
-  }))
+const latencyChartOption = computed(() => ({
+  backgroundColor: 'transparent',
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: '#161b22',
+    borderColor: '#30363d',
+    textStyle: { color: '#e6edf3', fontFamily: 'DM Mono', fontSize: 12 },
+    formatter: (params: any[]) =>
+      params
+        .map((p: any) => `<span style="color:${p.color}">●</span> ${p.seriesName}: ${p.value}ms`)
+        .join('<br/>'),
+  },
+  legend: {
+    data: data.value?.models.map((m) => shortName(m.model)) ?? [],
+    textStyle: { color: '#7d8590', fontFamily: 'DM Mono', fontSize: 11 },
+    bottom: 0,
+  },
+  grid: { top: 16, right: 16, bottom: 40, left: 60 },
+  xAxis: {
+    type: 'category',
+    data: ['p50', 'p95', 'p99'],
+    axisLine: { lineStyle: { color: COLORS.grid } },
+    axisLabel: { color: COLORS.axis, fontFamily: 'DM Mono', fontSize: 11 },
+  },
+  yAxis: {
+    type: 'value',
+    name: 'ms',
+    nameTextStyle: { color: COLORS.axis, fontSize: 10 },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: COLORS.grid } },
+    axisLabel: { color: COLORS.axis, fontFamily: 'DM Mono', fontSize: 11 },
+  },
+  series:
+    data.value?.models.map((m) => ({
+      name: shortName(m.model),
+      type: 'bar',
+      barMaxWidth: 40,
+      data: [m.latency.p50_ms, m.latency.p95_ms, m.latency.p99_ms],
+      itemStyle: { color: modelColor(m.model), borderRadius: [3, 3, 0, 0] },
+    })) ?? [],
+}))
 
-  const errorChartOption = computed(() => ({
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#161b22',
-      borderColor: '#30363d',
-      textStyle: { color: '#e6edf3', fontFamily: 'DM Mono', fontSize: 12 },
+const errorChartOption = computed(() => ({
+  backgroundColor: 'transparent',
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: '#161b22',
+    borderColor: '#30363d',
+    textStyle: { color: '#e6edf3', fontFamily: 'DM Mono', fontSize: 12 },
+  },
+  grid: { top: 16, right: 16, bottom: 40, left: 60 },
+  xAxis: {
+    type: 'category',
+    data: data.value?.models.map((m) => shortName(m.model)) ?? [],
+    axisLine: { lineStyle: { color: COLORS.grid } },
+    axisLabel: { color: COLORS.axis, fontFamily: 'DM Mono', fontSize: 11 },
+  },
+  yAxis: {
+    type: 'value',
+    name: '%',
+    nameTextStyle: { color: COLORS.axis, fontSize: 10 },
+    axisLine: { show: false },
+    splitLine: { lineStyle: { color: COLORS.grid } },
+    axisLabel: {
+      color: COLORS.axis,
+      fontFamily: 'DM Mono',
+      fontSize: 11,
+      formatter: (v: number) => `${(v * 100).toFixed(0)}%`,
     },
-    grid: { top: 16, right: 16, bottom: 40, left: 60 },
-    xAxis: {
-      type: 'category',
-      data: data.value?.models.map((m) => shortName(m.model)) ?? [],
-      axisLine: { lineStyle: { color: COLORS.grid } },
-      axisLabel: { color: COLORS.axis, fontFamily: 'DM Mono', fontSize: 11 },
+  },
+  series: [
+    {
+      type: 'bar',
+      barMaxWidth: 60,
+      data:
+        data.value?.models.map((m) => ({
+          value: m.error_rate,
+          itemStyle: {
+            color: m.error_rate === 0 ? '#3fb950' : m.error_rate < 0.05 ? '#d29922' : '#f85149',
+            borderRadius: [3, 3, 0, 0],
+          },
+        })) ?? [],
     },
-    yAxis: {
-      type: 'value',
-      name: '%',
-      nameTextStyle: { color: COLORS.axis, fontSize: 10 },
-      axisLine: { show: false },
-      splitLine: { lineStyle: { color: COLORS.grid } },
-      axisLabel: {
-        color: COLORS.axis,
-        fontFamily: 'DM Mono',
-        fontSize: 11,
-        formatter: (v: number) => `${(v * 100).toFixed(0)}%`,
-      },
-    },
-    series: [
-      {
-        type: 'bar',
-        barMaxWidth: 60,
-        data:
-          data.value?.models.map((m) => ({
-            value: m.error_rate,
-            itemStyle: {
-              color: m.error_rate === 0 ? '#3fb950' : m.error_rate < 0.05 ? '#d29922' : '#f85149',
-              borderRadius: [3, 3, 0, 0],
-            },
-          })) ?? [],
-      },
-    ],
-  }))
+  ],
+}))
 
-  onMounted(refresh)
-  useIntervalFn(refresh, 30000)
+onMounted(refresh)
+useIntervalFn(refresh, 30000)
 </script>
 
 <template>

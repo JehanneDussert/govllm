@@ -6,7 +6,7 @@ Self-hosted LLM governance monitoring for regulated environments. Continuous sco
 
 Built out of a question I couldn't find a good answer to, working on LLM deployment in the French public sector. Directly applicable to AI Act Article 9 requirements (ongoing risk management) and NIS2 operational continuity constraints.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-00d4b8.svg)](LICENSE)
+[![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-00d4b8.svg)](LICENSE)
 [![Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20Vue%203%20%7C%20Ollama-3a3a3a)](https://github.com/JehanneDussert/govllm)
 
 ![govllm demo](docs/screenshots/govllm-demo.gif)
@@ -313,9 +313,9 @@ The past few years have seen a proliferation of AI ethics charters and responsib
 - [EIG Program](https://eig.numerique.gouv.fr) — Entrepreneurs d'Intérêt Général
 - [CNIL AI guidance](https://www.cnil.fr/fr/intelligence-artificielle) — French data protection authority on AI
 - [AI Charters Portal for Public Administration](https://alliance.numerique.gouv.fr/ressources/portail-des-chartes-ia-dans-ladministration/) — Public repository of AI charters, guidelines, and governance frameworks used across French public administrations, designed to share best practices, promote ethical AI, and support adoption by public sector staff
-
+- [Projet PANAME](https://www.cnil.fr/fr/projet-paname-participez-aux-tests-dun-outil-daudit-rgpd-des-modeles-dia) — CNIL's GDPR audit tool for AI models, currently in beta testing
 ---
 
 ## License
 
-MIT
+EUPL-1.2

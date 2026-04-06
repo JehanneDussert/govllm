@@ -117,6 +117,12 @@ flush-scores:
 # Quality
 lint:
 	$(UV) tool run ruff check back/
+	cd front && npx prettier --check "src/**/*.{ts,vue}"
+
+format:
+	$(UV) tool run ruff check --fix back/
+	$(UV) tool run ruff format back/
+	cd front && npx prettier --write "src/**/*.{ts,vue}"
 
 # TODO: add some tests
 # test:
