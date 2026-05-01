@@ -10,7 +10,7 @@ import { useJudgeStore } from '@/stores/judge'
 import { api } from '@/api/client'
 
 // Types
-type SettingsTabTypes = 'profiles' | 'use_cases' | 'judge' | 'thresholds'
+type SettingsTabTypes = 'profiles' | 'use_cases' | 'judge' // | 'thresholds'
 
 // Store
 const store = useJudgeStore()
@@ -32,7 +32,7 @@ const tabs = [
   { id: 'profiles' as SettingsTabTypes, label: 'Governance profiles' },
   { id: 'use_cases' as SettingsTabTypes, label: 'Use cases' },
   { id: 'judge' as SettingsTabTypes, label: 'Judge' },
-  { id: 'thresholds' as SettingsTabTypes, label: 'Thresholds' },
+  // { id: 'thresholds' as SettingsTabTypes, label: 'Thresholds' },
 ]
 
 const AVAILABLE_MODELS = [

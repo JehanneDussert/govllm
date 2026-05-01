@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir \
     pydantic \
     pydantic-settings \
     redis \
+    asyncpg \
     deepeval
 
 COPY shared/src/shared/ ./shared/

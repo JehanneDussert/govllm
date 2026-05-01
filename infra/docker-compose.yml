@@ -1,6 +1,6 @@
 services:
 
-  # Infrastructure
+  # ── Infrastructure ────────────────────────────────────────────
 
   redis:
     image: redis:7-alpine
@@ -82,7 +82,7 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning
     restart: unless-stopped
 
-  # Microservices
+  # ── Microservices ─────────────────────────────────────────────
 
   llm-gateway:
     build:
@@ -138,23 +138,22 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       LITELLM_BASE_URL: ${LITELLM_BASE_URL}
       LITELLM_API_KEY: ${LITELLM_API_KEY}
+      ARENA_DB_URL: ${ARENA_DB_URL}
     restart: unless-stopped
 
-  # Frontend
+  # ── Frontend ──────────────────────────────────────────────────
 
   front:
     build:
       context: ../front
       dockerfile: Dockerfile
-      args:
-        VITE_BENCHMARK_MODELS: ${VITE_BENCHMARK_MODELS}
     container_name: front
     ports:
       - "5173:80"
     depends_on: [llm-gateway, observability, evaluation]
     restart: unless-stopped
 
-  # Reverse proxy
+  # ── Reverse proxy ─────────────────────────────────────────────
 
   caddy:
     image: caddy:2-alpine

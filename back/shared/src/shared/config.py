@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
 
+import json
 from functools import lru_cache
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,8 +23,6 @@ class GatewaySettings(BaseSettings):
         if isinstance(v, str):
             v = v.strip()
             if v.startswith("["):
-                import json
-
                 return json.loads(v)
             return [item.strip() for item in v.split(",")]
         return v
@@ -47,8 +46,6 @@ class ObservabilitySettings(BaseSettings):
         if isinstance(v, str):
             v = v.strip()
             if v.startswith("["):
-                import json
-
                 return json.loads(v)
             return [item.strip() for item in v.split(",")]
         return v
@@ -56,17 +53,18 @@ class ObservabilitySettings(BaseSettings):
 
 class EvaluationSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-
+ 
     litellm_base_url: str
     litellm_api_key: str
     langfuse_public_key: str
     langfuse_secret_key: str
     langfuse_host: str
     redis_url: str
+    arena_db_url: str
     benchmark_models: list[str]
     eval_interval_seconds: int
     allowed_origins: list[str]
-
+ 
     @field_validator("benchmark_models", "allowed_origins", mode="before")
     @classmethod
     def parse_list(cls, v: str | list) -> list[str]:
@@ -74,11 +72,9 @@ class EvaluationSettings(BaseSettings):
             v = v.strip()
             if v.startswith("["):
                 import json
-
                 return json.loads(v)
             return [item.strip() for item in v.split(",")]
         return v
-
 
 @lru_cache
 def get_gateway_settings() -> GatewaySettings:

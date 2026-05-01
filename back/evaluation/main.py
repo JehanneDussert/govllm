@@ -4,6 +4,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.benchmark import router as benchmark_router
@@ -11,8 +12,11 @@ from routers.config import router as config_router
 from routers.eval import router as eval_router
 from routers.matrix import router as matrix_router
 from services.redis_consumer import consume_events
+from jobs.eval_runner import evaluate_trace
 from shared.schemas.events import LLMEvent
 from shared.config import get_evaluation_settings
+from db.database import run_migrations, close_pool
+
 
 logging.basicConfig(level=logging.INFO)
 settings = get_evaluation_settings()
@@ -29,6 +33,13 @@ async def lifespan(app: FastAPI):
     yield
     for task in tasks:
         task.cancel()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await run_migrations()
+    yield
+    await close_pool()
 
 
 app = FastAPI(
