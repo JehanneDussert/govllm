@@ -4,12 +4,10 @@
 -->
 
 <script setup lang="ts">
-// Imports
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/client'
 import { useIntervalFn } from '@vueuse/core'
 
-// Reactive states
 const health = ref([false, false, false])
 
 async function checkHealth() {
@@ -24,7 +22,8 @@ useIntervalFn(checkHealth, 30000)
   <div class="app">
     <nav class="sidebar">
       <div class="sidebar-logo">
-        <span class="logo-accent">Govllm</span>
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">gov<span class="logo-accent">llm</span></span>
       </div>
 
       <div class="nav-links">
@@ -44,9 +43,13 @@ useIntervalFn(checkHealth, 30000)
           <span class="nav-icon">⊞</span>
           <span>Matrix</span>
         </RouterLink>
-        <RouterLink to="/benchmark" class="nav-item">
+        <RouterLink to="/arena" class="nav-item">
+          <span class="nav-icon">⚔</span>
+          <span>Arena</span>
+        </RouterLink>
+        <RouterLink to="/ab" class="nav-item">
           <span class="nav-icon">⊕</span>
-          <span>Benchmark</span>
+          <span>A/B Test</span>
         </RouterLink>
         <RouterLink to="/settings" class="nav-item">
           <span class="nav-icon">⚙</span>
@@ -80,13 +83,7 @@ useIntervalFn(checkHealth, 30000)
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap');
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --bg: #080c10;
@@ -107,17 +104,8 @@ useIntervalFn(checkHealth, 30000)
   --font-mono: 'DM Mono', monospace;
 }
 
-html,
-body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-}
-
-body {
-  font-family: var(--font-mono);
-  font-size: 13px;
-}
+html, body { height: 100%; background: var(--bg); color: var(--text); }
+body { font-family: var(--font-mono); font-size: 13px; }
 
 .app {
   display: grid;
@@ -147,14 +135,8 @@ body {
   letter-spacing: -0.5px;
 }
 
-.logo-icon {
-  color: var(--accent);
-  font-size: 20px;
-}
-
-.logo-accent {
-  color: var(--accent);
-}
+.logo-icon { color: var(--accent); font-size: 20px; }
+.logo-accent { color: var(--accent); }
 
 .nav-links {
   display: flex;
@@ -176,22 +158,14 @@ body {
   transition: all 0.15s;
 }
 
-.nav-item:hover {
-  background: var(--bg-3);
-  color: var(--text);
-}
-
+.nav-item:hover { background: var(--bg-3); color: var(--text); }
 .nav-item.router-link-active {
   background: var(--accent-dim);
   color: var(--accent);
   border: 1px solid rgba(0, 229, 255, 0.2);
 }
 
-.nav-icon {
-  font-size: 14px;
-  width: 16px;
-  text-align: center;
-}
+.nav-icon { font-size: 14px; width: 16px; text-align: center; }
 
 /* Service status */
 .service-status {
@@ -230,9 +204,7 @@ body {
   box-shadow: 0 0 6px var(--green);
 }
 
-.status-item.down .status-dot {
-  background: var(--red);
-}
+.status-item.down .status-dot { background: var(--red); }
 
 /* Content */
 .content {
@@ -241,20 +213,17 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Loading dots — shared across views */
+.loading-dots { display: flex; gap: 6px; }
+.loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s ease infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
-}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes bounce { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-6px); opacity: 1; } }
 </style>

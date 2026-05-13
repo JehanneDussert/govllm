@@ -7,7 +7,8 @@ from pydantic import BaseModel
 class LLMEvent(BaseModel):
     trace_id: str
     model: str
+    input: str
+    output: str
     latency_ms: float
-    input_tokens: int
-    output_tokens: int
-    success: bool
+    usage: dict = {}
+    timestamp: str

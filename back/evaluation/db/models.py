@@ -12,6 +12,7 @@ from pydantic import BaseModel
 class ArenaRunRequest(BaseModel):
     """Payload to trigger a new Arena session."""
     prompt: str
+    answer: str
     profile_id: str
     use_case_id: str | None = None
     # If not provided, all models in benchmark_models are used as judges
@@ -94,3 +95,75 @@ class BiasMatrix(BaseModel):
     profile_id: str | None
     judge_families: list[str]
     evaluated_models: list[str]
+
+
+class IncoherenceScore(BaseModel):
+    """Per-judge incoherence rate over all stored sessions."""
+    model_name: str
+    model_family: str
+    total_scores: int
+    incoherent_count: int
+    incoherence_rate: float  # incoherent_count / total_scores
+
+
+class IncoherenceReport(BaseModel):
+    """
+    Intra-judge incoherence — fraction of scores where flag=True but score<threshold
+    and reason is short, indicating a structural contradiction in the judge's JSON output.
+    Distinct from Jung et al. (confidence escalation) — observable without self-report.
+    """
+    judges: list[IncoherenceScore]
+    score_threshold: float
+    reason_min_len: int
+
+
+# ── Lifecycle ─────────────────────────────────────────────────
+
+class ModelLifecycleStatus(BaseModel):
+    """Current zone for one model — derived from its latest lifecycle row."""
+    model: str
+    zone: str   # 'test' | 'validation' | 'production' | 'quarantine'
+    score: float | None
+    profile_id: str | None
+    operator: str
+    note: str | None
+    since: datetime
+
+
+class LifecycleTransition(BaseModel):
+    """One row from model_lifecycle — a single zone transition."""
+    id: UUID
+    model: str
+    zone: str
+    score: float | None
+    criterion_id: str | None
+    profile_id: str | None
+    operator: str
+    note: str | None
+    created_at: datetime
+
+
+class LifecycleHistory(BaseModel):
+    model: str | None   # None = all models
+    transitions: list[LifecycleTransition]
+
+
+class SasRequest(BaseModel):
+    model: str
+    profile_id: str | None = None
+
+
+class SasResult(BaseModel):
+    model: str
+    avg_score: float | None
+    sample_size: int
+    threshold: float
+    decision: str   # 'promote' | 'quarantine' | 'no_data'
+    new_zone: str
+    profile_id: str | None
+
+
+class SasLmsysResult(SasResult):
+    """SAS result from a fresh LMSYS-style governance corpus run."""
+    prompts_tested: int
+    criteria_breakdown: dict[str, float]  # criterion_id → avg score

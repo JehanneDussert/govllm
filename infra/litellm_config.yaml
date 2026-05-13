@@ -1,22 +1,22 @@
 model_list:
-  - model_name: ollama/qwen2.5:1.5b
+  - model_name: ollama/phi4-mini
     litellm_params:
-      model: ollama/qwen2.5:1.5b
+      model: ollama/phi4-mini
       api_base: http://ollama:11434
 
-  - model_name: ollama/gemma3:1b
+  - model_name: ollama/gemma3:4b
     litellm_params:
-      model: ollama/gemma3:1b
+      model: ollama/gemma3:4b
       api_base: http://ollama:11434
 
-  - model_name: ollama/llama3.2:3b
+  - model_name: ollama/mistral:7b
     litellm_params:
-      model: ollama/llama3.2:3b
+      model: ollama/mistral:7b
       api_base: http://ollama:11434
 
-  - model_name: ollama/deepseek-r1:1.5b
+  - model_name: ollama/qwen3:1.7b
     litellm_params:
-      model: ollama/deepseek-r1:1.5b
+      model: ollama/qwen3:1.7b
       api_base: http://ollama:11434
 
 litellm_settings:

@@ -7,9 +7,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
-import type { MatrixResponse } from '@/api/client'
+import type { MatrixResponse, ModelLifecycleStatus, LifecycleTransition, LifecycleZone, SasResult, SasLmsysResult } from '@/api/client'
 import { useJudgeStore } from '@/stores/judge'
 import { useIntervalFn } from '@vueuse/core'
+import { modelShortName as shortName } from '@/utils/model'
+import { scoreClass } from '@/utils/score'
 
 // Stores
 const judgeStore = useJudgeStore()
@@ -22,6 +24,97 @@ const matrix = ref<MatrixResponse | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const lastUpdated = ref<string | null>(null)
+
+// Lifecycle
+const lifecycleStatus = ref<ModelLifecycleStatus[]>([])
+const drawerModel = ref<string | null>(null)
+const drawerHistory = ref<LifecycleTransition[]>([])
+const drawerLoading = ref(false)
+const sasRunning = ref(false)
+const sasResult = ref<SasResult | null>(null)
+const lmsysRunning = ref(false)
+const lmsysResult = ref<SasLmsysResult | null>(null)
+
+const ZONE_LABEL: Record<LifecycleZone, string> = {
+  test: 'TEST',
+  validation: 'VALIDATION',
+  production: 'PROD',
+  quarantine: 'QUARANTINE',
+}
+
+function zoneClass(zone: LifecycleZone) {
+  return `zone-${zone}`
+}
+
+function modelZone(model: string): LifecycleZone {
+  return lifecycleStatus.value.find(s => s.model === model)?.zone ?? 'test'
+}
+
+async function loadLifecycle() {
+  try {
+    const res = await api.lifecycleStatus()
+    lifecycleStatus.value = res.data
+  } catch {
+    // lifecycle endpoint optional — silently ignore if DB not migrated yet
+  }
+}
+
+async function openDrawer(model: string) {
+  drawerModel.value = model
+  drawerLoading.value = true
+  sasResult.value = null
+  try {
+    const res = await api.lifecycleHistory(model)
+    drawerHistory.value = res.data.transitions
+  } finally {
+    drawerLoading.value = false
+  }
+}
+
+function closeDrawer() {
+  drawerModel.value = null
+  drawerHistory.value = []
+  sasResult.value = null
+  lmsysResult.value = null
+}
+
+async function validate(model: string) {
+  await api.lifecycleValidate(model, 'Human validation via Matrix UI')
+  await loadLifecycle()
+  await openDrawer(model)
+}
+
+async function quarantine(model: string) {
+  await api.lifecycleQuarantine(model, 'Manual quarantine via Matrix UI')
+  await loadLifecycle()
+  await openDrawer(model)
+}
+
+async function runSas(model: string) {
+  sasRunning.value = true
+  lmsysResult.value = null
+  try {
+    const res = await api.lifecycleSas(model)
+    sasResult.value = res.data
+    await loadLifecycle()
+    await openDrawer(model)
+  } finally {
+    sasRunning.value = false
+  }
+}
+
+async function runLmsysSas(model: string) {
+  lmsysRunning.value = true
+  sasResult.value = null
+  try {
+    const res = await api.lifecycleSasLmsys(model)
+    lmsysResult.value = res.data
+    await loadLifecycle()
+    await openDrawer(model)
+  } finally {
+    lmsysRunning.value = false
+  }
+}
 
 const models = computed(() => {
   if (!matrix.value) return []
@@ -48,16 +141,6 @@ async function refresh() {
 const gridStyle = computed(() => ({
   gridTemplateColumns: `180px repeat(${models.value.length}, 1fr)`,
 }))
-
-function shortName(model: string) {
-  return model.split('/').pop() ?? model
-}
-
-function scoreClass(score: number) {
-  if (score >= 0.7) return 'green'
-  if (score >= 0.4) return 'yellow'
-  return 'red'
-}
 
 function cellClass(cell: any) {
   if (!cell || cell.avg_score === null) return 'cell-empty'
@@ -116,7 +199,7 @@ const matrixWithWinner = computed(() => {
   return result
 })
 
-onMounted(refresh)
+onMounted(() => { refresh(); loadLifecycle() })
 useIntervalFn(refresh, 60000)
 </script>
 
@@ -158,8 +241,17 @@ useIntervalFn(refresh, 60000)
         <!-- Header -->
         <div class="matrix-header" :style="gridStyle">
           <div class="cell cell-label">USE CASE</div>
-          <div class="cell cell-model" v-for="model in models" :key="model">
-            {{ shortName(model) }}
+          <div
+            class="cell cell-model"
+            v-for="model in models"
+            :key="model"
+            @click="openDrawer(model)"
+            style="cursor:pointer"
+          >
+            <span>{{ shortName(model) }}</span>
+            <span class="zone-badge" :class="zoneClass(modelZone(model))">
+              {{ ZONE_LABEL[modelZone(model)] }}
+            </span>
           </div>
         </div>
 
@@ -207,6 +299,29 @@ useIntervalFn(refresh, 60000)
                   stroke-linejoin="round"
                 />
               </svg>
+              <!-- Hover tooltip -->
+              <div class="cell-tooltip">
+                <div class="tooltip-header">
+                  <span :class="['tooltip-score', scoreClass(data.models[model].avg_score!)]">
+                    {{ data.models[model].avg_score!.toFixed(3) }}
+                  </span>
+                  <span class="tooltip-trend" :class="data.models[model].trend ?? ''">
+                    {{ trendIcon(data.models[model].trend) }}
+                  </span>
+                </div>
+                <div class="tooltip-meta">{{ data.models[model].sample_size }} samples · {{ shortName(model) }}</div>
+                <div class="tooltip-scores" v-if="data.models[model].scores.length">
+                  <span class="tooltip-scores-label">last scores</span>
+                  <div class="tooltip-score-pills">
+                    <span
+                      v-for="(s, idx) in data.models[model].scores.slice(-5)"
+                      :key="idx"
+                      class="score-pill"
+                      :class="scoreClass(s)"
+                    >{{ s.toFixed(2) }}</span>
+                  </div>
+                </div>
+              </div>
             </template>
             <template v-else>
               <span class="no-data">—</span>
@@ -235,6 +350,85 @@ useIntervalFn(refresh, 60000)
       </div>
     </div>
   </div>
+
+  <!-- Lifecycle drawer -->
+  <Transition name="drawer">
+    <div v-if="drawerModel" class="drawer-overlay" @click.self="closeDrawer">
+      <div class="drawer">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <span class="drawer-model">{{ shortName(drawerModel) }}</span>
+            <span class="zone-badge" :class="zoneClass(modelZone(drawerModel))">
+              {{ ZONE_LABEL[modelZone(drawerModel)] }}
+            </span>
+          </div>
+          <button class="drawer-close" @click="closeDrawer">✕</button>
+        </div>
+
+        <!-- SAS result banner -->
+        <div v-if="sasResult" class="sas-result" :class="`sas-${sasResult.decision}`">
+          <div class="sas-decision">{{ sasResult.decision === 'promote' ? '↑ Promoted' : sasResult.decision === 'quarantine' ? '⚠ Quarantined' : '— No data' }}</div>
+          <div class="sas-meta" v-if="sasResult.avg_score !== null">
+            avg {{ sasResult.avg_score.toFixed(3) }} · threshold {{ sasResult.threshold }} · {{ sasResult.sample_size }} samples
+          </div>
+          <div class="sas-meta" v-else>No evaluation data in Redis yet</div>
+        </div>
+
+        <!-- LMSYS SAS result -->
+        <div v-if="lmsysResult" class="sas-result" :class="`sas-${lmsysResult.decision}`">
+          <div class="sas-decision">
+            LMSYS — {{ lmsysResult.decision === 'promote' ? '↑ Promoted' : lmsysResult.decision === 'quarantine' ? '⚠ Quarantined' : '— No data' }}
+          </div>
+          <div class="sas-meta" v-if="lmsysResult.avg_score !== null">
+            avg {{ lmsysResult.avg_score.toFixed(3) }} · {{ lmsysResult.prompts_tested }} prompts tested
+          </div>
+          <div class="sas-meta" v-else>Model call failed or no results</div>
+          <div class="lmsys-breakdown" v-if="Object.keys(lmsysResult.criteria_breakdown).length">
+            <div v-for="(score, cid) in lmsysResult.criteria_breakdown" :key="cid" class="breakdown-row">
+              <span class="breakdown-cid">{{ String(cid).replace('_', ' ') }}</span>
+              <span class="breakdown-score" :class="scoreClass(score)">{{ score.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="drawer-actions">
+          <button class="action-btn btn-validate" @click="validate(drawerModel!)">
+            ✓ Validate → Prod
+          </button>
+          <button class="action-btn btn-quarantine" @click="quarantine(drawerModel!)">
+            ⚠ Quarantine
+          </button>
+          <button class="action-btn btn-sas" @click="runSas(drawerModel!)" :disabled="sasRunning || lmsysRunning">
+            {{ sasRunning ? 'Running…' : '▶ SAS' }}
+          </button>
+          <button class="action-btn btn-lmsys" @click="runLmsysSas(drawerModel!)" :disabled="sasRunning || lmsysRunning">
+            {{ lmsysRunning ? 'Running…' : '▶ LMSYS' }}
+          </button>
+        </div>
+
+        <!-- Timeline -->
+        <div class="drawer-section-title">TRANSITION HISTORY</div>
+        <div v-if="drawerLoading" class="drawer-loading">
+          <div class="loading-dots"><span /><span /><span /></div>
+        </div>
+        <div v-else-if="!drawerHistory.length" class="drawer-empty">No transitions recorded yet.</div>
+        <div v-else class="timeline">
+          <div v-for="t in drawerHistory" :key="t.id" class="timeline-item">
+            <span class="zone-badge" :class="zoneClass(t.zone as LifecycleZone)">
+              {{ ZONE_LABEL[t.zone as LifecycleZone] }}
+            </span>
+            <div class="timeline-meta">
+              <span class="tl-operator">{{ t.operator }}</span>
+              <span class="tl-date">{{ new Date(t.created_at).toLocaleString() }}</span>
+              <span class="tl-score" v-if="t.score !== null">score {{ t.score.toFixed(3) }}</span>
+            </div>
+            <div class="tl-note" v-if="t.note">{{ t.note }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
@@ -375,10 +569,85 @@ useIntervalFn(refresh, 60000)
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
 }
 .cell:last-child {
   border-right: none;
 }
+
+/* Hover tooltip */
+.cell-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 160px;
+  max-width: 220px;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.cell-score:hover .cell-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tooltip-score {
+  font-size: 18px;
+  font-weight: 600;
+}
+.tooltip-score.green { color: var(--green); }
+.tooltip-score.yellow { color: var(--yellow); }
+.tooltip-score.red { color: var(--red); }
+.tooltip-trend {
+  font-size: 14px;
+}
+.tooltip-trend.up { color: var(--green); }
+.tooltip-trend.down { color: var(--red); }
+.tooltip-trend.stable { color: var(--text-dim); }
+
+.tooltip-meta {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.tooltip-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tooltip-scores-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.tooltip-score-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.score-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+}
+.score-pill.green { color: var(--green); border-color: rgba(63, 185, 80, 0.3); }
+.score-pill.yellow { color: var(--yellow); border-color: rgba(210, 153, 34, 0.3); }
+.score-pill.red { color: var(--red); border-color: rgba(248, 81, 73, 0.3); }
 
 .cell-label {
   font-size: 10px;
@@ -534,38 +803,159 @@ useIntervalFn(refresh, 60000)
   padding: 60px 0;
   color: var(--text-dim);
 }
-.loading-dots {
+
+/* Zone badges */
+.zone-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.zone-test        { color: #7d8590; border-color: #7d8590; background: rgba(125,133,144,0.08); }
+.zone-validation  { color: #f0883e; border-color: #f0883e; background: rgba(240,136,62,0.08); }
+.zone-production  { color: var(--green); border-color: var(--green); background: rgba(63,185,80,0.08); }
+.zone-quarantine  { color: var(--red); border-color: var(--red); background: rgba(248,81,73,0.08); }
+
+/* Drawer */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
   display: flex;
-  gap: 6px;
+  justify-content: flex-end;
 }
-.loading-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: bounce 1.2s ease infinite;
+.drawer {
+  width: 360px;
+  height: 100%;
+  background: var(--bg-2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
 }
-.loading-dots span:nth-child(2) {
-  animation-delay: 0.2s;
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
 }
-.loading-dots span:nth-child(3) {
-  animation-delay: 0.4s;
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.drawer-model {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+.drawer-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.drawer-close:hover { color: var(--text); }
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.action-btn {
+  flex: 1;
+  padding: 7px 4px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  transition: opacity 0.15s;
+}
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-validate  { background: rgba(63,185,80,0.1); color: var(--green); border-color: var(--green); }
+.btn-quarantine { background: rgba(248,81,73,0.1); color: var(--red); border-color: var(--red); }
+.btn-sas       { background: rgba(0,229,255,0.1); color: var(--accent); border-color: var(--accent); }
+.btn-lmsys     { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: #a78bfa; }
+
+.lmsys-breakdown {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.breakdown-cid  { color: var(--text-dim); }
+.breakdown-score { font-weight: 600; }
+.breakdown-score.green  { color: var(--green); }
+.breakdown-score.yellow { color: var(--yellow); }
+.breakdown-score.red    { color: var(--red); }
+
+.sas-result {
+  margin: 12px 20px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.sas-promote   { border-color: var(--green); background: rgba(63,185,80,0.07); }
+.sas-quarantine { border-color: var(--red); background: rgba(248,81,73,0.07); }
+.sas-no_data   { border-color: var(--border); }
+.sas-decision  { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.sas-meta      { font-size: 11px; color: var(--text-dim); }
+
+.drawer-section-title {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 16px 20px 8px;
+}
+.drawer-loading, .drawer-empty {
+  padding: 20px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-style: italic;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.timeline {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px 20px;
+  gap: 12px;
 }
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
+.timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
 }
+.timeline-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.tl-operator { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.tl-date     { font-size: 10px; color: var(--text-dim); }
+.tl-score    { font-size: 10px; color: var(--text-dim); background: var(--bg-3); border: 1px solid var(--border); border-radius: 20px; padding: 1px 6px; }
+.tl-note     { font-size: 11px; color: var(--text-dim); font-style: italic; }
+
+/* Drawer slide transition */
+.drawer-enter-active, .drawer-leave-active { transition: opacity 0.2s; }
+.drawer-enter-from, .drawer-leave-to { opacity: 0; }
+.drawer-enter-active .drawer, .drawer-leave-active .drawer { transition: transform 0.25s ease; }
+.drawer-enter-from .drawer, .drawer-leave-to .drawer { transform: translateX(100%); }
 </style>

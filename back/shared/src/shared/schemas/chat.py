@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     model: str
     stream: bool = False
+    session_id: str | None = None
 
 
 class ChatResponse(BaseModel):

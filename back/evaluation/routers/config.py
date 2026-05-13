@@ -4,8 +4,15 @@
 from fastapi import APIRouter, HTTPException
 from shared.schemas.judge import JudgeConfig
 from services.judge_config import get_judge_config, save_judge_config, apply_profile
+from shared.config import get_evaluation_settings
 
 router = APIRouter(prefix="/config", tags=["config"])
+_settings = get_evaluation_settings()
+
+
+@router.get("/models/available")
+async def get_available_models() -> dict:
+    return {"models": _settings.benchmark_models}
 
 
 @router.get("/judge", response_model=JudgeConfig)

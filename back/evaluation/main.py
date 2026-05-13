@@ -4,41 +4,51 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.benchmark import router as benchmark_router
 from routers.config import router as config_router
 from routers.eval import router as eval_router
 from routers.matrix import router as matrix_router
-from services.redis_consumer import consume_events
-from jobs.eval_runner import evaluate_trace
-from shared.schemas.events import LLMEvent
+from routers.arena import router as arena_router
+from routers.lifecycle import router as lifecycle_router
+from routers.groundtruth import router as groundtruth_router
 from shared.config import get_evaluation_settings
 from db.database import run_migrations, close_pool
 
-
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 settings = get_evaluation_settings()
 
-
-async def handle_event(event: LLMEvent) -> None:
-    """Handler called for each redis event."""
-    pass  # Scoring is triggered from the front end via a POST request to /eval/score
+DRIFT_CHECK_INTERVAL_SECONDS = 900  # 15 minutes
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    tasks = [asyncio.create_task(consume_events(handle_event))]
-    yield
-    for task in tasks:
-        task.cancel()
+async def _drift_watcher_loop():
+    """Background task: checks production models for score drift every 15 minutes."""
+    await asyncio.sleep(60)  # initial delay — let the app warm up
+    while True:
+        try:
+            from services.lifecycle import check_drift
+            quarantined = await check_drift()
+            if quarantined:
+                logger.warning(f"[drift_watcher] Quarantined: {quarantined}")
+            else:
+                logger.debug("[drift_watcher] No drift detected")
+        except Exception as e:
+            logger.error(f"[drift_watcher] Error: {e}")
+        await asyncio.sleep(DRIFT_CHECK_INTERVAL_SECONDS)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await run_migrations()
+    drift_task = asyncio.create_task(_drift_watcher_loop())
     yield
+    drift_task.cancel()
+    try:
+        await drift_task
+    except asyncio.CancelledError:
+        pass
     await close_pool()
 
 
@@ -61,6 +71,9 @@ app.include_router(benchmark_router)
 app.include_router(config_router)
 app.include_router(eval_router)
 app.include_router(matrix_router)
+app.include_router(arena_router)
+app.include_router(lifecycle_router)
+app.include_router(groundtruth_router)
 
 
 @app.get("/health")

@@ -28,7 +28,7 @@ async def get_traces(
     limit: int = Query(50, ge=1, le=200),
     model: str | None = Query(None),
 ):
-    raw = await get_traces_with_scores(limit=limit, model_filter=None)
+    raw = await get_traces_with_scores(limit=limit)
 
     traces = []
     for t in raw:

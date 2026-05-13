@@ -11,6 +11,7 @@ import { useJudgeStore } from '@/stores/judge'
 import MessageScore from '@/components/MessageScore.vue'
 import { api } from '@/api/client'
 import type { RoutingResult } from '@/api/client'
+import { modelShortName } from '@/utils/model'
 
 // Stores
 const store = useChatStore()
@@ -24,18 +25,18 @@ const inputEl = ref<HTMLTextAreaElement>()
 // Routing
 const routing = ref<RoutingResult | null>(null)
 const routingExpanded = ref(false)
+const autoRoute = ref(true)
 
-async function fetchRouting() {
+async function fetchRouting(applyModel = true) {
   try {
     const res = await api.getRouting()
     routing.value = res.data
-    // Auto-select: prefer recommended if it meets threshold, else first model that does
+    if (!applyModel || !autoRoute.value) return
     if (res.data?.recommended) {
       const recommended = res.data.models.find((m) => m.model === res.data.recommended)
       if (!recommended || recommended.meets_threshold !== false) {
         store.currentModel = res.data.recommended
       } else {
-        // Recommended fails threshold — pick first model that passes
         const firstValid = res.data.models.find((m) => m.meets_threshold === true)
         if (firstValid) store.currentModel = firstValid.model
       }
@@ -43,13 +44,15 @@ async function fetchRouting() {
   } catch {}
 }
 
-function modelShortName(model: string) {
-  return model.replace('ollama/', '')
-}
-
 function selectModel(model: string) {
+  autoRoute.value = false
   store.currentModel = model
   routingExpanded.value = false
+}
+
+function toggleAutoRoute() {
+  autoRoute.value = !autoRoute.value
+  if (autoRoute.value) fetchRouting(true)
 }
 
 onMounted(async () => {
@@ -63,6 +66,7 @@ watch(() => judgeStore.config?.active_use_case_id, fetchRouting)
 
 async function send() {
   if (!input.value.trim() || store.isStreaming) return
+  if (autoRoute.value) await fetchRouting(true)
   const msg = input.value.trim()
   input.value = ''
   if (inputEl.value) {
@@ -111,9 +115,21 @@ watch(
       </div>
 
       <!-- Routing bar -->
-      <div class="routing-bar" @click="routingExpanded = !routingExpanded">
-        <div class="routing-bar-left">
+      <div class="routing-bar">
+        <div class="routing-bar-left" @click="routingExpanded = !routingExpanded" style="flex:1; cursor:pointer">
           <span class="routing-label">ROUTING</span>
+          <button
+            class="auto-route-toggle"
+            :class="{ active: autoRoute }"
+            @click.stop="toggleAutoRoute"
+            :title="autoRoute ? 'Auto-routing ON — click to switch to manual' : 'Manual mode — click to enable auto-routing'"
+          >
+            {{ autoRoute ? 'AUTO' : 'MANUAL' }}
+          </button>
+          <span v-if="autoRoute && judgeStore.config?.routing_strategy" class="routing-strategy">
+            {{ judgeStore.config.routing_strategy.replace('_', ' ') }}
+          </span>
+          <span class="routing-sep" v-if="autoRoute && judgeStore.config?.routing_strategy">·</span>
           <span class="routing-model">{{ modelShortName(store.currentModel) }}</span>
           <span v-if="routing?.models[0]?.avg_score != null" class="routing-score">
             {{
@@ -122,11 +138,11 @@ watch(
             }}
           </span>
           <span v-else class="routing-score-empty">no data yet</span>
-          <span class="routing-reason" v-if="routing?.recommended === store.currentModel"
+          <span class="routing-reason" v-if="autoRoute && routing?.recommended === store.currentModel"
             >— best for this profile + use case</span
           >
         </div>
-        <span class="routing-toggle">{{ routingExpanded ? 'collapse ↑' : 'show all ↓' }}</span>
+        <span class="routing-toggle" @click="routingExpanded = !routingExpanded" style="cursor:pointer">{{ routingExpanded ? 'collapse ↑' : 'show all ↓' }}</span>
       </div>
 
       <!-- Scoreboard expanded -->
@@ -303,17 +319,48 @@ watch(
   padding: 6px 28px;
   background: var(--bg-3);
   border-top: 1px solid var(--border);
-  cursor: pointer;
   user-select: none;
   transition: background 0.15s;
-}
-.routing-bar:hover {
-  background: var(--bg-4);
 }
 .routing-bar-left {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.routing-bar-left:hover {
+  background: none;
+}
+
+.auto-route-toggle {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.auto-route-toggle.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 229, 255, 0.08);
+}
+.auto-route-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.routing-strategy {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.routing-sep {
+  color: var(--text-dim);
+  font-size: 10px;
 }
 .routing-label {
   font-size: 10px;

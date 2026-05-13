@@ -16,7 +16,7 @@ export interface ChatMessage extends Message {
 export const useChatStore = defineStore('chat', () => {
   const messages = ref<ChatMessage[]>([])
   const isStreaming = ref(false)
-  const currentModel = ref('ollama/qwen2.5:1.5b')
+  const currentModel = ref('ollama/phi4-mini')
   const lastLatency = ref<number | null>(null)
   const tokensPerSecond = ref<number | null>(null)
 

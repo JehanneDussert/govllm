@@ -10,7 +10,8 @@ dependencies = [
     "pydantic-settings>=2.5.2",
     "redis>=5.0.0",
     "asyncpg>=0.29.0",
-    "deepeval>=0.21.73",
+    "deepeval>=3.8.9",
+    "shared",
 ]
 
 [tool.uv.sources]

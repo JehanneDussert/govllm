@@ -92,10 +92,10 @@ ps:
 
 # Models 
 pull-models:
-	$(COMPOSE_DEV) exec ollama ollama pull gemma3:1b
-	$(COMPOSE_DEV) exec ollama ollama pull llama3.2:3b
-	$(COMPOSE_DEV) exec ollama ollama pull qwen2.5:1.5b
-	$(COMPOSE_DEV) exec ollama ollama pull deepseek-r1:1.5b
+	$(COMPOSE_DEV) exec ollama ollama pull gemma3:4b
+	$(COMPOSE_DEV) exec ollama ollama pull mistral:7b
+	$(COMPOSE_DEV) exec ollama ollama pull phi4-mini
+	$(COMPOSE_DEV) exec ollama ollama pull qwen3:1.7b
 
 # Redis 
 flush-redis:

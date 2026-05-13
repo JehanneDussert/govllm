@@ -7,6 +7,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { api } from '@/api/client'
 import type { EvalResult } from '@/api/client'
 import { useJudgeStore } from '@/stores/judge'
+import { scoreClass } from '@/utils/score'
 
 const props = defineProps<{
   traceId: string
@@ -24,12 +25,6 @@ let pollInterval: ReturnType<typeof setInterval> | null = null
 
 function labelFor(id: string) {
   return judgeStore.config?.criteria.find((c) => c.id === id)?.label ?? id
-}
-
-function scoreClass(score: number) {
-  if (score >= 0.7) return 'green'
-  if (score >= 0.4) return 'yellow'
-  return 'red'
 }
 
 async function triggerAndPoll() {

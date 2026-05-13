@@ -8,13 +8,15 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/client'
 import type { TracesResponse, TraceItem } from '@/api/client'
+import { modelShortName as shortName } from '@/utils/model'
+import { scoreClass } from '@/utils/score'
 
 // Constants
 const BENCHMARK_MODELS = [
-  'ollama/qwen2.5:1.5b',
-  'ollama/gemma3:1b',
-  'ollama/llama3.2:3b',
-  'ollama/deepseek-r1:1.5b',
+  'ollama/phi4-mini',
+  'ollama/gemma3:4b',
+  'ollama/mistral:7b',
+  'ollama/qwen3:1.7b',
 ]
 
 // Reactive states
@@ -38,10 +40,6 @@ async function refresh() {
   }
 }
 
-function shortName(model: string) {
-  return model.replace('ollama/', '')
-}
-
 function formatTime(ts: string) {
   return new Date(ts).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
@@ -62,15 +60,9 @@ function modelClass(model: string) {
 }
 
 function latencyClass(ms: number) {
-  if (ms < 3000) return 'ok'
-  if (ms < 8000) return 'warn'
-  return 'bad'
-}
-
-function scoreClass(score: number) {
-  if (score >= 0.7) return 'ok'
-  if (score >= 0.4) return 'warn'
-  return 'bad'
+  if (ms < 3000) return 'green'
+  if (ms < 8000) return 'yellow'
+  return 'red'
 }
 
 function extractText(raw: string): string {
@@ -359,13 +351,13 @@ onMounted(refresh)
   font-family: var(--font-mono);
   font-size: 12px;
 }
-.ok {
+.green {
   color: var(--green);
 }
-.warn {
+.yellow {
   color: var(--yellow);
 }
-.bad {
+.red {
   color: var(--red);
 }
 .no-score {
@@ -422,39 +414,5 @@ onMounted(refresh)
   justify-content: center;
   padding: 60px 0;
   color: var(--text-dim);
-}
-.loading-dots {
-  display: flex;
-  gap: 6px;
-}
-.loading-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: bounce 1.2s ease infinite;
-}
-.loading-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.loading-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
 }
 </style>

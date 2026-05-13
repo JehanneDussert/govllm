@@ -8,6 +8,8 @@ import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
 import type { BenchmarkResponse } from '@/api/client'
 import { useIntervalFn } from '@vueuse/core'
+import { modelShortName as shortName } from '@/utils/model'
+import { scoreClass } from '@/utils/score'
 
 // Reactive state
 const data = ref<BenchmarkResponse | null>(null)
@@ -19,7 +21,7 @@ async function refresh() {
   loading.value = true
   error.value = null
   try {
-    const res = await api.benchmarkResults()
+    const res = await api.abResults()
     data.value = res.data
     lastUpdated.value = new Date().toLocaleTimeString()
   } catch {
@@ -27,10 +29,6 @@ async function refresh() {
   } finally {
     loading.value = false
   }
-}
-
-function shortName(model: string) {
-  return model.split('/').pop() ?? model
 }
 
 function latencyClass(ms: number) {
@@ -42,13 +40,6 @@ function latencyClass(ms: number) {
 function errorClass(rate: number) {
   if (rate === 0) return 'green'
   if (rate < 0.05) return 'yellow'
-  return 'red'
-}
-
-function scoreClass(score: number | null) {
-  if (score === null) return ''
-  if (score >= 0.7) return 'green'
-  if (score >= 0.4) return 'yellow'
   return 'red'
 }
 
@@ -394,39 +385,5 @@ useIntervalFn(refresh, 30000)
   justify-content: center;
   padding: 60px 0;
   color: var(--text-dim);
-}
-.loading-dots {
-  display: flex;
-  gap: 6px;
-}
-.loading-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: bounce 1.2s ease infinite;
-}
-.loading-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.loading-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
 }
 </style>

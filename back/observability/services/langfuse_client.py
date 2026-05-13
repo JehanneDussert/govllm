@@ -1,69 +1,24 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
 
-import base64
-import httpx
+from shared.langfuse import LangfuseClient
 from shared.config import get_observability_settings
 
-settings = get_observability_settings()
+_s = get_observability_settings()
+_client = LangfuseClient(_s.langfuse_host, _s.langfuse_public_key, _s.langfuse_secret_key)
+
+# Re-export shared methods
+get_traces = _client.get_traces
+get_model_from_observation = _client.get_model_from_observation
+get_trace_scores = _client.get_trace_scores
+# push_score is NOT exposed here — observability is read-only on Langfuse
 
 
-def _auth_header() -> dict:
-    token = base64.b64encode(
-        f"{settings.langfuse_public_key}:{settings.langfuse_secret_key}".encode()
-    ).decode()
-    return {"Authorization": f"Basic {token}"}
-
-
-async def get_traces(limit: int = 50) -> list[dict]:
-    async with httpx.AsyncClient(timeout=30) as client:
-        r = await client.get(
-            f"{settings.langfuse_host}/api/public/traces",
-            headers=_auth_header(),
-            params={"limit": limit},
-        )
-        r.raise_for_status()
-    return r.json().get("data", [])
-
-
-async def get_model_from_observation(trace_id: str) -> str:
-    """Reads the first observation to extract the actual model."""
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            f"{settings.langfuse_host}/api/public/observations",
-            headers=_auth_header(),
-            params={"traceId": trace_id, "limit": 1},
-        )
-        if r.status_code != 200:
-            return "unknown"
-    obs = r.json().get("data", [])
-    if obs and obs[0].get("model"):
-        return obs[0]["model"]
-    return "unknown"
-
-
-async def get_trace_scores(trace_id: str) -> list[dict]:
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            f"{settings.langfuse_host}/api/public/scores",
-            headers=_auth_header(),
-            params={"traceId": trace_id},
-        )
-        r.raise_for_status()
-    return r.json().get("data", [])
-
-
-async def get_traces_with_scores(
-    limit: int = 50,
-    model_filter: str | None = None,
-) -> list[dict]:
-    traces = await get_traces(limit=limit)
+async def get_traces_with_scores(limit: int = 50) -> list[dict]:
+    traces = await _client.get_traces(limit=limit)
     for trace in traces:
-        # Model from observation
-        trace["_model"] = await get_model_from_observation(trace["id"])
-
-        # Scores
-        scores = await get_trace_scores(trace["id"])
+        trace["_model"] = await _client.get_model_from_observation(trace["id"])
+        scores = await _client.get_trace_scores(trace["id"])
         trace["eval_score"] = next(
             (
                 s["value"]
