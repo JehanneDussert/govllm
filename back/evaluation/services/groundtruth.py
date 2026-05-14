@@ -315,10 +315,10 @@ async def _call_judge_checklist(
         if isinstance(v, str):
             s = v.strip().lower()
 
-            if s in {"true", "a", "compliant", "A"}:
+            if s in {"true", "compliant"}:
                 return True
 
-            if s in {"false", "b", "violation", "B"}:
+            if s in {"false", "violation"}:
                 return False
 
         return None

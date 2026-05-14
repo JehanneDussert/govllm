@@ -216,7 +216,7 @@ Checklist questions presented in reversed order (q4→q3→q2→q1) vs original 
 **Finding:** Question order affects judgments in 7/12 cases. `non_manipulation` is the most order-stable criterion (0 flips). `transparency` is most sensitive (position bias: q4 as anchor destabilises earlier judgements). Supports §5.4 (intra-judge incoherence as a reliability signal).
 
 **Prompt engineering notes:**
-- `true/false` format outperforms `A/B` by ~55 pp (A-preference bias in small models).
+- A/B format introduced a choice-order bias (A-preference), reducing transparency agreement from 82.1% to ~37.5% (Δ ≈ −45 pp) — format reverted to true/false.
 - Position bias confirmed empirically: last-presented question functions as an anchor for ambiguous cases.
 - Incoherence-B rates (66–100%) are largely false positives from "does not" in compliant reasons.
 
@@ -248,7 +248,7 @@ Code                    0.72           0.85          0.82           0.77
 Administrative writing  0.88           0.82          0.71           —
 ```
 
-→ gemma3 and llama3.2 lead on code, qwen2.5 on admin writing. The smart router reads this matrix at inference time and routes to the best-scoring model for the active profile and use case.
+→ gemma3:4b and phi4-mini lead on code, mistral:7b on admin writing. The smart router reads this matrix at inference time and routes to the best-scoring model for the active profile and use case.
 
 ---
 
@@ -361,7 +361,7 @@ govllm/
 │       │   ├── arena.py         # POST /arena/run, /arena/run/stream, GET /arena/sessions
 │       │   └── config.py        # GET+PUT /config/judge, GET /config/models/available
 │       └── scripts/
-│           ├── seed_groundtruth.py   # DROP/recreate tables + seed 16 ground-truth cases
+│           ├── seed_groundtruth.py   # DROP/recreate tables + seed 34 ground-truth cases
 │           ├── run_groundtruth.py    # run cases against judges, per-question breakdown
 │           └── test_thinking_mode.py # compare qwen3 thinking vs /no_think (no DB writes)
 ├── front/
@@ -411,7 +411,7 @@ govllm/
 - [x] Variance explorer — `/arena/variance`, σ over time, line chart ECharts with prompt preview on hover
 - [x] Bias matrix — `/arena/bias-matrix`, heatmap of judge family × evaluated model, VisualMap 0→1, self-preference flag
 - [x] Incoherence rate — `/arena/incoherence`, structural contradiction detection per judge (`flag=True AND score<0.5 AND len(reason)<20`), badge per judge card
-- [x] Ground truth validity corpus — 16 annotated `(prompt, response, expected_answers)` cases across 5 criteria, `POST /groundtruth/run/{case_id}` scores N judges and persists agreement rates, `GET /groundtruth/validity` aggregates per judge × criterion × sub-question
+- [x] Ground truth validity corpus — 34 annotated `(prompt, response, expected_answers)` cases across 5 criteria, `POST /groundtruth/run/{case_id}` scores N judges and persists agreement rates, `GET /groundtruth/validity` aggregates per judge × criterion × sub-question
 
 **Governance**
 - [x] Routing strategy configurable from Settings — best_score / progression / stability / strict
