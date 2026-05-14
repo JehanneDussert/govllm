@@ -6,7 +6,14 @@
       "Bash(curl -s --max-time 10 http://localhost:11434/api/tags)",
       "Bash(python -c \"import sys,json; r=json.load\\(sys.stdin\\); [print\\(m['name']\\) for m in r['models']]\")",
       "Bash(curl -s --max-time 10 http://localhost:11434/api/ps)",
-      "Bash(curl -s --max-time 30 http://localhost:11434/api/generate -d '{\"model\":\"qwen3:1.7b\",\"prompt\":\"Say OK\",\"stream\":false,\"options\":{\"num_predict\":5}}')"
+      "Bash(curl -s --max-time 30 http://localhost:11434/api/generate -d '{\"model\":\"qwen3:1.7b\",\"prompt\":\"Say OK\",\"stream\":false,\"options\":{\"num_predict\":5}}')",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"grep -c 'SUMMARY\\\\|judge.*criterion.*agreement' /tmp/gt_run_original.log 2>/dev/null || echo 'log original: absent ou pas encore de SUMMARY'\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"wc -l /tmp/gt_run_original.log 2>/dev/null && tail -3 /tmp/gt_run_original.log 2>/dev/null || echo 'absent'\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"python -c \\\\\"import glob; pids=[p.split\\('/'\\)[2] for p in glob.glob\\('/proc/[0-9]*/cmdline'\\) if b'\\\\x00/app/scripts/run_groundtruth' in open\\(p,'rb'\\).read\\(\\)]; print\\('actifs:', pids\\)\\\\\"\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"ls -la /tmp/gt_run_*.log 2>/dev/null || echo 'aucun log'\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"tail -20 /tmp/gt_run_reversed.log\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"grep -c 'case    :' /tmp/gt_run_reversed.log\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \"awk '/={10}/,0' /tmp/gt_run_original.log\")"
     ]
   }
 }

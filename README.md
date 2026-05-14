@@ -163,39 +163,44 @@ The judge is prompted with 4 binary sub-questions per criterion (e.g. "Does the 
 
 Each case is a `(prompt, response, expected_answers)` triple annotated with a binary 4-question checklist (`true=compliant, false=violation`). Cases cover clear violations, clearly compliant responses, and edge cases.
 
-### Empirical results — qwen3:1.7b (May 2026)
+### Empirical results — final runs (May 2026, 34 cases × 4 judges)
 
-**Run 1 — 16 cases (original corpus):**
+**Run 5 — original question order:**
 
-| Criterion | Agreement | n |
-|---|---|---|
-| transparency | 81.2% | 4 |
-| human_oversight | 83.3% | 3 |
-| data_privacy | 83.3% | 3 |
-| non_manipulation | 83.3% | 3 |
-| prompt_injection | 41.7% | 3 |
+| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | global |
+|---|---|---|---|---|---|---|
+| phi4-mini | 82.1% | 85.7% | 89.3% | 87.5% | 53.6% | **79.4%** |
+| qwen3:1.7b | 67.9% | 78.6% | 82.1% | 41.7% | 82.1% | **71.3%** |
+| gemma3:4b | 53.6% | 67.9% | 71.4% | 75.0% | 78.6% | **69.1%** |
+| mistral:7b | 53.6% | 37.5% | 46.4% | 70.8% | 39.3% | **49.2%** |
 
-**Run 2 — 28 cases (expanded corpus, 4 criteria):**
+**Run 6 — reversed question order:**
 
-| Criterion | Agreement | n |
-|---|---|---|
-| transparency | 82.1% | 7 |
-| human_oversight | 78.6% | 7 |
-| non_manipulation | 82.1% | 7 |
-| data_privacy | 67.9% | 7 |
+| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | global |
+|---|---|---|---|---|---|---|
+| phi4-mini | 82.1% | 89.3% | 89.3% | 87.5% | 57.1% | **80.9%** |
+| gemma3:4b | 60.7% | 78.6% | 85.7% | 58.3% | 60.7% | **69.1%** |
+| qwen3:1.7b | 71.4% | 85.7% | 57.1% | 29.2% | 57.1% | **61.0%** |
+| mistral:7b | 53.6% | 46.4% | 46.4% | 70.8% | 39.3% | **50.7%** |
 
-**Run 3 — multi-judge (gemma3:4b · phi4-mini · mistral:7b, 13 cases):**
+**Order sensitivity (delta reversed − original, changes ≥ 10%):**
 
-| Judge | transparency | human_oversight | non_manipulation | data_privacy |
+| Judge | Criterion | Original | Reversed | Δ |
 |---|---|---|---|---|
-| phi4-mini | 50.0% | 91.7% | 91.7% | 83.3% |
-| gemma3:4b | 75.0% | 66.7% | 75.0% | 50.0% |
-| mistral:7b | 37.5% | 58.3% | 58.3% | 50.0% |
+| qwen3:1.7b | non_manipulation | 82.1% | 57.1% | −25.0% |
+| qwen3:1.7b | transparency | 82.1% | 57.1% | −25.0% |
+| gemma3:4b | transparency | 78.6% | 60.7% | −17.9% |
+| gemma3:4b | prompt_injection | 75.0% | 58.3% | −16.7% |
+| gemma3:4b | non_manipulation | 71.4% | 85.7% | +14.3% |
+| qwen3:1.7b | prompt_injection | 41.7% | 29.2% | −12.5% |
+| gemma3:4b | human_oversight | 67.9% | 78.6% | +10.7% |
 
 **Notable findings:**
-- `prompt_injection` gap (41.7%): the judge interprets *mentioning* a system prompt as *revealing* it — a systematic validity weakness.
-- `data_privacy` regression on 7-case corpus (67.9%): indirect re-identification cases (John Smith, single female engineer) classified as compliant.
-- phi4-mini outperforms qwen3:1.7b on human_oversight and non_manipulation; mistral:7b underperforms across all criteria.
+- **phi4-mini** is the most reliable judge overall (79.4–80.9%) and most stable across question orders (Δ global +1.5%).
+- **mistral:7b** is the weakest judge (49–51%) but nearly unaffected by question order (0% delta on 4/5 criteria).
+- **qwen3:1.7b** shows the strongest position bias: −25% on non_manipulation and transparency when questions are reversed.
+- **prompt_injection** remains the hardest criterion: qwen3:1.7b scores 41.7% (original) and 29.2% (reversed). The judge conflates mentioning a system prompt with revealing it.
+- **data_privacy** weakness on indirect re-identification persists across all judges (53–82%).
 
 ### Question-order experiment (May 2026, 12 cases, qwen3:1.7b)
 
@@ -218,23 +223,15 @@ Checklist questions presented in reversed order (q4→q3→q2→q1) vs original 
 ### Scripts
 
 ```bash
-# Seed or reset the corpus
-docker exec evaluation python /app/scripts/seed_groundtruth.py
-
-# Run all corpus cases against configured judges
-docker exec evaluation python /app/scripts/run_groundtruth.py
-
-# Filter by criterion and judges
-docker exec evaluation python /app/scripts/run_groundtruth.py \
-  --criterion transparency data_privacy --judges ollama/qwen3:1.7b
-
-# Run with reversed question order and show original vs reversed comparison
-docker exec evaluation python /app/scripts/run_groundtruth.py \
-  --cases 9dea1b2c d025ba36 6a2c2694 \
-  --judges ollama/qwen3:1.7b --question-order reversed --compare
-
-# Compare qwen3 thinking vs no_think mode (no DB writes)
-docker exec evaluation python /app/scripts/test_thinking_mode.py --criterion transparency
+make gt-seed             # DROP+CREATE tables, insert 34 cases
+make gt-run              # run all cases (original order) → streams to /tmp/gt_run_original.log
+make gt-run-reversed     # run all cases (reversed order) → streams to /tmp/gt_run_reversed.log
+make gt-log              # tail -f original log (Ctrl+C to stop)
+make gt-log-reversed     # tail -f reversed log
+make gt-summary          # print SUMMARY table from original log
+make gt-status           # check if a run is active in the container
+make gt-kill             # kill all active groundtruth processes
+make gt-clean            # kill + clear both log files
 ```
 
 ---

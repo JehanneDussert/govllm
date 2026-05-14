@@ -4,10 +4,13 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from services import groundtruth as gt_service
+from fastapi import Body
 from shared.schemas.groundtruth import (
     GroundTruthCase,
     GroundTruthCaseCreate,
     GroundTruthRunResult,
+    IncoherenceItem,
+    OrderSensitivityEntry,
     ValidityReport,
 )
 
@@ -64,3 +67,28 @@ async def get_case_results(
 async def get_validity():
     """Validity report: agreement rate per judge × criterion × sub-question."""
     return await gt_service.get_validity()
+
+
+@router.get("/order-sensitivity", response_model=list[OrderSensitivityEntry])
+async def get_order_sensitivity():
+    """Flip rate and delta agreement per judge × criterion (original vs reversed question order)."""
+    return await gt_service.get_order_sensitivity()
+
+
+@router.get("/incoherence", response_model=list[IncoherenceItem])
+async def get_incoherence_items():
+    """All result rows where incoherence pattern B is detected (compliant answer + negative reason)."""
+    return await gt_service.get_incoherence_items()
+
+
+@router.patch("/results/{result_id}/validate")
+async def validate_incoherence(
+    result_id: str,
+    validated: bool | None = Body(default=None, embed=True),
+):
+    """Set incoherence_validated on a result row. Pass null to reset."""
+    try:
+        await gt_service.set_incoherence_validation(result_id, validated)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"result_id": result_id, "incoherence_validated": validated}

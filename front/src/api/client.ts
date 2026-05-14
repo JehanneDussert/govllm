@@ -364,6 +364,29 @@ export interface ValidityReport {
   judge_models: string[]
 }
 
+export interface IncoherenceItem {
+  result_id: string
+  case_id: string
+  prompt_preview: string
+  criterion: string
+  judge_model: string
+  judge_family: string
+  answers: Record<string, boolean>
+  expected_answers: Record<string, boolean>
+  reason: string | null
+  incoherence_validated: boolean | null
+  question_order: string
+}
+
+export interface OrderSensitivityEntry {
+  judge_model: string
+  criterion: string
+  flip_rate: number
+  mean_delta_agreement: number
+  n_cases: number
+  flipped_case_ids: string[]
+}
+
 
 // ── API calls ─────────────────────────────────────────────────
 
@@ -485,6 +508,15 @@ export const api = {
     evaluation.post<GroundTruthRunResult>(`/groundtruth/run/${encodeURIComponent(caseId)}`),
   groundtruthValidity: () =>
     evaluation.get<ValidityReport>('/groundtruth/validity'),
+  groundtruthOrderSensitivity: () =>
+    evaluation.get<OrderSensitivityEntry[]>('/groundtruth/order-sensitivity'),
+  groundtruthIncoherence: () =>
+    evaluation.get<IncoherenceItem[]>('/groundtruth/incoherence'),
+  validateIncoherence: (resultId: string, validated: boolean | null) =>
+    evaluation.patch<{ result_id: string; incoherence_validated: boolean | null }>(
+      `/groundtruth/results/${encodeURIComponent(resultId)}/validate`,
+      { validated },
+    ),
 
   // Routing
   getRouting: () =>

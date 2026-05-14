@@ -60,3 +60,28 @@ class ValidityReport(BaseModel):
     entries: list[ValidityEntry]
     criteria: list[str]
     judge_models: list[str]
+
+
+class IncoherenceItem(BaseModel):
+    """One groundtruth result row where incoherence pattern B is detected."""
+    result_id: str
+    case_id: str
+    prompt_preview: str
+    criterion: str
+    judge_model: str
+    judge_family: str
+    answers: dict[str, bool]
+    expected_answers: dict[str, bool]
+    reason: str | None
+    incoherence_validated: bool | None
+    question_order: str
+
+
+class OrderSensitivityEntry(BaseModel):
+    """Flip rate and agreement delta for one judge × criterion pair (original vs reversed order)."""
+    judge_model: str
+    criterion: str
+    flip_rate: float            # fraction of cases with ≥1 answer flip
+    mean_delta_agreement: float # mean(agreement_reversed − agreement_original)
+    n_cases: int
+    flipped_case_ids: list[str]

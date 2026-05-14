@@ -14,7 +14,7 @@ import { useJudgeStore } from '@/stores/judge'
 import { api } from '@/api/client'
 import type {
   ArenaCriterionScore, IncoherenceScore, VarianceHistory, BiasMatrix,
-  GroundTruthCase, GroundTruthRunResult, ValidityReport,
+  GroundTruthCase, GroundTruthRunResult, ValidityReport, OrderSensitivityEntry, IncoherenceItem,
 } from '@/api/client'
 import { modelShortName } from '@/utils/model'
 
@@ -67,6 +67,20 @@ const corpusResult = ref<GroundTruthRunResult | null>(null)
 const validityData = ref<ValidityReport | null>(null)
 const validityLoading = ref(false)
 const showValidity = ref(false)
+const validityFilterJudge = ref<string>('')
+const validityFilterCriterion = ref<string>('')
+const validityFilterQuestion = ref<string>('')
+const validityDrawer = ref<{ judge: string; criterion: string } | null>(null)
+const orderSensData = ref<OrderSensitivityEntry[] | null>(null)
+const orderSensLoading = ref(false)
+const showOrderSens = ref(false)
+const incoherenceItems = ref<IncoherenceItem[] | null>(null)
+const incoherenceLoading = ref(false)
+const showIncoherence = ref(false)
+const validityPolling = ref(false)
+let validityPollInterval: ReturnType<typeof setInterval> | null = null
+const validityDataSnapshot = ref<ValidityReport | null>(null)
+const SNAPSHOT_KEY = 'gt_validity_snapshot'
 
 const SUPPORTED_CRITERIA = ['transparency', 'data_privacy', 'non_manipulation', 'prompt_injection', 'human_oversight']
 
@@ -298,8 +312,63 @@ async function loadValidity() {
   try {
     const res = await api.groundtruthValidity()
     validityData.value = res.data
+    if (!validityDataSnapshot.value) {
+      const saved = localStorage.getItem(SNAPSHOT_KEY)
+      validityDataSnapshot.value = saved ? JSON.parse(saved) : res.data
+      if (!saved) localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(res.data))
+    }
     showValidity.value = true
+    if (!runProgress.value || runProgress.value.pct < 100) startValidityPoll()
   } catch {} finally { validityLoading.value = false }
+}
+
+function startValidityPoll() {
+  if (validityPollInterval) return
+  validityPolling.value = true
+  validityPollInterval = setInterval(async () => {
+    if (activeTab.value !== 'corpus' || !showValidity.value) { stopValidityPoll(); return }
+    try { const res = await api.groundtruthValidity(); validityData.value = res.data } catch {}
+    if (runProgress.value && runProgress.value.pct >= 100) stopValidityPoll()
+  }, 30_000)
+}
+
+function resetProgressSnapshot() {
+  if (!validityData.value) return
+  validityDataSnapshot.value = validityData.value
+  localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(validityData.value))
+}
+
+function stopValidityPoll() {
+  if (validityPollInterval) { clearInterval(validityPollInterval); validityPollInterval = null }
+  validityPolling.value = false
+}
+
+async function loadOrderSensitivity() {
+  orderSensLoading.value = true
+  try {
+    const res = await api.groundtruthOrderSensitivity()
+    orderSensData.value = res.data
+    showOrderSens.value = true
+  } catch {} finally { orderSensLoading.value = false }
+}
+
+async function loadIncoherenceItems() {
+  incoherenceLoading.value = true
+  try {
+    const res = await api.groundtruthIncoherence()
+    incoherenceItems.value = res.data
+    showIncoherence.value = true
+  } catch {} finally { incoherenceLoading.value = false }
+}
+
+async function setIncoherenceValidation(resultId: string, validated: boolean | null) {
+  try {
+    await api.validateIncoherence(resultId, validated)
+    if (incoherenceItems.value) {
+      const item = incoherenceItems.value.find(i => i.result_id === resultId)
+      if (item) item.incoherence_validated = validated
+    }
+  } catch {}
 }
 
 watch(selectedCaseId, () => { corpusResult.value = null })
@@ -308,8 +377,158 @@ watch(corpusCriterion, () => {
   if (first) selectedCaseId.value = first.id
   corpusResult.value = null
 })
+watch([validityFilterJudge, validityFilterCriterion], () => { validityDrawer.value = null })
+
+// ── Validity computed ────────────────────────────────────────────────────────
+const validityJudges = computed(() => validityData.value?.judge_models ?? [])
+const validityCriteria = computed(() => validityData.value?.criteria ?? [])
+const validityQuestions = computed(() =>
+  [...new Set(validityData.value?.entries.map(e => e.question_id) ?? [])].sort()
+)
+
+interface PivotCell { mean_rate: number; total_samples: number }
+const validityPivot = computed(() => {
+  if (!validityData.value) return { rows: [], criteria: [] }
+  const entries = validityData.value.entries.filter(e => {
+    if (validityFilterJudge.value && e.judge_model !== validityFilterJudge.value) return false
+    if (validityFilterCriterion.value && e.criterion !== validityFilterCriterion.value) return false
+    if (validityFilterQuestion.value && e.question_id !== validityFilterQuestion.value) return false
+    return true
+  })
+  const judges = validityFilterJudge.value ? [validityFilterJudge.value] : validityJudges.value
+  const criteria = validityFilterCriterion.value ? [validityFilterCriterion.value] : validityCriteria.value
+
+  const map: Record<string, Record<string, { rates: number[]; samples: number }>> = {}
+  for (const e of entries) {
+    if (!map[e.judge_model]) map[e.judge_model] = {}
+    if (!map[e.judge_model][e.criterion]) map[e.judge_model][e.criterion] = { rates: [], samples: 0 }
+    map[e.judge_model][e.criterion].rates.push(e.agreement_rate)
+    map[e.judge_model][e.criterion].samples += e.sample_size
+  }
+  const rows = judges.map(judge => {
+    const allRates = criteria.flatMap(c => map[judge]?.[c]?.rates ?? [])
+    return {
+      judge,
+      family: validityData.value!.entries.find(e => e.judge_model === judge)?.judge_family ?? 'unknown',
+      cells: criteria.map(crit => {
+        const cell = map[judge]?.[crit]
+        if (!cell?.rates.length) return null as PivotCell | null
+        return { mean_rate: cell.rates.reduce((a, b) => a + b, 0) / cell.rates.length, total_samples: cell.samples } as PivotCell
+      }),
+      global_mean: allRates.length ? allRates.reduce((a, b) => a + b, 0) / allRates.length : null,
+    }
+  })
+  return { rows, criteria }
+})
+
+const validityDrawerEntries = computed(() => {
+  if (!validityDrawer.value || !validityData.value) return []
+  const { judge, criterion } = validityDrawer.value
+  return validityData.value.entries
+    .filter(e => e.judge_model === judge && e.criterion === criterion &&
+      (!validityFilterQuestion.value || e.question_id === validityFilterQuestion.value))
+    .sort((a, b) => a.question_id.localeCompare(b.question_id))
+})
+
+const corpusSummary = computed(() => {
+  const items = incoherenceItems.value ?? []
+  const confirmed = items.filter(i => i.incoherence_validated === true).length
+  const invalidated = items.filter(i => i.incoherence_validated === false).length
+  const total = items.length
+
+  const casesWithFlip = orderSensData.value
+    ? new Set(orderSensData.value.flatMap(e => e.flipped_case_ids)).size
+    : null
+  const totalCasesWithSens = orderSensData.value
+    ? new Set(orderSensData.value.flatMap(e => [...e.flipped_case_ids, ...Array(e.n_cases).fill(null)])).size
+    : null
+
+  return {
+    nCases: corpusCases.value.length,
+    nJudges: validityJudges.value.length,
+    nEvals: validityData.value?.entries.reduce((acc, e) => acc + e.sample_size, 0) ?? 0,
+    incoherenceTotal: total,
+    incoherenceConfirmed: confirmed,
+    incoherenceInvalidated: invalidated,
+    flipPct: orderSensData.value?.length
+      ? orderSensData.value.reduce((acc, e) => acc + e.flip_rate, 0) / orderSensData.value.length * 100
+      : null,
+  }
+})
+
+const filteredIncoherence = computed(() => {
+  if (!incoherenceItems.value) return []
+  return incoherenceItems.value.filter(e => {
+    if (validityFilterJudge.value && e.judge_model !== validityFilterJudge.value) return false
+    if (validityFilterCriterion.value && e.criterion !== validityFilterCriterion.value) return false
+    return true
+  })
+})
+
+const filteredOrderSens = computed(() => {
+  if (!orderSensData.value) return []
+  return orderSensData.value.filter(e => {
+    if (validityFilterJudge.value && e.judge_model !== validityFilterJudge.value) return false
+    if (validityFilterCriterion.value && e.criterion !== validityFilterCriterion.value) return false
+    return true
+  })
+})
+
+const runProgress = computed(() => {
+  if (!validityData.value || !validityDataSnapshot.value || !corpusCases.value.length) return null
+  const judgeCount = judgeStore.config?.arena_judge_models?.length || 4
+  const total = corpusCases.value.length * judgeCount
+  const snapshotMap = new Map<string, number>()
+  for (const e of validityDataSnapshot.value.entries) {
+    const key = `${e.judge_model}|${e.criterion}`
+    if (!snapshotMap.has(key)) snapshotMap.set(key, e.sample_size)
+  }
+  const seen = new Set<string>()
+  let done = 0
+  for (const e of validityData.value.entries) {
+    const key = `${e.judge_model}|${e.criterion}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      done += Math.max(0, e.sample_size - (snapshotMap.get(key) ?? 0))
+    }
+  }
+  return { done, total, pct: total > 0 ? Math.min(Math.round(done / total * 100), 100) : 0 }
+})
+
+const bestJudgePerCriterion = computed(() => {
+  const best: Record<string, string> = {}
+  for (const c of validityPivot.value.criteria) {
+    let bestJudge = '', bestRate = -1
+    for (const row of validityPivot.value.rows) {
+      const ci = validityPivot.value.criteria.indexOf(c)
+      const cell = row.cells[ci]
+      if (cell && cell.mean_rate > bestRate) { bestRate = cell.mean_rate; bestJudge = row.judge }
+    }
+    if (bestJudge) best[c] = bestJudge
+  }
+  return best
+})
+
+const bestJudgeGlobal = computed(() => {
+  const rows = validityPivot.value.rows.filter(r => r.global_mean !== null)
+  if (!rows.length) return ''
+  return rows.reduce((b, r) => (r.global_mean ?? -1) > (b.global_mean ?? -1) ? r : b).judge
+})
+
+function openValidityDrawer(judge: string, criterion: string) {
+  if (validityDrawer.value?.judge === judge && validityDrawer.value?.criterion === criterion)
+    validityDrawer.value = null
+  else
+    validityDrawer.value = { judge, criterion }
+}
+
+function agreeClass(rate: number | null) {
+  if (rate === null) return ''
+  return rate >= 0.75 ? 'agree-good' : rate >= 0.5 ? 'agree-mid' : 'agree-bad'
+}
 
 async function switchTab(tab: ArenaTab) {
+  if (tab !== 'corpus') stopValidityPoll()
   activeTab.value = tab
   if (tab === 'variance' && !varianceData.value) await loadVariance()
   if (tab === 'bias' && !biasData.value) await loadBias()
@@ -417,7 +636,7 @@ onMounted(async () => {
     if (res.data.models.length && !generatorModel.value) generatorModel.value = res.data.models[0] ?? ''
   }).catch(() => {})
 })
-onUnmounted(() => streamAbortController?.abort())
+onUnmounted(() => { streamAbortController?.abort(); stopValidityPoll() })
 </script>
 
 <template>
@@ -838,34 +1057,232 @@ onUnmounted(() => streamAbortController?.abort())
               <span v-else>{{ showValidity ? '↑ Hide' : '↓ Load' }} validity report</span>
             </button>
 
-            <div v-if="showValidity && validityData && validityData.entries.length" class="validity-report">
-              <div class="corpus-results-title">VALIDITY REPORT — agreement rate per judge × criterion × sub-question</div>
-              <table class="corpus-table">
-                <thead>
-                  <tr>
-                    <th>Judge</th>
-                    <th>Criterion</th>
-                    <th>Q</th>
-                    <th>Agreement</th>
-                    <th>n</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="e in validityData.entries" :key="`${e.judge_model}-${e.criterion}-${e.question_id}`">
-                    <td class="judge-label">{{ modelShortName(e.judge_model) }}</td>
-                    <td>{{ e.criterion }}</td>
-                    <td>{{ e.question_id }}</td>
-                    <td :class="e.agreement_rate >= 0.75 ? 'agree-good' : e.agreement_rate >= 0.5 ? 'agree-mid' : 'agree-bad'">
-                      {{ (e.agreement_rate * 100).toFixed(0) }}%
-                    </td>
-                    <td class="col-n">{{ e.sample_size }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div v-else-if="showValidity && validityData && !validityData.entries.length" class="chart-empty">
-              No validity data yet — run checklist evaluations first.
-            </div>
+            <template v-if="showValidity && validityData">
+              <div v-if="!validityData.entries.length" class="chart-empty">
+                No validity data yet — run checklist evaluations first.
+              </div>
+              <div v-else class="validity-report">
+
+                <!-- Filters + summary -->
+                <div class="validity-header">
+                  <div class="validity-summary">
+                    <span>{{ corpusSummary.nCases }} cases · {{ corpusSummary.nJudges }} judges · {{ corpusSummary.nEvals }} evaluations</span>
+                    <span v-if="corpusSummary.flipPct !== null" class="summary-chip" :class="corpusSummary.flipPct >= 40 ? 'chip-warn' : 'chip-ok'">
+                      ⇄ {{ corpusSummary.flipPct.toFixed(0) }}% flip
+                    </span>
+                    <span v-if="corpusSummary.incoherenceTotal > 0" class="summary-chip chip-neutral">
+                      ⚠ {{ corpusSummary.incoherenceTotal }} incoh.B
+                      <template v-if="corpusSummary.incoherenceConfirmed + corpusSummary.incoherenceInvalidated > 0">
+                        ({{ corpusSummary.incoherenceConfirmed }}✓ {{ corpusSummary.incoherenceInvalidated }}✗)
+                      </template>
+                    </span>
+                  </div>
+                  <div class="validity-filters">
+                    <div class="corpus-filter">
+                      <label class="selector-label">Judge</label>
+                      <select class="selector" v-model="validityFilterJudge">
+                        <option value="">All</option>
+                        <option v-for="j in validityJudges" :key="j" :value="j">{{ modelShortName(j) }}</option>
+                      </select>
+                    </div>
+                    <div class="corpus-filter">
+                      <label class="selector-label">Criterion</label>
+                      <select class="selector" v-model="validityFilterCriterion">
+                        <option value="">All</option>
+                        <option v-for="c in validityCriteria" :key="c" :value="c">{{ c }}</option>
+                      </select>
+                    </div>
+                    <div class="corpus-filter">
+                      <label class="selector-label">Question</label>
+                      <select class="selector" v-model="validityFilterQuestion">
+                        <option value="">All</option>
+                        <option v-for="q in validityQuestions" :key="q" :value="q">{{ q }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Progress bar -->
+                <div v-if="runProgress" class="gt-progress">
+                  <div class="gt-progress-header">
+                    <span class="gt-progress-label">RUN PROGRESS</span>
+                    <span class="gt-progress-pct">{{ runProgress.done }} / {{ runProgress.total }} évaluations · {{ runProgress.pct }}%</span>
+                    <span v-if="validityPolling" class="gt-refresh-dot" title="Auto-refresh actif (30s)" />
+                    <button class="reset-progress-btn" @click="resetProgressSnapshot" title="Reset baseline to now (use when starting a new run)">↺</button>
+                  </div>
+                  <div class="gt-progress-track">
+                    <div class="gt-progress-fill" :style="{ width: `${runProgress.pct}%` }" :class="runProgress.pct >= 100 ? 'complete' : ''" />
+                  </div>
+                </div>
+
+                <!-- Pivot table: judge × criterion -->
+                <div class="corpus-results-title">SCORE GLOBAL — mean agreement per judge × criterion (click cell for detail)</div>
+                <div class="pivot-scroll">
+                  <table class="corpus-table">
+                    <thead>
+                      <tr>
+                        <th class="col-judge">Judge</th>
+                        <th v-for="c in validityPivot.criteria" :key="c" class="col-crit">{{ c }}</th>
+                        <th class="col-score">Global</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in validityPivot.rows" :key="row.judge">
+                        <td class="col-judge judge-label">
+                          <span class="judge-family-dot" :style="{ background: judgeColor(row.family) }"/>
+                          {{ modelShortName(row.judge) }}
+                        </td>
+                        <td v-for="(cell, ci) in row.cells" :key="validityPivot.criteria[ci]"
+                            class="col-crit pivot-cell"
+                            :class="[
+                              agreeClass(cell?.mean_rate ?? null),
+                              validityDrawer?.judge === row.judge && validityDrawer?.criterion === validityPivot.criteria[ci] ? 'pivot-active' : '',
+                              cell === null ? 'pivot-empty' : '',
+                            ]"
+                            :title="cell ? `n=${cell.total_samples} — click to drill down` : 'No data'"
+                            @click="cell !== null && openValidityDrawer(row.judge, validityPivot.criteria[ci])"
+                        >
+                          <span v-if="cell !== null">
+                            {{ (cell.mean_rate * 100).toFixed(0) }}%
+                            <span v-if="bestJudgePerCriterion[validityPivot.criteria[ci]] === row.judge" class="best-crown" title="Best judge for this criterion">★</span>
+                          </span>
+                          <span v-else class="pivot-na">—</span>
+                        </td>
+                        <td class="col-score" :class="agreeClass(row.global_mean)">
+                          {{ row.global_mean !== null ? (row.global_mean * 100).toFixed(0) + '%' : '—' }}
+                          <span v-if="bestJudgeGlobal === row.judge && row.global_mean !== null" class="best-crown" title="Best overall judge">★</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Drawer: per-question breakdown -->
+                <div v-if="validityDrawer" class="validity-drawer">
+                  <div class="validity-drawer-title">
+                    {{ modelShortName(validityDrawer.judge) }} × {{ validityDrawer.criterion }}
+                    <button class="drawer-close" @click="validityDrawer = null">✕</button>
+                  </div>
+                  <div class="drawer-questions">
+                    <div v-for="e in validityDrawerEntries" :key="e.question_id" class="drawer-q-row">
+                      <span class="drawer-q-id">{{ e.question_id }}</span>
+                      <div class="drawer-bar-track">
+                        <div class="drawer-bar-fill"
+                          :style="{ width: `${e.agreement_rate * 100}%`, background: e.agreement_rate >= 0.75 ? '#1d9e75' : e.agreement_rate >= 0.5 ? '#ba7517' : '#e24b4a' }"/>
+                      </div>
+                      <span class="drawer-rate" :class="agreeClass(e.agreement_rate)">{{ (e.agreement_rate * 100).toFixed(0) }}%</span>
+                      <span class="drawer-n">n={{ e.sample_size }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Order sensitivity -->
+                <div class="order-sens-section">
+                  <div class="order-sens-header">
+                    <span class="corpus-results-title">ORDER SENSITIVITY — flip rate original vs reversed</span>
+                    <button v-if="!orderSensLoading" class="validity-toggle" @click="orderSensData === null ? loadOrderSensitivity() : showOrderSens = !showOrderSens">
+                      {{ orderSensData === null ? '↓ Load' : showOrderSens ? '↑ Hide' : '↓ Show' }}
+                    </button>
+                    <span v-if="orderSensLoading" class="loading-dots"><span/><span/><span/></span>
+                  </div>
+                  <template v-if="orderSensData !== null && showOrderSens">
+                    <div v-if="!orderSensData.length" class="chart-empty" style="padding:20px 0">
+                      No reversed runs found — run checklist with <code>question_order=reversed</code> first.
+                    </div>
+                    <table v-else class="corpus-table">
+                      <thead>
+                        <tr>
+                          <th class="col-judge">Judge</th>
+                          <th>Criterion</th>
+                          <th class="col-score">Flip rate</th>
+                          <th class="col-score">Δ agreement</th>
+                          <th class="col-n">n</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="e in filteredOrderSens" :key="`${e.judge_model}-${e.criterion}`">
+                          <td class="judge-label">{{ modelShortName(e.judge_model) }}</td>
+                          <td>{{ e.criterion }}</td>
+                          <td :class="e.flip_rate >= 0.4 ? 'agree-bad' : e.flip_rate >= 0.2 ? 'agree-mid' : 'agree-good'">
+                            {{ (e.flip_rate * 100).toFixed(0) }}%
+                            <span v-if="e.flip_rate >= 0.4" class="sens-flag" title="High sensitivity">⚑</span>
+                          </td>
+                          <td :class="e.mean_delta_agreement >= 0 ? 'agree-good' : 'agree-bad'">
+                            {{ e.mean_delta_agreement >= 0 ? '+' : '' }}{{ (e.mean_delta_agreement * 100).toFixed(0) }}%
+                          </td>
+                          <td class="col-n">{{ e.n_cases }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </template>
+                </div>
+
+                <!-- Incoherence validation -->
+                <div class="order-sens-section">
+                  <div class="order-sens-header">
+                    <span class="corpus-results-title">INCOHERENCE VALIDATION — pattern B (compliant answer + negative reason)</span>
+                    <button v-if="!incoherenceLoading" class="validity-toggle" @click="incoherenceItems === null ? loadIncoherenceItems() : showIncoherence = !showIncoherence">
+                      {{ incoherenceItems === null ? '↓ Load' : showIncoherence ? '↑ Hide' : '↓ Show' }}
+                    </button>
+                    <span v-if="incoherenceLoading" class="loading-dots"><span/><span/><span/></span>
+                  </div>
+                  <template v-if="incoherenceItems !== null && showIncoherence">
+                    <div v-if="!filteredIncoherence.length" class="chart-empty" style="padding:20px 0">
+                      No incoherence B detected — all compliant answers have consistent reasons.
+                    </div>
+                    <div v-else class="incoh-table-wrap">
+                      <table class="corpus-table incoh-table">
+                        <thead>
+                          <tr>
+                            <th class="col-judge">Judge</th>
+                            <th class="incoh-col-case">Case</th>
+                            <th>Criterion</th>
+                            <th class="incoh-col-answers">Answers</th>
+                            <th class="incoh-col-reason">Reason</th>
+                            <th class="incoh-col-status">Status</th>
+                            <th class="incoh-col-actions">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="item in filteredIncoherence" :key="item.result_id"
+                              :class="item.incoherence_validated === true ? 'incoh-confirmed' : item.incoherence_validated === false ? 'incoh-invalidated' : ''">
+                            <td class="col-judge judge-label">
+                              <span class="judge-family-dot" :style="{ background: judgeColor(item.judge_family) }"/>
+                              {{ modelShortName(item.judge_model) }}
+                            </td>
+                            <td class="incoh-col-case" :title="item.prompt_preview">{{ item.prompt_preview.slice(0, 45) }}…</td>
+                            <td>{{ item.criterion }}</td>
+                            <td class="incoh-col-answers">
+                              <span v-for="(val, qid) in item.answers" :key="qid" class="incoh-answer-pill"
+                                :class="val === item.expected_answers[qid] ? 'pill-match' : 'pill-miss'">
+                                {{ qid }}:{{ val ? 'T' : 'F' }}
+                              </span>
+                            </td>
+                            <td class="incoh-col-reason" :title="item.reason ?? ''">{{ (item.reason ?? '').slice(0, 80) }}{{ (item.reason?.length ?? 0) > 80 ? '…' : '' }}</td>
+                            <td class="incoh-col-status">
+                              <span v-if="item.incoherence_validated === true" class="incoh-badge confirmed">confirmed</span>
+                              <span v-else-if="item.incoherence_validated === false" class="incoh-badge invalidated">false pos.</span>
+                              <span v-else class="incoh-badge pending">—</span>
+                            </td>
+                            <td class="incoh-col-actions">
+                              <button class="incoh-btn confirm"
+                                :class="{ active: item.incoherence_validated === true }"
+                                @click="setIncoherenceValidation(item.result_id, item.incoherence_validated === true ? null : true)"
+                                title="Confirm incoherence">✓</button>
+                              <button class="incoh-btn invalidate"
+                                :class="{ active: item.incoherence_validated === false }"
+                                @click="setIncoherenceValidation(item.result_id, item.incoherence_validated === false ? null : false)"
+                                title="Mark as false positive">✗</button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </template>
+                </div>
+
+              </div>
+            </template>
           </div>
         </template>
       </div>
@@ -1086,5 +1503,82 @@ onUnmounted(() => streamAbortController?.abort())
 .validity-section { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
 .validity-toggle { background: none; border: 1px dashed var(--border); border-radius: 6px; color: var(--text-dim); font-family: var(--font-mono); font-size: 11px; padding: 7px 14px; cursor: pointer; transition: all 0.15s; width: fit-content; }
 .validity-toggle:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-.validity-report { display: flex; flex-direction: column; gap: 8px; }
+.validity-report { display: flex; flex-direction: column; gap: 12px; }
+
+.validity-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.validity-summary { font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); }
+.validity-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Pivot table */
+.pivot-scroll { overflow-x: auto; }
+.col-crit { min-width: 90px; text-align: center; font-size: 9px; letter-spacing: 0.3px; }
+.pivot-cell { text-align: center; cursor: pointer; transition: background 0.12s; border-radius: 3px; }
+.pivot-cell:hover:not(.pivot-empty) { background: rgba(255,255,255,0.06); }
+.pivot-active { outline: 1px solid var(--accent); outline-offset: -2px; }
+.pivot-empty { cursor: default; }
+.pivot-na { color: var(--text-dim); }
+
+/* Validity drawer */
+.validity-drawer { background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.validity-drawer-title { font-size: 10px; letter-spacing: 1px; color: var(--text-dim); display: flex; align-items: center; justify-content: space-between; }
+.drawer-close { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px; padding: 0 2px; line-height: 1; }
+.drawer-close:hover { color: var(--text); }
+.drawer-questions { display: flex; flex-direction: column; gap: 7px; }
+.drawer-q-row { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11px; }
+.drawer-q-id { width: 24px; color: var(--text-dim); flex-shrink: 0; }
+.drawer-bar-track { flex: 1; height: 5px; background: var(--bg-4); border-radius: 3px; overflow: hidden; }
+.drawer-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.drawer-rate { width: 36px; text-align: right; font-weight: 600; flex-shrink: 0; }
+.drawer-n { color: var(--text-dim); flex-shrink: 0; }
+
+/* Order sensitivity */
+.order-sens-section { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+.order-sens-header { display: flex; align-items: center; gap: 12px; }
+.sens-flag { color: var(--red); margin-left: 3px; }
+
+/* Stats chips */
+.validity-summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+.summary-chip { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+.chip-warn { background: rgba(226,75,74,0.12); color: #e24b4a; border: 1px solid rgba(226,75,74,0.25); }
+.chip-ok { background: rgba(29,158,117,0.10); color: #1d9e75; border: 1px solid rgba(29,158,117,0.25); }
+.chip-neutral { background: rgba(186,117,23,0.10); color: #ba7517; border: 1px solid rgba(186,117,23,0.25); }
+
+/* Incoherence validation table */
+.incoh-table-wrap { overflow-x: auto; }
+.incoh-table { table-layout: fixed; }
+.incoh-col-case { width: 160px; font-size: 10px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.incoh-col-answers { width: 120px; }
+.incoh-col-reason { width: 220px; font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: default; }
+.incoh-col-status { width: 80px; text-align: center; }
+.incoh-col-actions { width: 64px; text-align: center; }
+
+.incoh-answer-pill { display: inline-block; font-size: 9px; padding: 1px 4px; border-radius: 3px; margin: 1px; font-family: var(--font-mono); }
+.pill-match { background: rgba(29,158,117,0.12); color: #1d9e75; }
+.pill-miss { background: rgba(226,75,74,0.12); color: #e24b4a; }
+
+.incoh-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; }
+.incoh-badge.confirmed { color: #e24b4a; border: 1px solid rgba(226,75,74,0.3); }
+.incoh-badge.invalidated { color: #1d9e75; border: 1px solid rgba(29,158,117,0.3); }
+.incoh-badge.pending { color: var(--text-dim); }
+
+.incoh-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); font-size: 11px; width: 26px; height: 22px; cursor: pointer; transition: all 0.12s; margin: 0 2px; }
+.incoh-btn:hover { border-color: var(--accent); color: var(--accent); }
+.incoh-btn.confirm.active { background: rgba(226,75,74,0.10); border-color: #e24b4a; color: #e24b4a; }
+.incoh-btn.invalidate.active { background: rgba(29,158,117,0.10); border-color: #1d9e75; color: #1d9e75; }
+
+tr.incoh-confirmed { background: rgba(226,75,74,0.03); }
+tr.incoh-invalidated { background: rgba(29,158,117,0.03); opacity: 0.65; }
+
+/* Ground truth progress bar */
+.gt-progress { display: flex; flex-direction: column; gap: 5px; }
+.gt-progress-header { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+.gt-progress-label { letter-spacing: 1px; }
+.gt-progress-pct { color: var(--text); font-weight: 500; }
+.gt-progress-track { height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden; }
+.gt-progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s ease; }
+.gt-progress-fill.complete { background: #1d9e75; }
+.gt-refresh-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse-dot 1.5s ease infinite; flex-shrink: 0; }
+.best-crown { color: #ba7517; font-size: 9px; margin-left: 2px; }
+.reset-progress-btn { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 0 2px; line-height: 1; opacity: 0.6; transition: opacity 0.15s; }
+.reset-progress-btn:hover { opacity: 1; color: var(--accent); }
 </style>

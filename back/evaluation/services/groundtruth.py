@@ -18,7 +18,9 @@ from shared.schemas.groundtruth import (
     GroundTruthCase,
     GroundTruthCaseCreate,
     GroundTruthRunResult,
+    IncoherenceItem,
     JudgeChecklistResult,
+    OrderSensitivityEntry,
     ValidityEntry,
     ValidityReport,
 )
@@ -30,6 +32,25 @@ _NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
 # Models empirically validated to benefit from thinking mode (Jayarao et al. 2025).
 # Populated after test_thinking_mode.py confirms improvement — overrides _NO_THINK_MODELS.
 _THINK_MODELS: set[str] = set()
+
+# ── Incoherence B detection ──────────────────────────────────────────────────
+_NEGATIVE_PATTERNS = [
+    "does not", "do not", "fails to", "fail to", "no ",
+    "violation", "fails", "missing", "lacks", "lack ",
+    "without", "never", "absent", "not signal", "not provide",
+    "not mention", "not invite", "not distinguish",
+]
+
+
+def _is_incoherence_b(answers: dict[str, bool], reason: str | None) -> bool:
+    """True = ≥1 compliant answer AND reason contains a negative pattern."""
+    if not any(answers.values()):
+        return False
+    if not reason:
+        return False
+    r_lower = reason.lower()
+    return any(pat in r_lower for pat in _NEGATIVE_PATTERNS)
+
 
 # ── Checklist questions ──────────────────────────────────────────────────────
 # Phrased so True=compliant, False=violation (normalised for the judge).
@@ -460,6 +481,105 @@ async def get_case_results(case_id: str, question_order: str | None = None) -> l
             "question_order": r["question_order"],
         }
         for r in rows
+    ]
+
+
+async def get_incoherence_items() -> list[IncoherenceItem]:
+    pool = await get_pool()
+    rows = await pool.fetch(
+        """
+        SELECT r.id, r.case_id, c.prompt, c.criterion, c.expected,
+               r.judge_model, r.judge_family, r.answers, r.reason,
+               r.incoherence_validated, r.question_order
+        FROM groundtruth_results r
+        JOIN groundtruth_cases c ON r.case_id = c.id
+        ORDER BY c.criterion, r.judge_model, r.created_at DESC
+        """
+    )
+    items = []
+    for row in rows:
+        answers: dict[str, bool] = json.loads(row["answers"])
+        expected: dict[str, bool] = json.loads(row["expected"])
+        if _is_incoherence_b(answers, row["reason"]):
+            items.append(IncoherenceItem(
+                result_id=str(row["id"]),
+                case_id=str(row["case_id"]),
+                prompt_preview=row["prompt"][:80],
+                criterion=row["criterion"],
+                judge_model=row["judge_model"],
+                judge_family=row["judge_family"],
+                answers=answers,
+                expected_answers=expected,
+                reason=row["reason"],
+                incoherence_validated=row["incoherence_validated"],
+                question_order=row["question_order"],
+            ))
+    return items
+
+
+async def set_incoherence_validation(result_id: str, validated: bool | None) -> None:
+    pool = await get_pool()
+    await pool.execute(
+        "UPDATE groundtruth_results SET incoherence_validated = $1 WHERE id = $2",
+        validated,
+        UUID(result_id),
+    )
+
+
+async def get_order_sensitivity() -> list[OrderSensitivityEntry]:
+    pool = await get_pool()
+    rows = await pool.fetch(
+        """
+        WITH latest AS (
+            SELECT DISTINCT ON (case_id, judge_model, question_order)
+                case_id, judge_model, answers, agreement, question_order
+            FROM groundtruth_results
+            ORDER BY case_id, judge_model, question_order, created_at DESC
+        )
+        SELECT
+            r1.judge_model,
+            c.criterion,
+            c.id        AS case_id,
+            r1.answers  AS orig_answers,
+            r2.answers  AS rev_answers,
+            r1.agreement AS orig_agreement,
+            r2.agreement AS rev_agreement
+        FROM latest r1
+        JOIN latest r2
+            ON  r1.case_id      = r2.case_id
+            AND r1.judge_model  = r2.judge_model
+            AND r1.question_order = 'original'
+            AND r2.question_order = 'reversed'
+        JOIN groundtruth_cases c ON r1.case_id = c.id
+        ORDER BY c.criterion, r1.judge_model
+        """
+    )
+
+    from collections import defaultdict
+    agg: dict[tuple[str, str], dict] = defaultdict(
+        lambda: {"total": 0, "n_flipped": 0, "delta_sum": 0.0, "flipped_ids": []}
+    )
+    for row in rows:
+        orig: dict[str, bool] = json.loads(row["orig_answers"])
+        rev:  dict[str, bool] = json.loads(row["rev_answers"])
+        key = (row["judge_model"], row["criterion"])
+        agg[key]["total"] += 1
+        flipped = any(orig.get(q) != rev.get(q) for q in orig if q in rev)
+        if flipped:
+            agg[key]["n_flipped"] += 1
+            agg[key]["flipped_ids"].append(str(row["case_id"]))
+        agg[key]["delta_sum"] += row["rev_agreement"] - row["orig_agreement"]
+
+    return [
+        OrderSensitivityEntry(
+            judge_model=judge,
+            criterion=criterion,
+            flip_rate=stats["n_flipped"] / stats["total"] if stats["total"] else 0.0,
+            mean_delta_agreement=stats["delta_sum"] / stats["total"] if stats["total"] else 0.0,
+            n_cases=stats["total"],
+            flipped_case_ids=stats["flipped_ids"],
+        )
+        for (judge, criterion), stats in sorted(agg.items())
     ]
 
 

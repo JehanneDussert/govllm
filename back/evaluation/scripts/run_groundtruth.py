@@ -17,9 +17,12 @@ Env vars:
 import argparse
 import asyncio
 import os
+import sys
 from collections import defaultdict
 
 import httpx
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 EVALUATION_URL = os.environ.get("EVALUATION_URL", "http://localhost:8003")
 

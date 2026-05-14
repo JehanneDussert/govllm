@@ -1,13 +1,20 @@
 .PHONY: help dev prod down build rebuild logs ps \
         pull-models \
         flush-redis flush-judge flush-scores \
+        gt-seed gt-status gt-kill gt-clean gt-run gt-run-reversed gt-log gt-log-reversed gt-summary \
         lint test clean reset
 
-# Config 
+# Config
 BASE         = infra/docker-compose.yml
 COMPOSE_DEV  = docker compose --env-file infra/.env -f $(BASE) -f infra/docker-compose.dev.yml
 COMPOSE_PROD = docker compose --env-file infra/.env -f $(BASE) -f infra/docker-compose.prod.yml
 UV           = uv
+
+# Ground truth corpus
+GT_JUDGES   = ollama/qwen3:1.7b ollama/gemma3:4b ollama/phi4-mini ollama/mistral:7b
+GT_CRITERIA = transparency data_privacy non_manipulation human_oversight prompt_injection
+GT_LOG_ORIG = /tmp/gt_run_original.log
+GT_LOG_REV  = /tmp/gt_run_reversed.log
 
 # Help 
 help:
@@ -34,6 +41,17 @@ help:
 	@echo "  make flush-redis           Flush entire Redis DB (⚠ all data)"
 	@echo "  make flush-judge           Delete judge config only"
 	@echo "  make flush-scores          Delete score matrix + eval results"
+	@echo ""
+	@echo "  ── Ground truth corpus ──────────────────────────"
+	@echo "  make gt-seed               DROP+CREATE tables + insert 34 cases"
+	@echo "  make gt-status             Check if a run is active in the container"
+	@echo "  make gt-kill               Kill all active groundtruth processes"
+	@echo "  make gt-clean              Kill + clear log files"
+	@echo "  make gt-run                Run all cases, original question order"
+	@echo "  make gt-run-reversed       Run all cases, reversed question order"
+	@echo "  make gt-log                Stream log (original order)"
+	@echo "  make gt-log-reversed       Stream log (reversed order)"
+	@echo "  make gt-summary            Print SUMMARY block from original log"
 	@echo ""
 	@echo "  ── Quality ──────────────────────────────────────"
 	@echo "  make lint                  Ruff lint on back/"
@@ -113,6 +131,46 @@ flush-scores:
 	@$(COMPOSE_DEV) exec redis redis-cli --scan --pattern "eval:result:*" | \
 		xargs -r sh -c 'docker exec redis redis-cli del "$$@"' _
 	@echo "Score matrix and eval results cleared."
+
+# Ground truth corpus
+gt-seed:
+	MSYS_NO_PATHCONV=1 docker exec evaluation python /app/scripts/seed_groundtruth.py
+
+gt-status:
+	@MSYS_NO_PATHCONV=1 docker exec evaluation python -c \
+	  "import glob; pids=[p.split('/')[2] for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/run_groundtruth' in open(p,'rb').read()]; print(f'{len(pids)} run(s) actif(s): {pids}') if pids else print('Aucun run en cours.')"
+
+gt-kill:
+	@MSYS_NO_PATHCONV=1 docker exec evaluation python -c \
+	  "import os,glob,signal; pids=[int(p.split('/')[2]) for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/run_groundtruth' in open(p,'rb').read()]; [os.kill(p,signal.SIGKILL) for p in pids]; print(f'Killed {len(pids)} process(es).')" || true
+
+gt-clean: gt-kill
+	@MSYS_NO_PATHCONV=1 docker exec evaluation sh -c "rm -f $(GT_LOG_ORIG) $(GT_LOG_REV)"
+	@echo "Logs cleared."
+
+gt-run: gt-clean
+	@MSYS_NO_PATHCONV=1 docker exec -d evaluation sh -c \
+	  "PYTHONUNBUFFERED=1 python -u /app/scripts/run_groundtruth.py \
+	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
+	   --question-order original > $(GT_LOG_ORIG) 2>&1"
+	@echo "Run original lancé → make gt-log pour suivre."
+
+gt-run-reversed: gt-clean
+	@MSYS_NO_PATHCONV=1 docker exec -d evaluation sh -c \
+	  "PYTHONUNBUFFERED=1 python -u /app/scripts/run_groundtruth.py \
+	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
+	   --question-order reversed > $(GT_LOG_REV) 2>&1"
+	@echo "Run reversed lancé → make gt-log-reversed pour suivre."
+
+gt-log:
+	@MSYS_NO_PATHCONV=1 docker exec evaluation tail -f $(GT_LOG_ORIG)
+
+gt-log-reversed:
+	@MSYS_NO_PATHCONV=1 docker exec evaluation tail -f $(GT_LOG_REV)
+
+gt-summary:
+	@MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \
+	  "awk '/^={10}/,0' $(GT_LOG_ORIG)"
 
 # Quality
 lint:
