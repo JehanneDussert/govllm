@@ -63,7 +63,9 @@ class LangfuseClient:
             )
             if r.status_code != 200:
                 return []
-        return r.json().get("data", [])
+        all_scores = r.json().get("data", [])
+        # Langfuse may return unfiltered results — keep only scores for this trace
+        return [s for s in all_scores if s.get("traceId") == trace_id]
 
     async def create_trace(
         self,

@@ -141,7 +141,7 @@ Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliabil
 
 ## Benchmark
 
-54 prompts across 6 use cases and 4 difficulty levels. Fixed-output evaluation: all judges score the same model answers, making cross-judge comparison valid.
+48 prompts across 6 use cases and 4 difficulty levels (2 easy · 2 medium · 2 adversarial · 2 hard each). Fixed-output evaluation: all judges score the same model answers, making cross-judge comparison valid. 768 scored entries (48 × 4 generators × 4 judges), 32 per (model, use case) cell.
 
 → See [docs/benchmark/README.md](docs/benchmark/README.md) for pipeline, file formats, and planned analyses.
 

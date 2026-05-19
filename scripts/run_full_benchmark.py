@@ -49,8 +49,6 @@ ALL_MODELS = [
     "ollama/qwen3:1.7b",
 ]
 
-PROFILE_ID_MAP  = {"accessibility_inclusion": "accessibility"}
-USE_CASE_ID_MAP = {"summarization": "summary", "administrative_writing": "legal"}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -187,8 +185,8 @@ def generate_references(models: list[str], prompts: list[dict], timeout: int = 3
                 use_case   = item["use_case"]
                 profile    = item["governance_profile"]
                 prompt     = item["prompt"]
-                profile_id  = PROFILE_ID_MAP.get(profile, profile)
-                use_case_id = USE_CASE_ID_MAP.get(use_case, use_case)
+                profile_id  = profile
+                use_case_id = use_case
 
                 print(f"  [{i:02d}/{len(missing)}] {pid} ({use_case} / {profile_id})", end="  ", flush=True)
 
@@ -281,8 +279,8 @@ def _run_judge(judge: str, model: str, entries: list[dict], timeout: int, out_pa
             if pid in done_ids:
                 continue
 
-            profile_id  = PROFILE_ID_MAP.get(entry["governance_profile"], entry["governance_profile"])
-            use_case_id = USE_CASE_ID_MAP.get(entry["use_case"], entry["use_case"])
+            profile_id  = entry["governance_profile"]
+            use_case_id = entry["use_case"]
 
             try:
                 if use_case_id != current_use_case:

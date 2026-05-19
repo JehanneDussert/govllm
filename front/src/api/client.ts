@@ -163,6 +163,7 @@ export interface CriterionConfig {
   enabled: boolean
   weight: number
   calibration_notes?: string
+  min_score: number | null
 }
  
 export interface GovernanceProfile {
@@ -193,6 +194,7 @@ export interface JudgeConfig {
   judge_model: string
   arena_judge_models: string[]
   routing_strategy: string
+  alpha: number
   latency_threshold_ms: number | null
   score_threshold: number | null
   error_rate_threshold: number | null
@@ -350,6 +352,15 @@ export interface GroundTruthRunResult {
   criterion: string
   expected_answers: Record<string, boolean>
   judges: JudgeChecklistResult[]
+}
+
+export interface StoredCaseResult {
+  judge_model: string
+  judge_family: string
+  answers: Record<string, boolean>
+  agreement: number
+  reason: string | null
+  question_order: string
 }
 
 export interface ValidityEntry {
@@ -514,6 +525,8 @@ export const api = {
     evaluation.post<GroundTruthCase>('/groundtruth/corpus', req),
   runGroundtruth: (caseId: string) =>
     evaluation.post<GroundTruthRunResult>(`/groundtruth/run/${encodeURIComponent(caseId)}`),
+  groundtruthResults: (caseId: string, questionOrder?: string) =>
+    evaluation.get<StoredCaseResult[]>(`/groundtruth/results/${encodeURIComponent(caseId)}` + (questionOrder ? `?question_order=${encodeURIComponent(questionOrder)}` : '')),
   groundtruthBestJudges: () =>
     evaluation.get<Record<string, string>>('/groundtruth/validity/best-judges'),
   groundtruthValidity: () =>

@@ -1,12 +1,12 @@
 # Benchmark — govllm
 
-Fixed-output multi-model × multi-judge evaluation. 54 prompts across 6 use cases and 4 governance profiles.
+Fixed-output multi-model × multi-judge evaluation. 48 prompts across 6 use cases and 4 governance profiles. 768 scored entries (48 × 4 generators × 4 judges).
 
 ## Structure
 
 ```
 docs/benchmark/
-├── prompts.json          # 54 prompts (6 use cases × difficulty levels)
+├── prompts.json          # 48 prompts (6 use cases × 8 prompts each)
 ├── references/           # model answers — one file per generator model
 │   ├── phi4-mini.json
 │   ├── gemma3-4b.json
@@ -45,16 +45,16 @@ python scripts/run_full_benchmark.py --models ollama/phi4-mini --judges ollama/g
 
 ## Prompts
 
-54 prompts across 6 use cases and 4 difficulty levels:
+48 prompts across 6 use cases and 4 difficulty levels (2 each):
 
-| Use case | Config ID | Governance profile | Easy | Medium | Adversarial | Hard |
-|---|---|---|---|---|---|---|
-| general | general | quality_baseline | 4 | 1 | 2 | 2 |
-| summarization | summary | quality_baseline | 4 | 1 | 2 | 2 |
-| translation | translation | accessibility | 4 | 1 | 2 | 2 |
-| code | code | security | 4 | 1 | 2 | 2 |
-| administrative_writing | legal | data_protection | 4 | 1 | 2 | 2 |
-| analysis | analysis | ai_act_compliance | 4 | 1 | 2 | 2 |
+| Use case | Config ID | Governance profile | Easy | Medium | Adversarial | Hard | Total |
+|---|---|---|---|---|---|---|---|
+| general | general | quality_baseline | 2 | 2 | 2 | 2 | 8 |
+| summarization | summary | quality_baseline | 2 | 2 | 2 | 2 | 8 |
+| translation | translation | accessibility | 2 | 2 | 2 | 2 | 8 |
+| code | code | security | 2 | 2 | 2 | 2 | 8 |
+| administrative_writing | legal | data_protection | 2 | 2 | 2 | 2 | 8 |
+| analysis | analysis | ai_act_compliance | 2 | 2 | 2 | 2 | 8 |
 
 ## File schemas
 
@@ -63,7 +63,7 @@ python scripts/run_full_benchmark.py --models ollama/phi4-mini --judges ollama/g
 ```json
 {
   "model": "ollama/phi4-mini",
-  "n": 54,
+  "n": 48,
   "updated_at": "2026-05-19T...",
   "entries": [
     {
@@ -86,7 +86,7 @@ python scripts/run_full_benchmark.py --models ollama/phi4-mini --judges ollama/g
   "judge_model": "ollama/gemma3:4b",
   "timeout": 120,
   "fixed_outputs": true,
-  "total": 54,
+  "total": 48,
   "results": [
     {
       "id": "gen_easy_01",

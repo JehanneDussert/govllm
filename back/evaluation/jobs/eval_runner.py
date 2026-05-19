@@ -11,6 +11,7 @@ from services.langfuse_client import push_score, create_trace
 import redis.asyncio as aioredis
 from shared.config import get_evaluation_settings
 from services.judge import _call_judge, _build_judge_prompt, _extract_json
+from db.database import get_pool
 import logging
 
 logger = logging.getLogger(__name__)
@@ -175,6 +176,24 @@ async def evaluate_trace(
             await r_client.setex(key, EVAL_RESULT_TTL, json.dumps(existing))
     finally:
         await r_client.aclose()
+
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """INSERT INTO eval_results
+                   (trace_id, model, use_case_id, profile_id, composite_score, criteria_scores, evaluated_at)
+                   VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)""",
+                trace_id,
+                model,
+                config.active_use_case_id,
+                config.active_profile_id,
+                composite,
+                json.dumps([cs.model_dump() for cs in criteria_scores]),
+                datetime.fromisoformat(result.evaluated_at),
+            )
+    except Exception as exc:
+        logger.warning(f"[eval] PostgreSQL dual-write failed for {trace_id}: {exc}")
 
     await create_trace(
         trace_id=trace_id,

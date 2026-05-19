@@ -18,6 +18,7 @@ class CriterionConfig(BaseModel):
     enabled: bool = True
     weight: float = 1.0
     calibration_notes: str = ""
+    min_score: float | None = None  # per-criterion compliance gate θᵢ
  
  
 class GovernanceProfile(BaseModel):
@@ -68,6 +69,7 @@ class JudgeConfig(BaseModel):
     judge_model: str = "ollama/gemma3:4b"
     arena_judge_models: list[str] = []  # empty → fall back to settings.benchmark_models
     routing_strategy: str = "best_score"  # best_score | progression | stability | strict
+    alpha: float = 0.5  # progression strategy: weight between avg_score and delta_score
     latency_threshold_ms: float | None = None
     score_threshold: float | None = None
     variance_threshold: float = 0.1

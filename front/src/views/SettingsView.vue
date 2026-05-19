@@ -79,7 +79,7 @@ function addProfile() {
     criteria_config: Object.fromEntries(
       store.config.criteria
         .filter(c => c.enabled)
-        .map(c => [c.id, { enabled: true, weight: c.weight }])
+        .map(c => [c.id, { enabled: true, weight: c.weight, calibration_notes: '', min_score: null }])
     ),
   })
   newProfile.value = { label: '', description: '' }
@@ -146,7 +146,7 @@ function setCalNotes(profileId: string, criterionId: string, value: string) {
   const profile = store.config.profiles.find(p => p.id === profileId)
   if (!profile) return
   if (!profile.criteria_config[criterionId]) {
-    profile.criteria_config[criterionId] = { enabled: true, weight: 1.0, calibration_notes: value }
+    profile.criteria_config[criterionId] = { enabled: true, weight: 1.0, calibration_notes: value, min_score: null }
   } else {
     profile.criteria_config[criterionId].calibration_notes = value
   }
@@ -305,6 +305,18 @@ onMounted(async () => {
                         <div class="weight-control">
                           <span class="weight-label">weight</span>
                           <input type="number" v-model.number="criterion.weight" min="0.1" max="3" step="0.1" class="weight-input" :disabled="!criterion.enabled" />
+                        </div>
+                        <div class="weight-control">
+                          <span class="weight-label">min θ</span>
+                          <input
+                            type="number"
+                            :value="profile.criteria_config[criterion.id]?.min_score ?? ''"
+                            @input="(e) => { const v = parseFloat((e.target as HTMLInputElement).value); if (!profile.criteria_config[criterion.id]) profile.criteria_config[criterion.id] = { enabled: true, weight: criterion.weight, calibration_notes: '', min_score: null }; profile.criteria_config[criterion.id].min_score = isNaN(v) ? null : Math.min(1, Math.max(0, v)) }"
+                            min="0" max="1" step="0.05"
+                            class="weight-input"
+                            :disabled="!criterion.enabled"
+                            placeholder="—"
+                          />
                         </div>
                       </div>
                     </div>
@@ -549,6 +561,11 @@ onMounted(async () => {
               </div>
             </label>
           </div>
+          <div v-if="store.config.routing_strategy === 'progression'" class="alpha-control">
+            <label class="field-label">α — balance instantaneous score vs trajectory <span class="field-hint">(0 = trajectory only · 1 = score only)</span></label>
+            <input type="range" v-model.number="store.config.alpha" min="0" max="1" step="0.05" class="alpha-slider" />
+            <span class="alpha-value">{{ (store.config.alpha ?? 0.5).toFixed(2) }}</span>
+          </div>
         </section>
 
         <section class="settings-section">
@@ -713,6 +730,11 @@ onMounted(async () => {
 .arena-judge-active { font-size: 10px; color: var(--accent); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; padding: 1px 7px; }
 .arena-panel-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
 .panel-warning { font-size: 11px; color: var(--yellow, #e8a838); background: rgba(232, 168, 56, 0.08); border: 1px solid rgba(232, 168, 56, 0.25); border-radius: 6px; padding: 7px 10px; margin-top: 8px; line-height: 1.5; }
+
+/* Alpha slider */
+.alpha-control { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; margin-top: 4px; }
+.alpha-slider { flex: 1; accent-color: var(--accent); }
+.alpha-value { font-family: var(--font-mono); font-size: 12px; color: var(--accent); min-width: 32px; text-align: right; }
 
 /* Routing strategies */
 .routing-strategies { display: flex; flex-direction: column; gap: 4px; }

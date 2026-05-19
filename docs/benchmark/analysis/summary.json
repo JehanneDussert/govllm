@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-05-19T16:56:51.177326Z",
+  "generated_at": "2026-05-19T20:35:34.006518Z",
   "n_result_files": 16,
-  "n_entries_used": 767,
+  "n_entries_used": 768,
   "analysis_1_delta_specialized_vs_baseline": {
     "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case",
     "by_generator": {
@@ -10,9 +10,9 @@
         "quality_baseline_n": 64,
         "specialized": {
           "administrative_writing": {
-            "mean": 0.9141,
-            "delta_vs_baseline": 0.0049,
-            "n": 31
+            "mean": 0.9157,
+            "delta_vs_baseline": 0.0065,
+            "n": 32
           },
           "analysis": {
             "mean": 0.9182,
@@ -142,9 +142,9 @@
       "hard": {
         "quality_baseline_mean": 0.8524,
         "quality_baseline_n": 64,
-        "specialized_mean": 0.9092,
-        "specialized_n": 127,
-        "delta": 0.0568
+        "specialized_mean": 0.9097,
+        "specialized_n": 128,
+        "delta": 0.0573
       }
     }
   },
@@ -153,9 +153,9 @@
     "models": {
       "gemma3-4b": {
         "size_B": 4.0,
-        "mean_score": 0.9282,
-        "stdev": 0.1004,
-        "n": 191
+        "mean_score": 0.9284,
+        "stdev": 0.1002,
+        "n": 192
       },
       "mistral-7b": {
         "size_B": 7.0,
@@ -176,7 +176,7 @@
         "n": 192
       }
     },
-    "pearson_size_vs_score": -0.3916
+    "pearson_size_vs_score": -0.3887
   },
   "analysis_3_interjudge_disagreement_by_prompt": {
     "description": "Std dev of composite scores across 4 judges per prompt (per generator, then averaged)",
@@ -388,7 +388,7 @@
       "adm_hard_02": {
         "use_case": "administrative_writing",
         "difficulty": "hard",
-        "mean_interjudge_stdev": 0.0305,
+        "mean_interjudge_stdev": 0.03,
         "n_generators": 4
       },
       "ana_01": {
@@ -600,9 +600,9 @@
           "n": 32
         },
         "administrative_writing": {
-          "mean": 0.8984,
-          "stdev": 0.1058,
-          "n": 31
+          "mean": 0.9005,
+          "stdev": 0.1047,
+          "n": 32
         },
         "analysis": {
           "mean": 0.9095,
@@ -703,8 +703,8 @@
       },
       "mistral-7b": {
         "gemma3-4b": {
-          "mean_score": 0.9483,
-          "n": 47,
+          "mean_score": 0.9487,
+          "n": 48,
           "is_self": false
         },
         "mistral-7b": {
@@ -777,8 +777,8 @@
       },
       "mistral-7b": {
         "self_score": 0.9449,
-        "mean_cross_score": 0.9457,
-        "self_preference_delta": -0.0008,
+        "mean_cross_score": 0.9459,
+        "self_preference_delta": -0.001,
         "spr": 0.3333
       },
       "phi4-mini": {
@@ -800,10 +800,10 @@
     "by_generator": {
       "gemma3-4b": {
         "self_eval_mean": 0.8491,
-        "cross_eval_mean": 0.9547,
-        "bias_delta": -0.1056,
+        "cross_eval_mean": 0.9548,
+        "bias_delta": -0.1057,
         "self_n": 48,
-        "cross_n": 143
+        "cross_n": 144
       },
       "mistral-7b": {
         "self_eval_mean": 0.9449,

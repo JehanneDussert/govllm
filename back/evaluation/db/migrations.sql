@@ -91,3 +91,20 @@ CREATE TABLE IF NOT EXISTS groundtruth_results (
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion  ON groundtruth_cases(criterion);
 CREATE INDEX IF NOT EXISTS idx_gt_results_case     ON groundtruth_results(case_id);
 CREATE INDEX IF NOT EXISTS idx_gt_results_judge    ON groundtruth_results(judge_model);
+
+-- Production eval scores — audit-grade persistence (AI Act Art. 9)
+-- Redis is the hot cache (TTL 7 d); this table is the authoritative long-term record.
+CREATE TABLE IF NOT EXISTS eval_results (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trace_id        TEXT NOT NULL,
+    model           TEXT NOT NULL,
+    use_case_id     TEXT,
+    profile_id      TEXT,
+    composite_score FLOAT NOT NULL,
+    criteria_scores JSONB NOT NULL DEFAULT '[]',
+    evaluated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_eval_results_trace   ON eval_results(trace_id);
+CREATE INDEX IF NOT EXISTS idx_eval_results_model   ON eval_results(model, use_case_id);
+CREATE INDEX IF NOT EXISTS idx_eval_results_created ON eval_results(evaluated_at);

@@ -20,12 +20,8 @@ async def get_traces_with_scores(limit: int = 50) -> list[dict]:
         raw_model = await _client.get_model_from_observation(trace["id"])
         trace["_model"] = raw_model if raw_model and raw_model != "unknown" else None
         scores = await _client.get_trace_scores(trace["id"])
-        trace["eval_score"] = next(
-            (
-                s["value"]
-                for s in scores
-                if s.get("name") in ("composite", "composite_score", "hallucination", "overall")
-            ),
-            None,
-        )
+        composite_vals = [
+            s["value"] for s in scores if s.get("name") == "composite" and isinstance(s.get("value"), (int, float))
+        ]
+        trace["eval_score"] = round(sum(composite_vals) / len(composite_vals), 3) if composite_vals else None
     return traces

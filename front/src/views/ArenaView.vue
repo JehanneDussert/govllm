@@ -14,7 +14,7 @@ import { useJudgeStore } from '@/stores/judge'
 import { api } from '@/api/client'
 import type {
   ArenaCriterionScore, IncoherenceScore, VarianceHistory, BiasMatrix,
-  GroundTruthCase, GroundTruthRunResult, ValidityReport, OrderSensitivityEntry, IncoherenceItem,
+  GroundTruthCase, GroundTruthRunResult, StoredCaseResult, ValidityReport, OrderSensitivityEntry, IncoherenceItem,
 } from '@/api/client'
 import { modelShortName } from '@/utils/model'
 
@@ -65,6 +65,7 @@ const selectedCaseId = ref<string>('')
 const corpusLoading = ref(false)
 const corpusRunning = ref(false)
 const corpusResult = ref<GroundTruthRunResult | null>(null)
+const corpusResultIsStored = ref(false)
 const validityData = ref<ValidityReport | null>(null)
 const validityLoading = ref(false)
 const showValidity = ref(false)
@@ -300,10 +301,37 @@ async function loadCorpus() {
   } catch {} finally { corpusLoading.value = false }
 }
 
+async function loadStoredResults(caseId: string) {
+  const cas = corpusCases.value.find(c => c.id === caseId)
+  if (!cas) return
+  try {
+    const res = await api.groundtruthResults(caseId, 'original')
+    if (!res.data.length) return
+    const score = (answers: Record<string, boolean>) =>
+      Object.values(answers).filter(Boolean).length / Object.keys(answers).length
+    corpusResult.value = {
+      case_id: caseId,
+      criterion: cas.criterion,
+      expected_answers: cas.expected_answers,
+      judges: res.data.map((r: StoredCaseResult) => ({
+        judge_model: r.judge_model,
+        judge_family: r.judge_family,
+        answers: r.answers,
+        score: score(r.answers),
+        agreement: r.agreement,
+        reason: r.reason,
+        latency_ms: null,
+      })),
+    }
+    corpusResultIsStored.value = true
+  } catch {}
+}
+
 async function runCorpus() {
   if (!selectedCaseId.value) return
   corpusRunning.value = true
   corpusResult.value = null
+  corpusResultIsStored.value = false
   try {
     const res = await api.runGroundtruth(selectedCaseId.value)
     corpusResult.value = res.data
@@ -374,11 +402,15 @@ async function setIncoherenceValidation(resultId: string, validated: boolean | n
   } catch {}
 }
 
-watch(selectedCaseId, () => { corpusResult.value = null })
+watch(selectedCaseId, async (id) => {
+  corpusResult.value = null
+  corpusResultIsStored.value = false
+  if (id) await loadStoredResults(id)
+})
 watch(corpusCriterion, () => {
   const first = filteredCases.value[0]
   if (first) selectedCaseId.value = first.id
-  corpusResult.value = null
+  else { corpusResult.value = null; corpusResultIsStored.value = false }
 })
 watch([validityFilterJudge, validityFilterCriterion], () => { validityDrawer.value = null })
 
@@ -1013,7 +1045,10 @@ onUnmounted(() => { streamAbortController?.abort(); stopValidityPoll() })
 
           <!-- Results table -->
           <div v-if="corpusResult" class="corpus-results">
-            <div class="corpus-results-title">RESULTS — {{ corpusResult.criterion }}</div>
+            <div class="corpus-results-title">
+              RESULTS — {{ corpusResult.criterion }}
+              <span v-if="corpusResultIsStored" class="stored-badge">stored · original order</span>
+            </div>
 
             <table class="corpus-table">
               <thead>
@@ -1482,7 +1517,8 @@ onUnmounted(() => { streamAbortController?.abort(); stopValidityPoll() })
 
 /* Results table */
 .corpus-results { display: flex; flex-direction: column; gap: 10px; }
-.corpus-results-title { font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim); }
+.corpus-results-title { font-size: 10px; letter-spacing: 1.5px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+.stored-badge { font-size: 9px; letter-spacing: 0.5px; background: var(--border); color: var(--text-dim); border-radius: 3px; padding: 1px 5px; text-transform: none; }
 .corpus-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; }
 .corpus-table th { padding: 6px 10px; color: var(--text-dim); border-bottom: 1px solid var(--border); text-align: left; font-weight: 500; font-size: 10px; letter-spacing: 0.5px; }
 .corpus-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
