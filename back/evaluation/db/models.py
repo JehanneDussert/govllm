@@ -49,6 +49,7 @@ class ArenaSession(BaseModel):
     profile_id: str
     use_case_id: str | None
     sigma: float | None          # inter-judge variance
+    high_variance: bool = False  # sigma >= variance_threshold → flag for human review
     user_vote: str | None
     created_at: datetime
     judges: list[ArenaJudge] = []
@@ -61,6 +62,7 @@ class ArenaRunResponse(BaseModel):
     prompt: str
     profile_id: str
     sigma: float | None
+    high_variance: bool = False  # sigma >= variance_threshold → flag for human review
     judges: list[ArenaJudge]
     # Pre-computed for the frontend
     criteria_labels: dict[str, str]   # criterion_id → label

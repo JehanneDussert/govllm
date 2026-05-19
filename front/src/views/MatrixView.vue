@@ -224,7 +224,7 @@ useIntervalFn(refresh, 60000)
     <div v-else-if="error" class="error-state">{{ error }}</div>
 
     <div v-else-if="matrix" class="matrix-content">
-      <!-- Légende -->
+      <!-- Legend -->
       <div class="legend">
         <div class="legend-item" v-for="(model, i) in models" :key="model">
           <span class="legend-dot" :class="`color-${i}`" />
@@ -236,7 +236,7 @@ useIntervalFn(refresh, 60000)
         <div class="legend-item"><span class="trend-icon stable">→</span> stable</div>
       </div>
 
-      <!-- Matrice -->
+      <!-- Matrix -->
       <div class="matrix-table">
         <!-- Header -->
         <div class="matrix-header" :style="gridStyle">

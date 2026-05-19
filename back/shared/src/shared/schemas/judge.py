@@ -48,7 +48,7 @@ class UseCase(BaseModel):
 class JudgePanelMember(BaseModel):
     """One judge in a per-profile panel — persona-aware, criteria-assigned."""
     model: str                        # e.g. "ollama/gemma3:4b"
-    persona_prompt: str = ""          # e.g. "Tu es expert CNIL, spécialiste RGPD…"
+    persona_prompt: str = ""          # e.g. "You are a CNIL expert, GDPR specialist..."
     assigned_criteria: list[str] = [] # criterion IDs this judge is responsible for
 
 
@@ -70,6 +70,7 @@ class JudgeConfig(BaseModel):
     routing_strategy: str = "best_score"  # best_score | progression | stability | strict
     latency_threshold_ms: float | None = None
     score_threshold: float | None = None
+    variance_threshold: float = 0.1
     error_rate_threshold: float | None = None
     policy_rules: str = ""
 

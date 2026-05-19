@@ -15,3 +15,8 @@ node_modules/
 dist/
 front/node_modules
 add_license_headers.sh
+CLAUDE.md 
+.claude
+docs/arxiv
+docs/paper*
+progress

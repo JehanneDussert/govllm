@@ -45,6 +45,7 @@ const generating = ref(false)
 const availableModels = ref<string[]>([])
 const judgeShells = ref<JudgeShell[]>([])
 const sigma = ref<number | null>(null)
+const highVariance = ref(false)
 const sessionId = ref<string | null>(null)
 const criteriaLabels = ref<Record<string, string>>({})
 const loading = ref(false)
@@ -211,6 +212,7 @@ async function runArena() {
   error.value = null
   judgeShells.value = []
   sigma.value = null
+  highVariance.value = false
   sessionId.value = null
   criteriaLabels.value = {}
   votedFor.value = null
@@ -242,6 +244,7 @@ async function runArena() {
           }
         } else if (event.type === 'complete') {
           sigma.value = event.sigma as number | null
+          highVariance.value = !!(event.high_variance)
           sessionId.value = event.session_id as string
           criteriaLabels.value = event.criteria_labels as Record<string, string>
           sessionDone.value = true
@@ -899,6 +902,9 @@ onUnmounted(() => { streamAbortController?.abort(); stopValidityPoll() })
             </div>
           </div>
         </div>
+        <div v-if="highVariance" class="high-variance-banner">
+          ⚠ High variance — human review recommended (σ ≥ ε)
+        </div>
         <div class="sigma-explanation" v-if="sigma !== null">
           <template v-if="sigma <= 0.03">
             All judges agree — this response is evaluated consistently across regulatory criteria.
@@ -1106,7 +1112,7 @@ onUnmounted(() => { streamAbortController?.abort(); stopValidityPoll() })
                 <div v-if="runProgress" class="gt-progress">
                   <div class="gt-progress-header">
                     <span class="gt-progress-label">RUN PROGRESS</span>
-                    <span class="gt-progress-pct">{{ runProgress.done }} / {{ runProgress.total }} évaluations · {{ runProgress.pct }}%</span>
+                    <span class="gt-progress-pct">{{ runProgress.done }} / {{ runProgress.total }} evaluations · {{ runProgress.pct }}%</span>
                     <span v-if="validityPolling" class="gt-refresh-dot" title="Auto-refresh actif (30s)" />
                     <button class="reset-progress-btn" @click="resetProgressSnapshot" title="Reset baseline to now (use when starting a new run)">↺</button>
                   </div>
@@ -1435,6 +1441,7 @@ onUnmounted(() => { streamAbortController?.abort(); stopValidityPoll() })
 .sigma-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease, background 0.3s ease; }
 .sigma-scale { display: flex; justify-content: space-between; font-size: 9px; color: var(--text-dim); }
 .sigma-explanation { font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px; line-height: 1.5; }
+.high-variance-banner { font-size: 12px; font-weight: 500; color: #e24b4a; background: rgba(226, 75, 74, 0.08); border: 1px solid rgba(226, 75, 74, 0.3); border-radius: 6px; padding: 8px 12px; }
 
 /* Arena tabs */
 .arena-tabs { display: flex; gap: 2px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 4px; width: fit-content; }

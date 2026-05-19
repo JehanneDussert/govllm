@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class TraceItem(BaseModel):
     trace_id: str
     model: str
+    judge_model: str | None
     input_preview: str
     output_preview: str
     latency_ms: float

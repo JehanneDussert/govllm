@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from shared.schemas.judge import JudgeConfig, JudgeCriterion
 from shared.schemas.evaluation import EvalResult, CriterionScore
 from services.judge_config import get_judge_config
-from services.langfuse_client import push_score
+from services.langfuse_client import push_score, create_trace
 import redis.asyncio as aioredis
 from shared.config import get_evaluation_settings
 from services.judge import _call_judge, _build_judge_prompt, _extract_json
@@ -37,6 +37,8 @@ async def evaluate_trace(
     question: str,
     answer: str,
     chat_mode: bool = True,
+    latency_ms: int | None = None,
+    started_at: str | None = None,
 ) -> EvalResult | None:
     config: JudgeConfig = await get_judge_config()
 
@@ -80,11 +82,10 @@ async def evaluate_trace(
         )
         raw = await _call_judge(prompt, judge_model, extra_system)
         logger.info(f"[eval] RAW {judge_model}: {raw!r}")
-        if not raw:
-            return []
-        parsed = _extract_json(raw)
+        parsed = _extract_json(raw) if raw else None
         if parsed is None:
             raw2 = await _call_judge(prompt, judge_model, extra_system)
+            logger.info(f"[eval] RAW retry {judge_model}: {raw2!r}")
             if raw2:
                 parsed = _extract_json(raw2)
         if parsed is None:
@@ -134,6 +135,20 @@ async def evaluate_trace(
         criteria_scores = await _score_with_judge(active_criteria, config.judge_model, uc_prompt)
 
     if not criteria_scores:
+        r_err = await aioredis.from_url(settings.redis_url, decode_responses=True)
+        try:
+            error_result = EvalResult(
+                trace_id=trace_id,
+                model=model,
+                use_case_id=config.active_use_case_id,
+                profile_id=config.active_profile_id,
+                composite_score=0.0,
+                criteria_scores=[],
+                evaluated_at=datetime.now(timezone.utc).isoformat(),
+            )
+            await r_err.setex(f"eval:result:{trace_id}", EVAL_RESULT_TTL, error_result.model_dump_json())
+        finally:
+            await r_err.aclose()
         return None
 
     composite = _compute_composite(criteria_scores, active_criteria)
@@ -161,6 +176,21 @@ async def evaluate_trace(
     finally:
         await r_client.aclose()
 
+    await create_trace(
+        trace_id=trace_id,
+        name="chat",
+        input=question,
+        output=answer,
+        model=model,
+        started_at=started_at,
+        latency_ms=latency_ms,
+        metadata={
+            "model": model,
+            "use_case_id": config.active_use_case_id,
+            "profile_id": config.active_profile_id,
+            "judge_model": config.judge_model,
+        },
+    )
     await push_score(trace_id, composite, name="composite")
     for cs in criteria_scores:
         if cs.flag:

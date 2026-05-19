@@ -583,6 +583,35 @@ async def get_order_sensitivity() -> list[OrderSensitivityEntry]:
     ]
 
 
+async def get_best_judges_per_criterion() -> dict[str, str]:
+    """Return the judge with the highest mean agreement per criterion.
+
+    Averages original + reversed runs so the result is order-robust.
+    Only considers judges with ≥3 evaluated cases per criterion.
+    """
+    pool = await get_pool()
+    rows = await pool.fetch(
+        """
+        SELECT r.judge_model, c.criterion, AVG(r.agreement) AS mean_agreement, COUNT(*) AS n
+        FROM groundtruth_results r
+        JOIN groundtruth_cases c ON r.case_id = c.id
+        GROUP BY r.judge_model, c.criterion
+        HAVING COUNT(*) >= 3
+        ORDER BY c.criterion, mean_agreement DESC
+        """
+    )
+
+    best: dict[str, tuple[str, float]] = {}
+    for row in rows:
+        criterion = row["criterion"]
+        judge = row["judge_model"]
+        score = float(row["mean_agreement"])
+        if criterion not in best or score > best[criterion][1]:
+            best[criterion] = (judge, score)
+
+    return {criterion: judge for criterion, (judge, _) in best.items()}
+
+
 async def get_validity() -> ValidityReport:
     pool = await get_pool()
     rows = await pool.fetch(

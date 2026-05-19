@@ -23,9 +23,9 @@ async def get_redis() -> aioredis.Redis:
 
 async def publish_event(event: LLMEvent) -> None:
     """
-    Publie un LLMEvent dans le canal Redis llm.events.
-    Le service evaluation le consomme pour scorer la réponse.
-    Fail silencieux — Redis est non-critique pour le chemin chat.
+    Publish an LLMEvent to the Redis llm.events channel.
+    The evaluation service consumes it to score the response.
+    Fails silently — Redis is non-critical for the chat path.
     """
     try:
         r = await get_redis()

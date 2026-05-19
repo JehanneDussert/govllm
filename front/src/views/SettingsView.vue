@@ -153,8 +153,48 @@ function setCalNotes(profileId: string, criterionId: string, value: string) {
 }
 
 // Per-profile judge panels
+async function autoAssignPanel(profileId: string) {
+  if (!store.config) return
+  let mapping: Record<string, string>
+  try {
+    const res = await api.groundtruthBestJudges()
+    mapping = res.data
+  } catch {
+    return
+  }
+  if (!Object.keys(mapping).length) return
+
+  // Group criteria by best judge
+  const byJudge: Record<string, string[]> = {}
+  for (const [criterion, judge] of Object.entries(mapping)) {
+    if (!byJudge[judge]) byJudge[judge] = []
+    byJudge[judge].push(criterion)
+  }
+
+  // Replace or create the panel for this profile
+  let panel = store.config.panels.find(p => p.profile_id === profileId)
+  if (!panel) {
+    panel = { profile_id: profileId, judges: [] }
+    store.config.panels.push(panel)
+  }
+  panel.judges = Object.entries(byJudge).map(([model, criteria]) => ({
+    model,
+    persona_prompt: '',
+    assigned_criteria: criteria,
+  }))
+}
+
 function panelFor(profileId: string) {
   return store.config?.panels.find(p => p.profile_id === profileId)?.judges ?? []
+}
+
+function generatorConflicts(profileId: string): string[] {
+  if (!store.config) return []
+  const panelModels = panelFor(profileId).map(j => j.model)
+  const preferredModels = store.config.use_cases
+    .filter(uc => uc.default_profile_id === profileId && uc.preferred_model)
+    .map(uc => uc.preferred_model as string)
+  return panelModels.filter(m => preferredModels.includes(m))
 }
 
 function addJudgeToPanel(profileId: string) {
@@ -323,7 +363,14 @@ onMounted(async () => {
                       </div>
                     </div>
                   </div>
-                  <button class="add-dashed-btn" @click="addJudgeToPanel(profile.id)">+ Add judge to panel</button>
+                  <div class="panel-actions">
+                    <button class="add-dashed-btn" @click="addJudgeToPanel(profile.id)">+ Add judge to panel</button>
+                    <button class="btn-auto-assign" @click="autoAssignPanel(profile.id)" title="Pre-fill panel using best judge per criterion from ground truth validity data">Auto-assign from ground truth</button>
+                  </div>
+                  <div v-if="generatorConflicts(profile.id).length" class="panel-warning">
+                    ⚠ {{ generatorConflicts(profile.id).map(m => m.replace('ollama/', '')).join(', ') }}
+                    {{ generatorConflicts(profile.id).length === 1 ? 'is' : 'are' }} also the preferred generator for a use case using this profile — a model should not judge its own outputs.
+                  </div>
                 </div>
 
               </div>
@@ -522,6 +569,10 @@ onMounted(async () => {
               <label class="field-label">Max error rate</label>
               <input type="number" v-model.number="store.config.error_rate_threshold" class="field-input" placeholder="e.g. 0.05" min="0" max="1" step="0.01" />
             </div>
+            <div class="threshold-field">
+              <label class="field-label">Variance threshold ε <span class="field-hint">— σ ≥ ε flags for human review</span></label>
+              <input type="number" v-model.number="store.config.variance_threshold" class="field-input" placeholder="e.g. 0.1" min="0" max="1" step="0.01" />
+            </div>
           </div>
         </section>
       </template>
@@ -649,6 +700,9 @@ onMounted(async () => {
 .panel-criterion-chip { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; transition: all 0.15s; }
 .panel-criterion-chip input { display: none; }
 .panel-criterion-chip.active { color: var(--accent); border-color: rgba(0,229,255,0.4); background: var(--accent-dim); }
+.panel-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn-auto-assign { font-size: 11px; color: var(--accent); border: 1px dashed rgba(0,229,255,0.4); border-radius: 6px; padding: 7px 14px; background: none; cursor: pointer; transition: all 0.15s; }
+.btn-auto-assign:hover { background: var(--accent-dim); border-style: solid; }
 
 /* Arena judge panel */
 .arena-panel-list { display: flex; flex-direction: column; gap: 4px; }
@@ -658,6 +712,7 @@ onMounted(async () => {
 .arena-judge-name { font-size: 12px; color: var(--text); flex: 1; }
 .arena-judge-active { font-size: 10px; color: var(--accent); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; padding: 1px 7px; }
 .arena-panel-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.panel-warning { font-size: 11px; color: var(--yellow, #e8a838); background: rgba(232, 168, 56, 0.08); border: 1px solid rgba(232, 168, 56, 0.25); border-radius: 6px; padding: 7px 10px; margin-top: 8px; line-height: 1.5; }
 
 /* Routing strategies */
 .routing-strategies { display: flex; flex-direction: column; gap: 4px; }
@@ -670,7 +725,7 @@ onMounted(async () => {
 .strategy-desc { font-size: 11px; color: var(--text-dim); }
 
 /* Thresholds */
-.thresholds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.thresholds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .threshold-field { display: flex; flex-direction: column; gap: 6px; }
 
 /* Toast */

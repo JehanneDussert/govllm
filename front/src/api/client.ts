@@ -47,6 +47,7 @@ export interface TracesResponse {
 export interface TraceItem {
   trace_id: string
   model: string
+  judge_model: string | null
   input_preview: string
   output_preview: string
   latency_ms: number
@@ -118,16 +119,18 @@ export interface ArenaRunResponse {
   prompt: string
   profile_id: string
   sigma: number | null
+  high_variance: boolean
   judges: ArenaJudge[]
   criteria_labels: Record<string, string>
 }
- 
+
 export interface ArenaSession {
   session_id: string
   prompt: string
   profile_id: string
   use_case_id: string | null
   sigma: number | null
+  high_variance: boolean
   user_vote: string | null
   created_at: string
   judges: ArenaJudge[]
@@ -401,7 +404,7 @@ export const api = {
   metrics: (window = '1h') =>
     observability.get<MetricsResponse>(`/metrics?window=${window}`),
 
-  traces: (limit = 50, model?: string) =>
+  traces: (limit = 200, model?: string) =>
     observability.get<TracesResponse>(`/traces?limit=${limit}${model ? `&model=${model}` : ''}`),
 
   abResults: () =>
@@ -460,8 +463,13 @@ export const api = {
 
   arenaVote: (req: ArenaVoteRequest) =>
     evaluation.post('/arena/vote', req),
-  arenaSessions: (profileId?: string) =>
-    evaluation.get<ArenaSession[]>('/arena/sessions' + (profileId ? `?profile_id=${profileId}` : '')),
+  arenaSessions: (profileId?: string, highVariance?: boolean) => {
+    const params = new URLSearchParams()
+    if (profileId) params.set('profile_id', profileId)
+    if (highVariance) params.set('high_variance', 'true')
+    const qs = params.toString()
+    return evaluation.get<ArenaSession[]>('/arena/sessions' + (qs ? `?${qs}` : ''))
+  },
   arenaVariance: (profileId?: string, windowDays?: number) => {
     const params = new URLSearchParams()
     if (profileId) params.set('profile_id', profileId)
@@ -506,6 +514,8 @@ export const api = {
     evaluation.post<GroundTruthCase>('/groundtruth/corpus', req),
   runGroundtruth: (caseId: string) =>
     evaluation.post<GroundTruthRunResult>(`/groundtruth/run/${encodeURIComponent(caseId)}`),
+  groundtruthBestJudges: () =>
+    evaluation.get<Record<string, string>>('/groundtruth/validity/best-judges'),
   groundtruthValidity: () =>
     evaluation.get<ValidityReport>('/groundtruth/validity'),
   groundtruthOrderSensitivity: () =>

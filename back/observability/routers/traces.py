@@ -45,10 +45,12 @@ async def get_traces(
         detected_model = t.get("_model") or _extract_model(t)
         if model and model not in detected_model:
             continue
+        metadata = t.get("metadata") or {}
         traces.append(
             TraceItem(
                 trace_id=t["id"],
                 model=detected_model,
+                judge_model=metadata.get("judge_model"),
                 input_preview=str(t.get("input", ""))[:100],
                 output_preview=str(t.get("output", ""))[:100],
                 latency_ms=t.get("latency") or 0,

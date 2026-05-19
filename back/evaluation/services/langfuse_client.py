@@ -9,8 +9,9 @@ _client = LangfuseClient(_s.langfuse_host, _s.langfuse_public_key, _s.langfuse_s
 
 # Re-export shared methods
 get_traces = _client.get_traces
-# push_score is intentionally only exposed here (evaluation pushes scores; observability is read-only)
+# push_score and create_trace only exposed here — observability is read-only on Langfuse
 push_score = _client.push_score
+create_trace = _client.create_trace
 
 
 async def get_traces_with_scores(limit: int = 50) -> list[dict]:

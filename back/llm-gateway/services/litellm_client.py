@@ -10,7 +10,7 @@ settings = get_gateway_settings()
 
 TIMEOUT = httpx.Timeout(
     connect=10.0,
-    read=300.0,
+    read=600.0,
     write=30.0,
     pool=10.0,
 )

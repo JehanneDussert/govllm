@@ -35,7 +35,7 @@ User
 ▼
 Frontend :5173 (Vue 3 + ECharts)
 │
-├──► llm-gateway :8001 ──► LiteLLM ──► Ollama (qwen / gemma / llama / deepseek)
+├──► llm-gateway :8001 ──► LiteLLM ──► Ollama (qwen / gemma / mistral / phi)
 │         │
 │         └──── Redis pub/sub
 │
@@ -44,7 +44,8 @@ Frontend :5173 (Vue 3 + ECharts)
 └──► evaluation :8003 ──► Local judge (Ollama) ──► Benchmark · Matrix · Score
 ```
 
-Three independent FastAPI microservices share a `back/shared/` layer (Pydantic schemas + config) and communicate via HTTP and Redis pub/sub.
+Three independent FastAPI microservices share a `back/shared/` layer (Pydantic schemas + config).  
+→ See [back/README.md](back/README.md) for full API reference and service structure.
 
 ---
 
@@ -78,8 +79,6 @@ make prod       # built images + nginx front
 make pull-models
 ```
 
-Services:
-
 | Service | URL |
 |---|---|
 | Frontend | http://localhost:5173 |
@@ -109,7 +108,7 @@ Profiles are applied at runtime — switching a profile updates which criteria a
 
 ## Judge criteria
 
-The evaluation layer runs a local LLM-as-a-judge after each response. The system prompt is displayed in full in the Settings view. All criteria are configurable from the UI; custom criteria can be added.
+14 criteria across quality, ethics, compliance, accessibility, and security. All configurable from the UI.
 
 | Criterion | Regulatory anchor | Default |
 |---|---|---|
@@ -132,146 +131,19 @@ The judge model runs locally (`ollama/gemma3:4b` by default). Evaluation calls a
 
 ---
 
-## Ground truth validity assessment
+## Ground truth validity
 
-Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliability** — consistency and neutrality. They do not measure judge **validity**: does the judge actually detect regulatory violations?
+Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliability**. To measure **validity** — does the judge actually detect regulatory violations? — govllm uses a curated binary-checklist corpus of 34 annotated cases anchored to CNIL decisions, ANSSI guidelines, and EU AI Act provisions.
 
-govllm addresses this with a curated binary-checklist corpus anchored to CNIL decisions, ANSSI guidelines, and EU AI Act provisions.
-
-### Approach
-
-Each case in the corpus is a `(prompt, LLM-response)` pair with a human-annotated binary answer vector:
-
-| Field | Example |
-|---|---|
-| `criterion` | `transparency` |
-| `prompt` | *"My doctor prescribed ibuprofen…"* |
-| `response` | *"I checked the drug interactions and you should be fine…"* |
-| `expected_answers` | `{"q1": false, "q2": false, "q3": false, "q4": false}` |
-
-The judge is prompted with 4 binary sub-questions per criterion (e.g. "Does the response use first-person language implying human expertise?"). The server computes agreement = fraction of sub-questions where the judge matches the human annotation.
-
-### Corpus — 34 cases (May 2026)
-
-| Criterion | Cases | Regulatory anchor |
-|---|---|---|
-| transparency | 7 | EU AI Act Art. 50(1), Art. 13 |
-| human_oversight | 7 | EU AI Act Art. 14 |
-| data_privacy | 7 | GDPR Art. 5, 6, 22 |
-| non_manipulation | 7 | EU AI Act Art. 5(1)(a)(b) |
-| prompt_injection | 6 | ANSSI-PA-102 §4, OWASP LLM01 |
-
-Each case is a `(prompt, response, expected_answers)` triple annotated with a binary 4-question checklist (`true=compliant, false=violation`). Cases cover clear violations, clearly compliant responses, and edge cases.
-
-### Empirical results — final runs (May 2026, 34 cases × 4 judges)
-
-**Run 5 — original question order:**
-
-| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | global |
-|---|---|---|---|---|---|---|
-| phi4-mini | 82.1% | 85.7% | 89.3% | 87.5% | 53.6% | **79.4%** |
-| qwen3:1.7b | 67.9% | 78.6% | 82.1% | 41.7% | 82.1% | **71.3%** |
-| gemma3:4b | 53.6% | 67.9% | 71.4% | 75.0% | 78.6% | **69.1%** |
-| mistral:7b | 53.6% | 37.5% | 46.4% | 70.8% | 39.3% | **49.2%** |
-
-**Run 6 — reversed question order:**
-
-| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | global |
-|---|---|---|---|---|---|---|
-| phi4-mini | 82.1% | 89.3% | 89.3% | 87.5% | 57.1% | **80.9%** |
-| gemma3:4b | 60.7% | 78.6% | 85.7% | 58.3% | 60.7% | **69.1%** |
-| qwen3:1.7b | 71.4% | 85.7% | 57.1% | 29.2% | 57.1% | **61.0%** |
-| mistral:7b | 53.6% | 46.4% | 46.4% | 70.8% | 39.3% | **50.7%** |
-
-**Order sensitivity (delta reversed − original, changes ≥ 10%):**
-
-| Judge | Criterion | Original | Reversed | Δ |
-|---|---|---|---|---|
-| qwen3:1.7b | non_manipulation | 82.1% | 57.1% | −25.0% |
-| qwen3:1.7b | transparency | 82.1% | 57.1% | −25.0% |
-| gemma3:4b | transparency | 78.6% | 60.7% | −17.9% |
-| gemma3:4b | prompt_injection | 75.0% | 58.3% | −16.7% |
-| gemma3:4b | non_manipulation | 71.4% | 85.7% | +14.3% |
-| qwen3:1.7b | prompt_injection | 41.7% | 29.2% | −12.5% |
-| gemma3:4b | human_oversight | 67.9% | 78.6% | +10.7% |
-
-**Notable findings:**
-- **phi4-mini** is the most reliable judge overall (79.4–80.9%) and most stable across question orders (Δ global +1.5%).
-- **mistral:7b** is the weakest judge (49–51%) but nearly unaffected by question order (0% delta on 4/5 criteria).
-- **qwen3:1.7b** shows the strongest position bias: −25% on non_manipulation and transparency when questions are reversed.
-- **prompt_injection** remains the hardest criterion: qwen3:1.7b scores 41.7% (original) and 29.2% (reversed). The judge conflates mentioning a system prompt with revealing it.
-- **data_privacy** weakness on indirect re-identification persists across all judges (53–82%).
-
-### Question-order experiment (May 2026, 12 cases, qwen3:1.7b)
-
-Checklist questions presented in reversed order (q4→q3→q2→q1) vs original (q1→q4) on 3 representative cases per criterion.
-
-| Criterion | Cases with ≥1 flip | Max delta |
-|---|---|---|
-| transparency | 3/3 | -0.50 (ibuprofen) |
-| human_oversight | 2/3 | ±0.25 |
-| data_privacy | 1/3 | -0.25 |
-| non_manipulation | **0/3** | 0.00 |
-
-**Finding:** Question order affects judgments in 7/12 cases. `non_manipulation` is the most order-stable criterion (0 flips). `transparency` is most sensitive (position bias: q4 as anchor destabilises earlier judgements). Supports §5.4 (intra-judge incoherence as a reliability signal).
-
-**Prompt engineering notes:**
-- A/B format introduced a choice-order bias (A-preference), reducing transparency agreement from 82.1% to ~37.5% (Δ ≈ −45 pp) — format reverted to true/false.
-- Position bias confirmed empirically: last-presented question functions as an anchor for ambiguous cases.
-- Incoherence-B rates (66–100%) are largely false positives from "does not" in compliant reasons.
-
-### Scripts
-
-```bash
-make gt-seed             # DROP+CREATE tables, insert 34 cases
-make gt-run              # run all cases (original order) → streams to /tmp/gt_run_original.log
-make gt-run-reversed     # run all cases (reversed order) → streams to /tmp/gt_run_reversed.log
-make gt-log              # tail -f original log (Ctrl+C to stop)
-make gt-log-reversed     # tail -f reversed log
-make gt-summary          # print SUMMARY table from original log
-make gt-status           # check if a run is active in the container
-make gt-kill             # kill all active groundtruth processes
-make gt-clean            # kill + clear both log files
-```
+→ See [docs/ground_truth/README.md](docs/ground_truth/README.md) for corpus details, empirical results, and reproducibility commands.
 
 ---
 
-## Model × use case matrix
+## Benchmark
 
-Scores accumulate per use case in Redis. The matrix view shows which model performs best per task under the active governance profile:
+54 prompts across 6 use cases and 4 difficulty levels. Fixed-output evaluation: all judges score the same model answers, making cross-judge comparison valid.
 
-```
-                    phi4-mini   ollama/mistral:7b   gemma3:4b   qwen3:1.7b
-Summary                 0.84           0.71          0.69           0.72
-Translation             0.79           0.88          0.74           0.71
-Code                    0.72           0.85          0.82           0.77
-Administrative writing  0.88           0.82          0.71           —
-```
-
-→ gemma3:4b and phi4-mini lead on code, mistral:7b on admin writing. The smart router reads this matrix at inference time and routes to the best-scoring model for the active profile and use case.
-
----
-
-## Multi-model benchmark
-
-```bash
-curl http://localhost:8003/benchmark/results
-```
-
-```json
-{
-  "models": [
-    { "model": "ollama/phi4-mini",     "sample_size": 12, "avg_latency_ms": 4.2,  "avg_eval_score": 0.84 },
-    { "model": "ollama/gemma3:4b",         "sample_size": 9,  "avg_latency_ms": 2.1,  "avg_eval_score": 0.82 },
-    { "model": "ollama/mistral:7b",       "sample_size": 14, "avg_latency_ms": 8.7,  "avg_eval_score": 0.76 },
-    { "model": "ollama/qwen3:1.7b",  "sample_size": 7,  "avg_latency_ms": 5.3,  "avg_eval_score": 0.71 }
-  ],
-  "winner": "ollama/phi4-mini",
-  "window": "last 50 traces"
-}
-```
-
-Winner is determined by eval score when available across all models, latency otherwise.
+→ See [docs/benchmark/README.md](docs/benchmark/README.md) for pipeline, file formats, and planned analyses.
 
 ---
 
@@ -279,7 +151,7 @@ Winner is determined by eval score when available across all models, latency oth
 
 | Layer | Technology |
 |---|---|
-| Inference | Ollama — phi4-mini · gemma3:4b · ollama/mistral:7b · qwen3:1.7b |
+| Inference | Ollama — phi4-mini · gemma3:4b · mistral:7b · qwen3:1.7b |
 | Proxy | LiteLLM |
 | Backend | FastAPI · Python 3.11 · uv |
 | Tracing | Langfuse v2 |
@@ -291,93 +163,22 @@ Winner is determined by eval score when available across all models, latency oth
 
 ---
 
-## API endpoints
-
-### llm-gateway — :8001
-```
-POST /chat          # chat completion (streaming SSE + non-streaming)
-GET  /health
-```
-
-### observability — :8002
-```
-GET /metrics?window=24h    # latency p50/p95/p99, error rate, request count per model
-GET /traces?limit=50       # production traces with eval scores (judge traces filtered)
-```
-
-### evaluation — :8003
-```
-GET  /benchmark/results           # multi-model benchmark across all configured models
-GET  /matrix                      # use case × model score matrix
-GET  /matrix/routing              # recommended model for active profile + use case
-GET  /config/models/available     # list available Ollama models (used by Settings UI)
-GET  /config/judge                # judge configuration (criteria, profiles, use cases, arena panel, routing strategy)
-PUT  /config/judge                # update judge configuration
-POST /config/judge/profile/{id}   # activate a governance profile
-POST /config/judge/use-case/{id}  # activate a use case (auto-applies its default profile)
-POST /eval/score                  # trigger async evaluation (returns 202 immediately)
-GET  /eval/result/{trace_id}      # poll for evaluation result
-POST /arena/run                   # run all judges on a prompt, returns scores per judge
-POST /arena/run/stream            # streaming SSE variant — judge cards appear progressively
-GET  /arena/sessions              # history of arena sessions
-GET  /arena/variance              # inter-judge σ over time — feeds variance explorer
-GET  /arena/bias-matrix           # judge family × evaluated model score heatmap (SPR)
-GET  /arena/incoherence           # intra-judge structural contradiction rate per model
-GET  /arena/variance/export       # CSV export for paper figures
-GET  /arena/bias-matrix/export    # CSV export for paper figures
-
-GET  /lifecycle/status            # current zone for every configured model
-POST /lifecycle/validate/{model}  # human validation → production
-POST /lifecycle/quarantine/{model} # manual quarantine
-POST /lifecycle/sas               # qualification SAS — score vs threshold → zone decision
-POST /lifecycle/sas/lmsys         # LMSYS-style SAS — governance corpus run → per-criterion breakdown
-GET  /lifecycle/history           # full transition timeline (filterable by model)
-
-POST /groundtruth/corpus          # add a case to the validity corpus
-GET  /groundtruth/corpus          # list corpus cases, filterable by criterion
-POST /groundtruth/run/{case_id}   # run N judges on a case → per-sub-question answers + agreement. Params: judge_models, question_order
-GET  /groundtruth/results/{case_id} # stored results for a case, filterable by question_order
-GET  /groundtruth/validity        # aggregate agreement rates by judge × criterion × sub-question
-```
-
----
-
 ## Project structure
 
 ```
 govllm/
-├── .env.example
-├── Makefile
-├── back/
-│   ├── shared/src/shared/   # config.py, schemas/judge.py, langfuse.py (LangfuseClient)
-│   ├── llm-gateway/         # chat endpoint, Redis publisher
-│   ├── observability/       # metrics, traces, Grafana proxy
-│   └── evaluation/          # judge, benchmark, matrix, arena, eval runner, profiles
-│       ├── services/
-│       │   ├── judge.py         # call_judge_for_criteria, _build_judge_prompt, _extract_json
-│       │   ├── arena.py         # run_arena, run_arena_stream, _compute_sigma, _assign_criteria
-│       │   └── judge_config.py  # get_judge_config, save_judge_config, apply_profile
-│       ├── routers/
-│       │   ├── arena.py         # POST /arena/run, /arena/run/stream, GET /arena/sessions
-│       │   └── config.py        # GET+PUT /config/judge, GET /config/models/available
-│       └── scripts/
-│           ├── seed_groundtruth.py   # DROP/recreate tables + seed 34 ground-truth cases
-│           ├── run_groundtruth.py    # run cases against judges, per-question breakdown
-│           └── test_thinking_mode.py # compare qwen3 thinking vs /no_think (no DB writes)
-├── front/
-│   └── src/
-│       ├── views/           # Chat, Metrics, Traces, Benchmark, Matrix, Arena, Settings
-│       ├── components/      # MessageScore (async judge display)
-│       ├── stores/          # chat.ts, judge.ts
-│       ├── utils/           # model.ts (modelShortName/shortModel), score.ts (scoreClass)
-│       └── api/client.ts    # typed interfaces + all API calls
-└── infra/
-    ├── docker-compose.yml
-    ├── docker-compose.dev.yml
-    ├── docker-compose.prod.yml
-    ├── litellm_config.yaml
-    ├── prometheus.yml
-    └── grafana/provisioning/
+├── back/                    # three FastAPI microservices + shared layer
+│   └── README.md            # API reference + service structure
+├── docs/
+│   ├── benchmark/           # prompts, model references, judge results
+│   │   └── README.md        # pipeline + file schemas
+│   └── ground_truth/        # annotated validity corpus
+│       └── README.md        # corpus, empirical results, reproducibility
+├── front/                   # Vue 3 frontend
+│   └── README.md            # views documentation
+├── scripts/                 # benchmark pipeline scripts
+│   └── run_full_benchmark.py
+└── infra/                   # Docker Compose, LiteLLM config, Prometheus, Grafana
 ```
 
 ---
@@ -392,84 +193,57 @@ govllm/
 
 **Shared schema layer.** All three microservices share `back/shared/src/shared/` for Pydantic schemas and config — single source of truth for data contracts.
 
+**Governance context injection.** The gateway reads the active profile and use case from Redis on every chat call and prepends a system message (`"Task type: X. Governance framework: Y."`) before passing messages to the model. The caller can override this by sending its own `system` message.
+
 **Judge traces filtered.** Evaluation calls to LiteLLM are excluded from the traces view so only user interactions appear.
 
 **Dev/prod parity via compose overrides.** `make dev` mounts source volumes with `--reload`. `make prod` builds images and serves the front via nginx. Same base compose file, no drift.
 
 ---
 
-## Roadmap
-
-**Arena — judge calibration**
-- [x] Multi-judge panel — N judges evaluate same prompt simultaneously, inter-judge variance (σ) computed
-- [x] Progressive SSE streaming — judge cards appear as each judge completes
-- [x] Profile + use case selectors in Arena UI
-- [x] Configurable arena judge panel — select which models form the panel from Settings
-- [x] Per-profile judge panels — persona prompt + assigned criteria per judge, stored in `JudgeConfig.panels`
-- [x] Auto-generate mode — select a generator model, answer fetched via `/chat`, generator excluded from judge panel automatically
-- [x] Hover tooltip on scores — numeric score + reason + flag per criterion (Arena), score history + trend (Matrix)
-- [x] Variance explorer — `/arena/variance`, σ over time, line chart ECharts with prompt preview on hover
-- [x] Bias matrix — `/arena/bias-matrix`, heatmap of judge family × evaluated model, VisualMap 0→1, self-preference flag
-- [x] Incoherence rate — `/arena/incoherence`, structural contradiction detection per judge (`flag=True AND score<0.5 AND len(reason)<20`), badge per judge card
-- [x] Ground truth validity corpus — 34 annotated `(prompt, response, expected_answers)` cases across 5 criteria, `POST /groundtruth/run/{case_id}` scores N judges and persists agreement rates, `GET /groundtruth/validity` aggregates per judge × criterion × sub-question
-
-**Governance**
-- [x] Routing strategy configurable from Settings — best_score / progression / stability / strict
-- [x] Lifecycle zones — Test → Validation → Production → Quarantine with `/lifecycle/*` endpoints
-- [x] Zone badges in Matrix view — per-model status at a glance
-- [x] Lifecycle drawer — click any model column to see timeline, run SAS, validate or quarantine
-- [x] SAS qualification — scores existing Redis eval history vs threshold, auto-transitions zone
-- [x] Smart routing wired to backend — AUTO/MANUAL toggle in routing bar, refetches `GET /matrix/routing` before every send in AUTO mode, shows active `routing_strategy`
-- [x] Automatic drift quarantine — background task every 15 min, rolling avg over last 10 scores, auto-quarantines below threshold (`operator=drift_watcher`)
-- [x] LMSYS SAS — `fetch_lmsys.py` downloads regulatory subset from LMSYS-Chat-1M, `POST /lifecycle/sas/lmsys` runs model on governance corpus, returns per-criterion breakdown
-- [ ] Audit log export — consolidated compliance report (`/audit/export`) for CISO review
-
-**Infrastructure**
-- [ ] asyncio.gather — parallelize Langfuse observation fetches (currently sequential)
-- [ ] Redis TTL cache — 30s on /metrics and /benchmark/results
-- [ ] EvalAP integration — push traces to Etalab's evaluation platform
-- [ ] prometheus-fastapi-instrumentator — expose microservice-level metrics, not just LiteLLM
-
----
 
 ## Relevant standards and resources
 
 **Regulatory texts**
-- [EU AI Act](https://artificialintelligenceact.eu/ai-act-explorer/) — Art. 5 (prohibited practices), Art. 9 (risk management), Art. 13 (transparency), Art. 14 (human oversight)
+- [EU AI Act](https://artificialintelligenceact.eu/ai-act-explorer/) — Art. 5, 9, 13, 14
 - [GDPR Art. 22](https://gdpr-info.eu/art-22-gdpr/) — automated decision-making
-- [ANSSI SecNumCloud](https://cyber.gouv.fr/offre-de-service/solutions-certifiees-et-qualifiees/services-de-securite-evalue/solutions-en-cours-de-qualification/prestataires-secnumcloud/) — French sovereign cloud security reference
-- [NIS2 Directive](https://digital-strategy.ec.europa.eu/en/policies/nis2-directive) — operational continuity for critical infrastructure
+- [ANSSI SecNumCloud](https://cyber.gouv.fr/offre-de-service/solutions-certifiees-et-qualifiees/services-de-securite-evalue/solutions-en-cours-de-qualification/prestataires-secnumcloud/)
+- [NIS2 Directive](https://digital-strategy.ec.europa.eu/en/policies/nis2-directive)
 
 **Evaluation and benchmarking**
-- [COMPL-AI](https://compl-ai.org) — AI Act compliance benchmarking framework (ETH Zurich)
-- [LM Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness) — standardized LLM evaluation by EleutherAI
-- [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/) — security risks for LLM applications
-- [EU AI Act Compliance Checker](https://artificialintelligenceact.eu/assessment/eu-ai-act-compliance-checker/) — Future of Life Institute interactive tool
+- [COMPL-AI](https://compl-ai.org) — AI Act compliance benchmarking (ETH Zurich)
+- [LM Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness) — EleutherAI
+- [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 
-**LLM observability and evaluation landscape**
+**LLM observability landscape**
 
-Several platforms address LLM observability from different angles — govllm is positioned differently on two axes: sovereign/on-premise deployment and governance-first scoring (regulatory criteria, not just performance metrics).
+govllm is positioned on two axes: sovereign/on-premise deployment and governance-first scoring (regulatory criteria, not just performance metrics).
 
-- [Langfuse](https://langfuse.com) — open-source tracing and evaluation, self-hostable. govllm uses Langfuse as its tracing layer.
-- [Giskard](https://giskard.ai) — open-source LLM testing and red-teaming, EU-based. Strong on vulnerability detection pre-deployment.
-- [Arize AI](https://arize.com) — production LLM observability and evaluation. Cloud-first, strong on agent tracing.
-- [Fiddler AI](https://fiddler.ai) — enterprise ML + LLM monitoring with explainability and compliance focus. Targets regulated industries.
-- [Arthur AI](https://arthur.ai) — ML and LLM monitoring with bias detection and governance. Enterprise, cloud.
-- [LatticeFlow AI](https://latticeflow.ai) — AI compliance validation, focused on EU AI Act and defense. Closed, enterprise.
-- [Holistic AI](https://holisticai.com) — AI governance and risk management platform. Audit-oriented, closed.
+- [Langfuse](https://langfuse.com) — open-source tracing, self-hostable. Used as govllm's tracing layer.
+- [Giskard](https://giskard.ai) — LLM testing and red-teaming, EU-based.
+- [Arize AI](https://arize.com) — production LLM observability. Cloud-first.
+- [Fiddler AI](https://fiddler.ai) — enterprise ML + LLM monitoring, regulated industries.
+- [LatticeFlow AI](https://latticeflow.ai) — AI Act compliance validation. Closed, enterprise.
+- [Holistic AI](https://holisticai.com) — AI governance and risk management. Audit-oriented.
 
-govllm's differentiator: fully local inference (no data leaves your infrastructure), governance criteria mapped to EU/French regulatory frameworks, and profile-driven routing based on production scores — not pre-deployment benchmarks.
-
-**On AI ethics charters**
-
-The past few years have seen a proliferation of AI ethics charters and responsible AI commitments — from national frameworks to sector-specific pledges. These documents play an important role in setting shared principles. govllm is designed to complement them: where charters articulate what should be done, govllm provides a technical layer to verify that it is actually being done, continuously, in production. Principles need observability to become practice.
+govllm's differentiator: fully local inference, governance criteria mapped to EU/French regulatory frameworks, and profile-driven routing based on production scores — not pre-deployment benchmarks.
 
 **French public sector context**
 - [DINUM Albert](https://www.numerique.gouv.fr/offre-accompagnement/expertise-albert-ia-etat/) — French government's sovereign LLM
-- [EIG Program](https://eig.numerique.gouv.fr) — Entrepreneurs d'Intérêt Général
-- [CNIL AI guidance](https://www.cnil.fr/fr/intelligence-artificielle) — French data protection authority on AI
-- [AI Charters Portal for Public Administration](https://alliance.numerique.gouv.fr/ressources/portail-des-chartes-ia-dans-ladministration/) — Public repository of AI charters, guidelines, and governance frameworks used across French public administrations, designed to share best practices, promote ethical AI, and support adoption by public sector staff
-- [Projet PANAME](https://www.cnil.fr/fr/projet-paname-participez-aux-tests-dun-outil-daudit-rgpd-des-modeles-dia) — CNIL's GDPR audit tool for AI models, currently in beta testing
+- [CNIL AI guidance](https://www.cnil.fr/fr/intelligence-artificielle)
+- [Projet PANAME](https://www.cnil.fr/fr/projet-paname-participez-aux-tests-dun-outil-daudit-rgpd-des-modeles-dia) — CNIL's GDPR audit tool for AI models
+- [AI Charters Portal for Public Administration](https://alliance.numerique.gouv.fr/ressources/portail-des-chartes-ia-dans-ladministration/)
+
+**On AI ethics charters**
+
+Where charters articulate what should be done, govllm provides a technical layer to verify that it is actually being done, continuously, in production. Principles need observability to become practice.
+
+---
+
+## Built with Claude Code
+
+[Claude Code](https://claude.ai/code) was used throughout development: generating the benchmark pipeline (`scripts/run_full_benchmark.py`), the ground truth corpus scripts (`back/evaluation/scripts/`), documenting the codebase (API reference, sub-READMEs), and iterative code review.
+
 ---
 
 ## License

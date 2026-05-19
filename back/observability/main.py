@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="LLM Observability",
-    description="Métriques Prometheus, traces Langfuse, proxy Grafana",
+    description="Prometheus metrics, Langfuse traces, Grafana proxy",
     version="0.1.0",
     lifespan=lifespan,
 )

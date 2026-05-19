@@ -28,7 +28,7 @@ function labelFor(id: string) {
 }
 
 async function triggerAndPoll() {
-  // Vérifier d'abord si le résultat existe déjà
+  // Check if result already exists before triggering evaluation
   try {
     const existing = await api.getEvalResult(props.traceId)
     if (existing.data?.evaluated_at) {

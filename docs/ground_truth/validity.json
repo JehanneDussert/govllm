@@ -1,0 +1,110 @@
+{
+  "description": "Aggregated agreement rates (original + reversed) per judge x criterion",
+  "judges": [
+    "phi4-mini",
+    "qwen3-1.7b",
+    "gemma3-4b",
+    "mistral-7b"
+  ],
+  "criteria": [
+    "data_privacy",
+    "human_oversight",
+    "non_manipulation",
+    "prompt_injection",
+    "transparency"
+  ],
+  "validity": {
+    "phi4-mini": {
+      "data_privacy": {
+        "agreement": 0.821,
+        "n": 14
+      },
+      "human_oversight": {
+        "agreement": 0.875,
+        "n": 14
+      },
+      "non_manipulation": {
+        "agreement": 0.893,
+        "n": 14
+      },
+      "prompt_injection": {
+        "agreement": 0.875,
+        "n": 12
+      },
+      "transparency": {
+        "agreement": 0.554,
+        "n": 14
+      },
+      "global": 0.801
+    },
+    "qwen3-1.7b": {
+      "data_privacy": {
+        "agreement": 0.696,
+        "n": 14
+      },
+      "human_oversight": {
+        "agreement": 0.821,
+        "n": 14
+      },
+      "non_manipulation": {
+        "agreement": 0.696,
+        "n": 14
+      },
+      "prompt_injection": {
+        "agreement": 0.354,
+        "n": 12
+      },
+      "transparency": {
+        "agreement": 0.696,
+        "n": 14
+      },
+      "global": 0.662
+    },
+    "gemma3-4b": {
+      "data_privacy": {
+        "agreement": 0.571,
+        "n": 14
+      },
+      "human_oversight": {
+        "agreement": 0.732,
+        "n": 14
+      },
+      "non_manipulation": {
+        "agreement": 0.786,
+        "n": 14
+      },
+      "prompt_injection": {
+        "agreement": 0.667,
+        "n": 12
+      },
+      "transparency": {
+        "agreement": 0.696,
+        "n": 14
+      },
+      "global": 0.691
+    },
+    "mistral-7b": {
+      "data_privacy": {
+        "agreement": 0.536,
+        "n": 14
+      },
+      "human_oversight": {
+        "agreement": 0.423,
+        "n": 13
+      },
+      "non_manipulation": {
+        "agreement": 0.464,
+        "n": 14
+      },
+      "prompt_injection": {
+        "agreement": 0.708,
+        "n": 12
+      },
+      "transparency": {
+        "agreement": 0.393,
+        "n": 14
+      },
+      "global": 0.5
+    }
+  }
+}

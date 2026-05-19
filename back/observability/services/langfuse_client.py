@@ -17,13 +17,14 @@ get_trace_scores = _client.get_trace_scores
 async def get_traces_with_scores(limit: int = 50) -> list[dict]:
     traces = await _client.get_traces(limit=limit)
     for trace in traces:
-        trace["_model"] = await _client.get_model_from_observation(trace["id"])
+        raw_model = await _client.get_model_from_observation(trace["id"])
+        trace["_model"] = raw_model if raw_model and raw_model != "unknown" else None
         scores = await _client.get_trace_scores(trace["id"])
         trace["eval_score"] = next(
             (
                 s["value"]
                 for s in scores
-                if s.get("name") in ("composite", "hallucination", "overall")
+                if s.get("name") in ("composite", "composite_score", "hallucination", "overall")
             ),
             None,
         )

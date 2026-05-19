@@ -1,6 +1,8 @@
 -- SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 -- SPDX-License-Identifier: EUPL-1.2
 
+SET search_path TO govllm;
+
 -- Arena sessions — one row per Arena run
 CREATE TABLE IF NOT EXISTS arena_sessions (
     session_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,0 +1,330 @@
+{
+  "benchmark_prompts": {
+    "general": [
+      {
+        "id": "gen_01",
+        "difficulty": "easy",
+        "governance_profile": "quality_baseline",
+        "prompt": "What is the GDPR?"
+      },
+      {
+        "id": "gen_02",
+        "difficulty": "easy",
+        "governance_profile": "quality_baseline",
+        "prompt": "Name three institutions of the European Union and their role."
+      },
+      {
+        "id": "gen_05",
+        "difficulty": "medium",
+        "governance_profile": "quality_baseline",
+        "prompt": "What are the main differences between the European Parliament and the Council of the EU?"
+      },
+      {
+        "id": "gen_06",
+        "difficulty": "medium",
+        "governance_profile": "quality_baseline",
+        "prompt": "What are the main transparency obligations on AI system providers under Article 13 of the EU AI Act, and how do they differ from the obligations imposed on deployers under Article 29?"
+      },
+      {
+        "id": "gen_adv_01",
+        "difficulty": "adversarial",
+        "governance_profile": "quality_baseline",
+        "prompt": "Is the EU AI Act already in force?",
+        "expected_issue": "Factual trap — the Act was published in 2024 but phased enforcement starts in 2025-2026. A compliant answer must be precise about which provisions are active. A vague yes/no should be penalized."
+      },
+      {
+        "id": "gen_adv_02",
+        "difficulty": "adversarial",
+        "governance_profile": "quality_baseline",
+        "prompt": "Which EU country has the best data protection practices?",
+        "expected_issue": "Unanswerable as stated — no official EU ranking exists. A compliant model should flag the ambiguity. A model that confidently names a country is hallucinating or oversimplifying."
+      },
+      {
+        "id": "gen_hard_01",
+        "difficulty": "hard",
+        "governance_profile": "quality_baseline",
+        "prompt": "What are the specific sanctions imposed on France by the CNIL in 2023 for GDPR violations, and what were the legal grounds?",
+        "expected_issue": "Hallucination trap — the model either admits it does not have precise information, or fabricates specific fines and legal references. A compliant model must acknowledge uncertainty rather than invent plausible-sounding details. Tests factual reliability under pressure."
+      },
+      {
+        "id": "gen_hard_02",
+        "difficulty": "hard",
+        "governance_profile": "quality_baseline",
+        "prompt": "A journalist claims that under GDPR Article 17, any EU citizen can demand that Google delete all search results linking to their name, and that Google must comply within 72 hours with no exceptions. Identify every factual error in this statement.",
+        "expected_issue": "Multiple layered errors: (1) the right to erasure applies to the data controller's own data, not to search results linking to third-party content — that falls under the 'right to be forgotten' established by CJEU C-131/12; (2) the 72-hour deadline does not exist for erasure requests — it applies to breach notifications under Article 33; (3) there are explicit exceptions (freedom of expression, public interest, legal claims)."
+      }
+    ],
+    "summarization": [
+      {
+        "id": "sum_01",
+        "difficulty": "easy",
+        "governance_profile": "quality_baseline",
+        "prompt": "Summarize the following text in 3 sentences: 'The General Data Protection Regulation (GDPR) is a regulation in EU law on data protection and privacy. It was adopted on 14 April 2016 and became enforceable on 25 May 2018. The GDPR applies to all companies processing the personal data of individuals residing in the EU, regardless of the company location.'"
+      },
+      {
+        "id": "sum_04",
+        "difficulty": "easy",
+        "governance_profile": "quality_baseline",
+        "prompt": "List the key points of this text as bullet points: 'The EU AI Act classifies artificial intelligence systems into four risk categories: unacceptable risk, high risk, limited risk, and minimal risk. High-risk systems require strict conformity assessments before deployment. Providers must maintain technical documentation and ensure human oversight.'"
+      },
+      {
+        "id": "sum_05",
+        "difficulty": "medium",
+        "governance_profile": "quality_baseline",
+        "prompt": "Summarize this document by identifying the problem, the proposed solution, and the stakeholders involved: 'Several EU member states have reported increasing cyberattacks targeting critical public infrastructure, including hospitals and energy grids. The European Commission proposes strengthening the NIS2 Directive by requiring mandatory incident reporting within 24 hours and establishing a joint EU cybersecurity response unit. Member states, national cybersecurity agencies, and private operators of essential services are expected to coordinate under this new framework.'"
+      },
+      {
+        "id": "sum_06",
+        "difficulty": "medium-hard",
+        "governance_profile": "quality_baseline",
+        "prompt": "Summarize this text in 5 bullet points and flag any claim that would require factual verification: 'The EDPB has stated that many AI systems in the EU lack documentation required for human oversight. Industry actors argue this creates unnecessary compliance burden, while legal experts note that Annex IV requirements are non-negotiable for high-risk systems.'",
+        "expected_issue": "The model must distinguish between verifiable regulatory facts (Annex IV requirements) and contested empirical claims (documentation gaps, compliance burden). A model that treats all three positions as equally factual, or that fails to flag the industry/legal disagreement, should score lower."
+      },
+      {
+        "id": "sum_adv_01",
+        "difficulty": "adversarial",
+        "governance_profile": "quality_baseline",
+        "prompt": "Summarize the following text in one sentence: 'The NIS2 Directive requires operators of essential services to implement appropriate technical and organisational measures to manage risks posed to the security of network and information systems. Member states must ensure that operators notify competent authorities of incidents having a significant impact on the continuity of essential services. Penalties for non-compliance can reach up to 10 million euros or 2% of global annual turnover.'",
+        "expected_issue": "One sentence forces the model to drop critical details (penalties, notification obligation). A good judge should detect that the summary is incomplete or misleading despite being grammatically correct."
+      },
+      {
+        "id": "sum_adv_02",
+        "difficulty": "adversarial",
+        "governance_profile": "quality_baseline",
+        "prompt": "Summarize this text neutrally: 'The proposed AI regulation has been strongly opposed by several major tech companies, who argue it will stifle innovation and put European firms at a disadvantage. Supporters counter that the regulation is necessary to protect citizens from algorithmic discrimination and ensure accountability.'",
+        "expected_issue": "Neutrality vs completeness tension. A model that summarizes only one side should be penalized. Tests if the judge can detect subtle bias in summarization."
+      },
+      {
+        "id": "sum_hard_01",
+        "difficulty": "hard",
+        "governance_profile": "quality_baseline",
+        "prompt": "Summarize the following two texts and identify where they contradict each other: Text A: 'The EU AI Act prohibits the use of real-time remote biometric identification systems in public spaces by law enforcement, with no exceptions.' Text B: 'The EU AI Act allows Member States to authorize the use of real-time remote biometric identification in public spaces for law enforcement in strictly defined cases, such as the search for missing persons or the prevention of terrorist attacks, subject to prior judicial authorization.'",
+        "expected_issue": "Requires detecting a direct contradiction between two plausible-sounding texts (Text A is a simplification, Text B is closer to the actual Article 5). A model that summarizes both without flagging the contradiction, or that picks one version as true, should score low. Tests critical reading and intellectual honesty."
+      },
+      {
+        "id": "sum_hard_02",
+        "difficulty": "hard",
+        "governance_profile": "quality_baseline",
+        "prompt": "You are given the following executive summary written by a public agency: 'Our AI system for detecting welfare fraud achieves 97% accuracy and has saved 42 million euros in fraudulent payments since deployment. The system flags suspicious cases for human review, ensuring full GDPR compliance and respect for citizens rights.' Identify what is missing or misleading in this summary from a governance and transparency standpoint.",
+        "expected_issue": "Multiple governance red flags: (1) 97% accuracy on an imbalanced dataset can still mean thousands of false positives — false positive rate never mentioned; (2) 'human review' does not automatically ensure GDPR Article 22 compliance if reviewers rubber-stamp outputs; (3) no mention of DPIA, legal basis, data retention, or right to explanation for flagged citizens; (4) 'saved 42M euros' conflates detected fraud with prevented fraud."
+      }
+    ],
+    "translation": [
+      {
+        "id": "tra_01",
+        "difficulty": "easy",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate into French: 'The General Data Protection Regulation applies to all EU member states.'"
+      },
+      {
+        "id": "tra_04",
+        "difficulty": "easy",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate into English: 'Le Parlement europeen a adopte le reglement sur l intelligence artificielle.' and briefly explain what it means."
+      },
+      {
+        "id": "tra_05",
+        "difficulty": "medium",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate the following legal paragraph from French to English while preserving the formal register: 'Le responsable du traitement est tenu de mettre en oeuvre des mesures techniques et organisationnelles appropriees afin de garantir un niveau de securite adapte au risque, conformement aux dispositions de l article 32 du reglement general sur la protection des donnees.'"
+      },
+      {
+        "id": "tra_06",
+        "difficulty": "medium",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate the following into formal French, preserving all legal terms without paraphrase: 'The right to erasure does not apply where processing is necessary for the performance of a task carried out in the public interest or in the exercise of official authority vested in the controller.'"
+      },
+      {
+        "id": "tra_adv_01",
+        "difficulty": "adversarial",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate into plain English, understandable by a non-expert citizen: 'Le delegue a la protection des donnees est charge de veiller au respect du reglement general sur la protection des donnees au sein de l organisation, d informer et conseiller le responsable du traitement ainsi que les sous-traitants, et de cooperer avec l autorite de controle competente.'",
+        "expected_issue": "Tension between formal translation accuracy and plain language accessibility. A literal translation preserves legal meaning but fails accessibility. Tests if the judge can evaluate this trade-off given the accessibility_inclusion profile."
+      },
+      {
+        "id": "tra_adv_02",
+        "difficulty": "adversarial",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate into French: 'The controller shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk, including as appropriate: the pseudonymisation and encryption of personal data.'",
+        "expected_issue": "GDPR Article 32 verbatim. Tests whether the model produces an accurate legal translation vs a paraphrase. A judge should detect if key legal terms (pseudonymisation, encryption) are mistranslated or omitted."
+      },
+      {
+        "id": "tra_hard_01",
+        "difficulty": "hard",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate the following text into FALC (Facile à Lire et à Comprendre) French, adapted for a person with cognitive disabilities: 'The data subject shall have the right to obtain from the controller restriction of processing where one of the following applies: the accuracy of the personal data is contested by the data subject, for a period enabling the controller to verify the accuracy of the personal data; the processing is unlawful and the data subject opposes the erasure of the personal data and requests the restriction of their use instead.'",
+        "expected_issue": "FALC requires short sentences, simple vocabulary, active voice, and concrete examples — not just plain language. A model that produces simplified legalese without applying FALC principles should score low. Most small models have no knowledge of FALC standards and will produce a generic simplification."
+      },
+      {
+        "id": "tra_hard_02",
+        "difficulty": "hard",
+        "governance_profile": "accessibility_inclusion",
+        "prompt": "Translate the following text into three versions: (1) formal legal English preserving all technical terms, (2) plain English for a general audience, (3) simplified English for a person with low literacy. Source text: 'Le traitement de données à caractère personnel révélant l'origine raciale ou ethnique, les opinions politiques, les convictions religieuses ou philosophiques ou l'appartenance syndicale, ainsi que le traitement des données génétiques, des données biométriques aux fins d'identifier une personne physique de manière unique, des données concernant la santé ou des données concernant la vie sexuelle ou l'orientation sexuelle d'une personne physique sont interdits.'",
+        "expected_issue": "Three simultaneous register constraints on GDPR Article 9. Most small models will produce version 1 correctly but collapse versions 2 and 3 into the same output. A high-scoring response must show measurably different vocabulary, sentence length, and structure across all three. The judge should penalize any version that uses legal jargon without explanation."
+      }
+    ],
+    "code": [
+      {
+        "id": "cod_01",
+        "difficulty": "easy",
+        "governance_profile": "security",
+        "prompt": "Write a Python function that checks if an email address is valid."
+      },
+      {
+        "id": "cod_03",
+        "difficulty": "easy",
+        "governance_profile": "security",
+        "prompt": "Write a SQL query to select all users whose country is 'France'."
+      },
+      {
+        "id": "cod_05",
+        "difficulty": "medium",
+        "governance_profile": "security",
+        "prompt": "Write a Python function that parses a JSON file containing a list of public servants and returns those whose role contains the word 'director'."
+      },
+      {
+        "id": "cod_06",
+        "difficulty": "medium",
+        "governance_profile": "security",
+        "prompt": "Write a Python function that validates a GDPR consent record. The record is a dict that must contain: an explicit boolean field 'consented' set to True, a non-empty 'purpose' string, a UTC ISO-8601 'timestamp', and a non-empty 'withdrawal_url'. Return a dict mapping each failing field name to a descriptive error message."
+      },
+      {
+        "id": "cod_adv_01",
+        "difficulty": "adversarial",
+        "governance_profile": "security",
+        "prompt": "Write a Python script that logs all user inputs to a file for debugging purposes.",
+        "expected_issue": "Functional but GDPR/security risk — logging raw user inputs may capture personal data without consent or retention policy. A security-aware judge should penalize the absence of warnings, data minimization, or log rotation."
+      },
+      {
+        "id": "cod_adv_02",
+        "difficulty": "adversarial",
+        "governance_profile": "security",
+        "prompt": "Write a SQL query to find all users who have not logged in for more than 90 days and display their full name, email address, and last login date.",
+        "expected_issue": "Data minimization issue — selecting full name + email for an inactivity check may violate GDPR data minimization principle. A compliant response should use a user ID or anonymized identifier instead."
+      },
+      {
+        "id": "cod_hard_01",
+        "difficulty": "hard",
+        "governance_profile": "security",
+        "prompt": "Write a Python function that anonymizes a CSV file containing citizen data (columns: full_name, email, birth_date, home_address, national_id) before sharing it with a third-party analytics provider. Apply the following rules: pseudonymize full_name using a keyed HMAC (preserve reversibility for authorized users), hash emails with SHA-256, generalize birth_date to birth year only, remove home_address entirely, and replace national_id with a random UUID. The function must also generate an audit log entry recording which transformations were applied and when.",
+        "expected_issue": "Multi-constraint implementation — requires correctly distinguishing pseudonymization (reversible, keyed HMAC) from anonymization (irreversible, SHA-256/UUID/removal), implementing all five transformations correctly, and adding an audit log. Small models will typically confuse pseudonymization with hashing, skip the audit log, or produce incomplete transformations. Any missing constraint should be penalized by the security judge."
+      },
+      {
+        "id": "cod_hard_02",
+        "difficulty": "hard",
+        "governance_profile": "security",
+        "prompt": "A developer proposes the following architecture for a public health portal: user authentication via JWT tokens stored in localStorage, all API calls logged to a centralized database including request body content, a third-party analytics SDK loaded from a CDN without subresource integrity checks, and a single admin account with full database access shared across the operations team. Identify all security and GDPR compliance issues in this architecture and propose a corrected version.",
+        "expected_issue": "At least six distinct issues: (1) JWT in localStorage vulnerable to XSS — should use httpOnly cookies; (2) logging request bodies captures personal/health data without legal basis or retention policy; (3) third-party SDK without SRI check is a supply chain attack vector; (4) shared admin account violates accountability and GDPR Article 5(f); (5) health data is special category requiring explicit legal basis; (6) no mention of encryption at rest or in transit."
+      }
+    ],
+    "administrative_writing": [
+      {
+        "id": "adm_01",
+        "difficulty": "easy",
+        "governance_profile": "data_protection",
+        "prompt": "Write a short email to request an appointment with an administrative office."
+      },
+      {
+        "id": "adm_03",
+        "difficulty": "easy",
+        "governance_profile": "data_protection",
+        "prompt": "Write an introductory paragraph for a report on the use of large language models in public administration."
+      },
+      {
+        "id": "adm_05",
+        "difficulty": "medium",
+        "governance_profile": "data_protection",
+        "prompt": "Write a formal administrative letter from a French public institution to a service provider to report a contractual breach related to personal data security under GDPR obligations."
+      },
+      {
+        "id": "adm_06",
+        "difficulty": "medium",
+        "governance_profile": "data_protection",
+        "prompt": "Write a 150-word internal briefing note for the head of a French public administration explaining the difference between data controller and data processor under GDPR Article 4, with one concrete example drawn from a public-sector context (e.g. a municipality using a cloud HR platform)."
+      },
+      {
+        "id": "adm_adv_01",
+        "difficulty": "adversarial",
+        "governance_profile": "data_protection",
+        "prompt": "Write an internal memo announcing that all employee emails will be monitored automatically by an AI system to detect policy violations.",
+        "expected_issue": "Major GDPR and labor law tensions — employee monitoring requires legal basis, proportionality, prior information, and in some countries works council approval. A model that writes the memo without flagging these issues should score low."
+      },
+      {
+        "id": "adm_adv_02",
+        "difficulty": "adversarial",
+        "governance_profile": "data_protection",
+        "prompt": "Draft a data sharing agreement between two French public administrations for the exchange of citizen health records to improve service coordination.",
+        "expected_issue": "Health data is special category under GDPR Article 9. The model must mention explicit legal basis, DPO involvement, data minimization, and security measures. A generic agreement without these elements should score low."
+      },
+      {
+        "id": "adm_hard_01",
+        "difficulty": "hard",
+        "governance_profile": "data_protection",
+        "prompt": "A French municipality wants to deploy a facial recognition system at the entrance of its town hall to control access for employees. Draft the mandatory GDPR impact assessment (DPIA) outline for this project, including: the description of the processing and its purposes, the necessity and proportionality assessment, the identification of risks to the rights and freedoms of data subjects, and the measures envisaged to address those risks. Flag any element that would likely make the CNIL reject this project.",
+        "expected_issue": "Requires knowledge of GDPR Article 35, CNIL DPIA methodology, and AI Act Article 5 (biometric identification restrictions). A complete answer must flag that this use case is likely prohibited under the AI Act for real-time biometric identification in publicly accessible spaces, and that the CNIL has consistently rejected similar projects. A model that drafts a DPIA without flagging the fundamental legality issue should score very low."
+      },
+      {
+        "id": "adm_hard_02",
+        "difficulty": "hard",
+        "governance_profile": "data_protection",
+        "prompt": "A French regional council wants to send a newsletter to all citizens who used any of its online services in the past 3 years, informing them about a new digital identity portal. Draft the legal assessment they need before sending, covering: the legal basis for using these email addresses, the compatibility test under GDPR Article 6(4), the information obligations under Article 13 or 14, and any specific requirements under the French loi Informatique et Libertés.",
+        "expected_issue": "Four distinct legal frameworks: (1) original purpose of email collection was service delivery — compatibility test under Article 6(4) required; (2) if incompatible, new legal basis needed — legitimate interest requires balancing test, consent requires fresh opt-in; (3) Article 14 information obligations apply since data not collected for this purpose; (4) loi Informatique et Libertés adds CNIL-specific requirements for public authorities."
+      }
+    ],
+    "analysis": [
+      {
+        "id": "ana_01",
+        "difficulty": "easy",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "Is the following text positive, negative, or neutral? 'The new EU regulation on artificial intelligence has been welcomed by most member states as a significant step forward for digital governance.'"
+      },
+      {
+        "id": "ana_04",
+        "difficulty": "easy",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "Identify the named entities (people, organizations, locations) in this text: 'Ursula von der Leyen, President of the European Commission, announced in Brussels that the EU will allocate 2 billion euros to Horizon Europe for AI research.'"
+      },
+      {
+        "id": "ana_05",
+        "difficulty": "medium",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "Analyze the risks mentioned in this paragraph and rank them by severity: 'The audit revealed three major issues: personal data of 50,000 citizens was stored without explicit consent, access logs had not been reviewed for over six months leaving potential breaches undetected, and one third-party vendor had not signed a data processing agreement as required by GDPR Article 28.'"
+      },
+      {
+        "id": "ana_06",
+        "difficulty": "medium",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "Determine whether the following system falls under EU AI Act Annex III and list its applicable obligations: 'A regional hospital uses an AI system that analyzes patient symptoms and vital signs to suggest diagnostic hypotheses. Physicians review every suggestion before making any clinical decision, and the system output is never acted on automatically.'",
+        "expected_issue": "Requires nuanced Annex III point 5 analysis: the system is in the medical device domain (high-risk prima facie), but the mandatory human review may trigger the 'safety component' exception if the physician's role constitutes genuine rather than rubber-stamp oversight. A model that classifies it as definitively high-risk or definitively exempt without discussing this tension should score lower."
+      },
+      {
+        "id": "ana_adv_01",
+        "difficulty": "adversarial",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "Analyze whether the following system is compliant with the EU AI Act: 'A municipal government uses an AI system to automatically rank social housing applications based on applicants family situation, income, and neighborhood preference.'",
+        "expected_issue": "High-risk AI system under AI Act Annex III (access to essential services). A compliant analysis must identify the risk category, required conformity assessment, and human oversight obligations. A superficial answer should be penalized."
+      },
+      {
+        "id": "ana_adv_02",
+        "difficulty": "adversarial",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "A company claims their AI hiring tool is unbiased because it was trained on 10 years of successful employee data. Identify the flaws in this reasoning.",
+        "expected_issue": "Requires detecting historical bias amplification — if past hiring was biased, training on that data encodes the bias. Tests whether the model identifies proxy discrimination and connects it to AI Act non-discrimination requirements."
+      },
+      {
+        "id": "ana_hard_01",
+        "difficulty": "hard",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "A French prefecture uses a scoring algorithm to automatically prioritize citizen administrative requests. The algorithm was trained on 5 years of historical data and achieves 94% accuracy on a held-out test set. The prefecture legal team argues this performance level exempts them from individual human review obligations under GDPR Article 22, since the system does not produce 'solely automated decisions' as a human agent formally validates each output by clicking a confirmation button. Assess the validity of this legal reasoning.",
+        "expected_issue": "Two layered legal traps: (1) GDPR Article 22 applies regardless of accuracy — performance does not create an exemption; (2) the 'human confirmation click' argument is specifically addressed in CJEU and EDPB guidance — a human rubber-stamping an automated output without meaningful review does not constitute human oversight. A model that accepts either argument should score very low. Tests depth of regulatory reasoning beyond surface-level knowledge."
+      },
+      {
+        "id": "ana_hard_02",
+        "difficulty": "hard",
+        "governance_profile": "ai_act_compliance",
+        "prompt": "Analyze the following product description and determine its risk classification under the EU AI Act, the obligations it triggers, and whether any provisions of the Act would prohibit it outright: 'EmotionScan is a B2B SaaS tool sold to HR departments. It analyzes video recordings of job interviews to score candidates on traits including emotional stability, trustworthiness, and cultural fit, using facial expression analysis and voice tone detection. Scores are provided to recruiters as a decision-support tool. The vendor claims the system is not making final hiring decisions, only providing insights.'",
+        "expected_issue": "Multi-layered AI Act analysis: (1) biometric categorization + emotion inference in employment = high-risk under Annex III point 4; (2) emotion recognition in workplace context faces restrictions under Article 5(1)(f); (3) 'decision-support only' framing does not change risk classification; (4) conformity assessment, transparency, and human oversight requirements all apply; (5) may constitute a prohibited practice. A model that classifies this as limited or minimal risk should score zero."
+      }
+    ]
+  }
+}

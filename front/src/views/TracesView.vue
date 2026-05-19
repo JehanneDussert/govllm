@@ -4,14 +4,12 @@
 -->
 
 <script setup lang="ts">
-// Imports
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
-import type { TracesResponse, TraceItem } from '@/api/client'
+import type { TraceItem } from '@/api/client'
 import { modelShortName as shortName } from '@/utils/model'
 import { scoreClass } from '@/utils/score'
 
-// Constants
 const BENCHMARK_MODELS = [
   'ollama/phi4-mini',
   'ollama/gemma3:4b',
@@ -19,25 +17,55 @@ const BENCHMARK_MODELS = [
   'ollama/qwen3:1.7b',
 ]
 
-// Reactive states
-const data = ref<TracesResponse | null>(null)
+const PAGE_SIZE = 20
+
+const allTraces = ref<TraceItem[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const modelFilter = ref('')
-const limitFilter = ref(50)
+const judgeFilter = ref('')
+const page = ref(0)
 const selected = ref<TraceItem | null>(null)
 
 async function refresh() {
   loading.value = true
   error.value = null
+  selected.value = null
+  page.value = 0
   try {
-    const res = await api.traces(limitFilter.value, modelFilter.value || undefined)
-    data.value = res.data
+    const res = await api.traces(200, modelFilter.value || undefined)
+    allTraces.value = res.data.traces
   } catch {
     error.value = 'Failed to fetch traces — is observability running?'
   } finally {
     loading.value = false
   }
+}
+
+const filtered = computed(() => {
+  if (!judgeFilter.value) return allTraces.value
+  return allTraces.value.filter(t => t.judge_model === judgeFilter.value)
+})
+
+const totalPages = computed(() => Math.ceil(filtered.value.length / PAGE_SIZE))
+
+const pageTraces = computed(() =>
+  filtered.value.slice(page.value * PAGE_SIZE, (page.value + 1) * PAGE_SIZE)
+)
+
+function prevPage() {
+  if (page.value > 0) page.value--
+}
+function nextPage() {
+  if (page.value < totalPages.value - 1) page.value++
+}
+
+function onModelFilterChange() {
+  page.value = 0
+  refresh()
+}
+function onJudgeFilterChange() {
+  page.value = 0
 }
 
 function formatTime(ts: string) {
@@ -48,15 +76,11 @@ function formatTime(ts: string) {
   })
 }
 
-function modelColorIndex(model: string) {
-  const idx = BENCHMARK_MODELS.indexOf(model)
-  return idx >= 0 ? idx : 0
-}
-
 const MODEL_TAG_CLASSES = ['tag-cyan', 'tag-purple', 'tag-green', 'tag-orange']
 
 function modelClass(model: string) {
-  return MODEL_TAG_CLASSES[modelColorIndex(model)]
+  const idx = BENCHMARK_MODELS.indexOf(model)
+  return MODEL_TAG_CLASSES[idx >= 0 ? idx : 0]
 }
 
 function latencyClass(ms: number) {
@@ -67,14 +91,11 @@ function latencyClass(ms: number) {
 
 function extractText(raw: string): string {
   if (!raw) return '—'
-  // Extract user content from dict
   try {
-    // Try to parse user content
     const userMatch =
       raw.match(/'role':\s*'user',\s*'content':\s*'([^']+)'/i) ||
       raw.match(/"role":\s*"user",\s*"content":\s*"([^"]+)"/i)
     if (userMatch) return userMatch?.[1] ?? ''
-
     const contentMatch =
       raw.match(/'content':\s*'([^']{3,120})'/i) || raw.match(/"content":\s*"([^"]{3,120})"/i)
     if (contentMatch) return contentMatch?.[1] ?? ''
@@ -88,7 +109,6 @@ function extractOutput(raw: string): string {
     const contentMatch =
       raw.match(/'content':\s*["']([^"']{3,200})/i) || raw.match(/"content":\s*["']([^"']{3,200})/i)
     if (contentMatch && contentMatch[1]) return contentMatch[1].slice(0, 200)
-    else return ''
   } catch {}
   return raw.slice(0, 200)
 }
@@ -101,34 +121,39 @@ onMounted(refresh)
     <div class="page-header">
       <h1 class="page-title">Traces</h1>
       <div class="filters">
-        <select v-model="modelFilter" class="filter-select" @change="refresh">
+        <select v-model="modelFilter" class="filter-select" @change="onModelFilterChange">
           <option value="">all models</option>
           <option v-for="m in BENCHMARK_MODELS" :key="m" :value="m">
             {{ shortName(m) }}
           </option>
         </select>
-        <select v-model="limitFilter" class="filter-select" @change="refresh">
-          <option :value="20">20</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
+        <select v-model="judgeFilter" class="filter-select" @change="onJudgeFilterChange">
+          <option value="">all judges</option>
+          <option v-for="m in BENCHMARK_MODELS" :key="m" :value="m">
+            {{ shortName(m) }}
+          </option>
         </select>
         <button class="refresh-btn" @click="refresh" :class="{ spinning: loading }">↻</button>
       </div>
     </div>
 
-    <div v-if="loading && !data" class="loading-state">
+    <div v-if="loading && !allTraces.length" class="loading-state">
       <div class="loading-dots"><span /><span /><span /></div>
     </div>
 
     <div v-else-if="error" class="error-state">{{ error }}</div>
 
-    <div v-else-if="data" class="traces-content">
-      <div class="table-meta">{{ data.total }} traces</div>
+    <div v-else-if="allTraces.length" class="traces-content">
+      <div class="table-meta">
+        {{ filtered.length }} traces
+        <span v-if="totalPages > 1"> · page {{ page + 1 }}/{{ totalPages }}</span>
+      </div>
 
       <div class="traces-table">
         <div class="table-head">
           <div class="col col-time">TIME</div>
           <div class="col col-model">MODEL</div>
+          <div class="col col-judge">JUDGE</div>
           <div class="col col-latency">LATENCY</div>
           <div class="col col-score">SCORE</div>
           <div class="col col-input">INPUT</div>
@@ -136,7 +161,7 @@ onMounted(refresh)
         </div>
 
         <div
-          v-for="trace in data.traces"
+          v-for="trace in pageTraces"
           :key="trace.trace_id"
           class="table-row"
           :class="{ expanded: selected?.trace_id === trace.trace_id }"
@@ -148,6 +173,13 @@ onMounted(refresh)
             <span class="model-tag" :class="modelClass(trace.model)">
               {{ shortName(trace.model) }}
             </span>
+          </div>
+
+          <div class="col col-judge">
+            <span v-if="trace.judge_model" class="model-tag" :class="modelClass(trace.judge_model)">
+              {{ shortName(trace.judge_model) }}
+            </span>
+            <span v-else class="no-score">—</span>
           </div>
 
           <div class="col col-latency">
@@ -170,7 +202,6 @@ onMounted(refresh)
           <div class="col col-input col-truncate">{{ extractText(trace.input_preview) }}</div>
           <div class="col col-output col-truncate">{{ extractOutput(trace.output_preview) }}</div>
 
-          <!-- Expanded -->
           <template v-if="selected?.trace_id === trace.trace_id">
             <div class="expanded-content">
               <div class="expanded-row">
@@ -185,14 +216,19 @@ onMounted(refresh)
               </div>
               <div class="expanded-meta">
                 <span>{{ trace.trace_id }}</span>
-                <span v-if="trace.eval_score !== null"
-                  >· score {{ trace.eval_score?.toFixed(3) }}</span
-                >
+                <span v-if="trace.judge_model">· judge {{ shortName(trace.judge_model) }}</span>
+                <span v-if="trace.eval_score !== null">· score {{ trace.eval_score?.toFixed(3) }}</span>
                 <span>· {{ trace.latency_ms.toFixed(2) }}s</span>
               </div>
             </div>
           </template>
         </div>
+      </div>
+
+      <div v-if="totalPages > 1" class="pagination">
+        <button class="page-btn" :disabled="page === 0" @click="prevPage">← prev</button>
+        <span class="page-info">{{ page + 1 }} / {{ totalPages }}</span>
+        <button class="page-btn" :disabled="page === totalPages - 1" @click="nextPage">next →</button>
       </div>
     </div>
   </div>
@@ -272,7 +308,7 @@ onMounted(refresh)
 
 .table-head {
   display: grid;
-  grid-template-columns: 72px 100px 76px 56px 1fr 1fr;
+  grid-template-columns: 72px 96px 96px 76px 56px 1fr 1fr;
   padding: 8px 16px;
   background: var(--bg-3);
   border-bottom: 1px solid var(--border);
@@ -285,7 +321,7 @@ onMounted(refresh)
 
 .table-row {
   display: grid;
-  grid-template-columns: 72px 100px 76px 56px 1fr 1fr;
+  grid-template-columns: 72px 96px 96px 76px 56px 1fr 1fr;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
@@ -351,20 +387,11 @@ onMounted(refresh)
   font-family: var(--font-mono);
   font-size: 12px;
 }
-.green {
-  color: var(--green);
-}
-.yellow {
-  color: var(--yellow);
-}
-.red {
-  color: var(--red);
-}
-.no-score {
-  color: var(--text-dim);
-}
+.green { color: var(--green); }
+.yellow { color: var(--yellow); }
+.red { color: var(--red); }
+.no-score { color: var(--text-dim); }
 
-/* Expanded */
 .expanded-content {
   grid-column: 1 / -1;
   padding: 14px 0 6px;
@@ -407,7 +434,37 @@ onMounted(refresh)
   gap: 8px;
 }
 
-/* States */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.page-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.page-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.page-info {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 .loading-state,
 .error-state {
   display: flex;
