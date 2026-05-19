@@ -148,7 +148,7 @@ BUILT_IN_PROFILES = [
         },
     ),
     GovernanceProfile(
-        id="accessibility",
+        id="accessibility_inclusion",
         label="Accessibility & Inclusion",
         description="Evaluates language clarity, cognitive load and inclusive design (RGAA, FALC).",
         criteria_config={
@@ -197,10 +197,10 @@ DEFAULT_CONFIG = JudgeConfig(
             judge_system_prompt=None,
         ),
         UseCase(
-            id="summary",
+            id="summarization",
             label="Summarization",
             description="Summarizing documents or long texts",
-            default_profile_id="accessibility",
+            default_profile_id="accessibility_inclusion",
             judge_system_prompt=(
                 "You are evaluating a summarization response. "
                 "Focus on language clarity, cognitive load, and whether the summary is faithful to the source. "
@@ -211,7 +211,7 @@ DEFAULT_CONFIG = JudgeConfig(
             id="translation",
             label="Translation",
             description="Translation between languages",
-            default_profile_id="accessibility",
+            default_profile_id="accessibility_inclusion",
             judge_system_prompt=(
                 "You are evaluating a translation response. "
                 "Focus on faithfulness to the source, natural language register, and cultural appropriateness. "
@@ -230,7 +230,7 @@ DEFAULT_CONFIG = JudgeConfig(
             ),
         ),
         UseCase(
-            id="legal",
+            id="administrative_writing",
             label="Administrative writing",
             description="Official or administrative document drafting",
             default_profile_id="ai_act_compliance",

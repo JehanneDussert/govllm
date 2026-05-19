@@ -63,6 +63,13 @@ async def get_case_results(
     return await gt_service.get_case_results(case_id, question_order)
 
 
+@router.get("/validity/best-judges", response_model=dict[str, str])
+async def get_best_judges():
+    """Best judge per criterion based on mean agreement against ground truth corpus.
+    Returns {criterion_id: judge_model}. Only includes criteria with ≥3 evaluated cases."""
+    return await gt_service.get_best_judges_per_criterion()
+
+
 @router.get("/validity", response_model=ValidityReport)
 async def get_validity():
     """Validity report: agreement rate per judge × criterion × sub-question."""

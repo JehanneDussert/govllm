@@ -50,7 +50,7 @@ async def quarantine_model(model: str, note: str | None = Query(None), criterion
 @router.post("/sas", response_model=SasResult)
 async def sas(req: SasRequest):
     """
-    Sas de qualification — scores the model against Redis eval history,
+    SAS qualification — scores the model against Redis eval history,
     compares to score_threshold and advances or quarantines accordingly.
     """
     if req.model not in settings.benchmark_models:

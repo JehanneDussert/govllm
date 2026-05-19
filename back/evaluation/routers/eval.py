@@ -14,6 +14,8 @@ class EvalRequest(BaseModel):
     model: str
     question: str
     answer: str
+    latency_ms: int | None = None
+    started_at: str | None = None
 
 
 @router.post("/score", status_code=202)
@@ -25,6 +27,8 @@ async def trigger_eval(req: EvalRequest, background_tasks: BackgroundTasks):
         model=req.model,
         question=req.question,
         answer=req.answer,
+        latency_ms=req.latency_ms,
+        started_at=req.started_at,
     )
     return {"status": "evaluating", "trace_id": req.trace_id}
 

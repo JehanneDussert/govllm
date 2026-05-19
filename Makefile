@@ -1,8 +1,9 @@
 .PHONY: help dev prod down build rebuild logs ps \
         pull-models \
         flush-redis flush-judge flush-scores \
+        benchmark benchmark-generate benchmark-evaluate \
         gt-seed gt-status gt-kill gt-clean gt-run gt-run-reversed gt-log gt-log-reversed gt-summary \
-        lint test clean reset
+        lint format clean reset
 
 # Config
 BASE         = infra/docker-compose.yml
@@ -16,37 +17,36 @@ GT_CRITERIA = transparency data_privacy non_manipulation human_oversight prompt_
 GT_LOG_ORIG = /tmp/gt_run_original.log
 GT_LOG_REV  = /tmp/gt_run_reversed.log
 
-# Help 
+# Help
 help:
 	@echo ""
-	@echo "  ── Environments ─────────────────────────────────"
-	@echo "  make dev                   Start all services with hot reload"
-	@echo "  make prod                  Start all services (built images + nginx front)"
+	@echo "  ── Quickstart ───────────────────────────────────"
+	@echo "  make dev                   Start all services (hot reload)"
+	@echo "  make pull-models           Pull all Ollama models"
 	@echo "  make down                  Stop all services"
 	@echo ""
 	@echo "  ── Build ────────────────────────────────────────"
 	@echo "  make build                 Build microservice images"
 	@echo "  make rebuild               Build without cache + recreate all"
 	@echo "  make rebuild s=evaluation  Rebuild a single service"
+	@echo "  make prod                  Start built images + nginx front"
 	@echo ""
 	@echo "  ── Logs & status ────────────────────────────────"
 	@echo "  make logs                  Follow logs (all services)"
 	@echo "  make logs s=evaluation     Follow logs (one service)"
 	@echo "  make ps                    Container status"
 	@echo ""
-	@echo "  ── Models ───────────────────────────────────────"
-	@echo "  make pull-models           Pull all Ollama models"
-	@echo ""
 	@echo "  ── Redis ────────────────────────────────────────"
 	@echo "  make flush-redis           Flush entire Redis DB (⚠ all data)"
 	@echo "  make flush-judge           Delete judge config only"
 	@echo "  make flush-scores          Delete score matrix + eval results"
 	@echo ""
+	@echo "  ── Benchmark ────────────────────────────────────"
+	@echo "  make benchmark             Full pipeline: generate answers + evaluate"
+	@echo "  make benchmark TIMEOUT=600 Custom timeout per call"
+	@echo ""
 	@echo "  ── Ground truth corpus ──────────────────────────"
 	@echo "  make gt-seed               DROP+CREATE tables + insert 34 cases"
-	@echo "  make gt-status             Check if a run is active in the container"
-	@echo "  make gt-kill               Kill all active groundtruth processes"
-	@echo "  make gt-clean              Kill + clear log files"
 	@echo "  make gt-run                Run all cases, original question order"
 	@echo "  make gt-run-reversed       Run all cases, reversed question order"
 	@echo "  make gt-log                Stream log (original order)"
@@ -54,22 +54,21 @@ help:
 	@echo "  make gt-summary            Print SUMMARY block from original log"
 	@echo ""
 	@echo "  ── Quality ──────────────────────────────────────"
-	@echo "  make lint                  Ruff lint on back/"
-	@echo "  make test                  Run pytest"
+	@echo "  make lint                  Ruff + Prettier check"
+	@echo "  make format                Ruff + Prettier autofix"
 	@echo ""
 	@echo "  ── Cleanup ──────────────────────────────────────"
 	@echo "  make clean                 Remove volumes + built images"
 	@echo "  make reset                 Full reset (clean + dev)"
 	@echo ""
 
-# Environments 
-# TODO: check hot reload seems broken
+# Environments
 dev:
 	@cp -n infra/.env.example infra/.env 2>/dev/null && echo "Created .env from .env.example" || true
 	$(COMPOSE_DEV) up -d
 	@echo ""
 	@echo "  Dev stack running with hot reload."
-	@echo "  Edit any file in back/ uvicorn reloads automatically."
+	@echo "  Edit any file in back/ — uvicorn reloads automatically."
 	@echo "  Frontend: cd front && pnpm dev"
 	@echo ""
 
@@ -84,7 +83,7 @@ prod:
 down:
 	$(COMPOSE_DEV) down 2>/dev/null || $(COMPOSE_PROD) down
 
-# Build 
+# Build
 build:
 	$(COMPOSE_PROD) build llm-gateway observability evaluation front
 
@@ -97,7 +96,7 @@ else
 	$(COMPOSE_PROD) up -d --force-recreate llm-gateway observability evaluation front
 endif
 
-# Logs and status 
+# Logs and status
 logs:
 ifdef s
 	$(COMPOSE_DEV) logs -f $(s)
@@ -108,14 +107,14 @@ endif
 ps:
 	$(COMPOSE_DEV) ps
 
-# Models 
+# Models
 pull-models:
 	$(COMPOSE_DEV) exec ollama ollama pull gemma3:4b
 	$(COMPOSE_DEV) exec ollama ollama pull mistral:7b
 	$(COMPOSE_DEV) exec ollama ollama pull phi4-mini
 	$(COMPOSE_DEV) exec ollama ollama pull qwen3:1.7b
 
-# Redis 
+# Redis
 flush-redis:
 	@echo "⚠  Flushing entire Redis DB..."
 	$(COMPOSE_DEV) exec redis redis-cli flushdb
@@ -132,13 +131,25 @@ flush-scores:
 		xargs -r sh -c 'docker exec redis redis-cli del "$$@"' _
 	@echo "Score matrix and eval results cleared."
 
+# Benchmark
+TIMEOUT ?= 120
+
+benchmark:
+	python scripts/run_full_benchmark.py --timeout $(TIMEOUT)
+
+benchmark-generate:
+	python scripts/run_full_benchmark.py --only-generate --timeout $(TIMEOUT)
+
+benchmark-evaluate:
+	python scripts/run_full_benchmark.py --only-evaluate --timeout $(TIMEOUT)
+
 # Ground truth corpus
 gt-seed:
 	MSYS_NO_PATHCONV=1 docker exec evaluation python /app/scripts/seed_groundtruth.py
 
 gt-status:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation python -c \
-	  "import glob; pids=[p.split('/')[2] for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/run_groundtruth' in open(p,'rb').read()]; print(f'{len(pids)} run(s) actif(s): {pids}') if pids else print('Aucun run en cours.')"
+	  "import glob; pids=[p.split('/')[2] for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/run_groundtruth' in open(p,'rb').read()]; print(f'{len(pids)} active run(s): {pids}') if pids else print('No active run.')"
 
 gt-kill:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation python -c \
@@ -153,14 +164,14 @@ gt-run: gt-clean
 	  "PYTHONUNBUFFERED=1 python -u /app/scripts/run_groundtruth.py \
 	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
 	   --question-order original > $(GT_LOG_ORIG) 2>&1"
-	@echo "Run original lancé → make gt-log pour suivre."
+	@echo "Original run started → use make gt-log to follow."
 
 gt-run-reversed: gt-clean
 	@MSYS_NO_PATHCONV=1 docker exec -d evaluation sh -c \
 	  "PYTHONUNBUFFERED=1 python -u /app/scripts/run_groundtruth.py \
 	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
 	   --question-order reversed > $(GT_LOG_REV) 2>&1"
-	@echo "Run reversed lancé → make gt-log-reversed pour suivre."
+	@echo "Reversed run started → use make gt-log-reversed to follow."
 
 gt-log:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation tail -f $(GT_LOG_ORIG)
@@ -181,11 +192,6 @@ format:
 	$(UV) tool run ruff check --fix back/
 	$(UV) tool run ruff format back/
 	cd front && npx prettier --write "src/**/*.{ts,vue}"
-
-# TODO: add some tests
-# test:
-# 	PYTHONPATH=back/shared/src:back/llm-gateway:back/observability:back/evaluation \
-# 	$(UV) run pytest back/ -v
 
 # Cleanup
 clean:

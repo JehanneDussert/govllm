@@ -225,8 +225,8 @@ watch(
           </div>
         </div>
 
-        <!-- Score async sous chaque message assistant terminé -->
-        <!-- key stable = traceId pour éviter remontage -->
+        <!-- Async governance score badge below each completed assistant message -->
+        <!-- stable key = traceId to avoid component remount -->
         <MessageScore
           v-if="
             msg.role === 'assistant' &&

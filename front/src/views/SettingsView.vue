@@ -79,7 +79,7 @@ function addProfile() {
     criteria_config: Object.fromEntries(
       store.config.criteria
         .filter(c => c.enabled)
-        .map(c => [c.id, { enabled: true, weight: c.weight }])
+        .map(c => [c.id, { enabled: true, weight: c.weight, calibration_notes: '', min_score: null }])
     ),
   })
   newProfile.value = { label: '', description: '' }
@@ -146,15 +146,55 @@ function setCalNotes(profileId: string, criterionId: string, value: string) {
   const profile = store.config.profiles.find(p => p.id === profileId)
   if (!profile) return
   if (!profile.criteria_config[criterionId]) {
-    profile.criteria_config[criterionId] = { enabled: true, weight: 1.0, calibration_notes: value }
+    profile.criteria_config[criterionId] = { enabled: true, weight: 1.0, calibration_notes: value, min_score: null }
   } else {
     profile.criteria_config[criterionId].calibration_notes = value
   }
 }
 
 // Per-profile judge panels
+async function autoAssignPanel(profileId: string) {
+  if (!store.config) return
+  let mapping: Record<string, string>
+  try {
+    const res = await api.groundtruthBestJudges()
+    mapping = res.data
+  } catch {
+    return
+  }
+  if (!Object.keys(mapping).length) return
+
+  // Group criteria by best judge
+  const byJudge: Record<string, string[]> = {}
+  for (const [criterion, judge] of Object.entries(mapping)) {
+    if (!byJudge[judge]) byJudge[judge] = []
+    byJudge[judge].push(criterion)
+  }
+
+  // Replace or create the panel for this profile
+  let panel = store.config.panels.find(p => p.profile_id === profileId)
+  if (!panel) {
+    panel = { profile_id: profileId, judges: [] }
+    store.config.panels.push(panel)
+  }
+  panel.judges = Object.entries(byJudge).map(([model, criteria]) => ({
+    model,
+    persona_prompt: '',
+    assigned_criteria: criteria,
+  }))
+}
+
 function panelFor(profileId: string) {
   return store.config?.panels.find(p => p.profile_id === profileId)?.judges ?? []
+}
+
+function generatorConflicts(profileId: string): string[] {
+  if (!store.config) return []
+  const panelModels = panelFor(profileId).map(j => j.model)
+  const preferredModels = store.config.use_cases
+    .filter(uc => uc.default_profile_id === profileId && uc.preferred_model)
+    .map(uc => uc.preferred_model as string)
+  return panelModels.filter(m => preferredModels.includes(m))
 }
 
 function addJudgeToPanel(profileId: string) {
@@ -266,6 +306,18 @@ onMounted(async () => {
                           <span class="weight-label">weight</span>
                           <input type="number" v-model.number="criterion.weight" min="0.1" max="3" step="0.1" class="weight-input" :disabled="!criterion.enabled" />
                         </div>
+                        <div class="weight-control">
+                          <span class="weight-label">min θ</span>
+                          <input
+                            type="number"
+                            :value="profile.criteria_config[criterion.id]?.min_score ?? ''"
+                            @input="(e) => { const v = parseFloat((e.target as HTMLInputElement).value); if (!profile.criteria_config[criterion.id]) profile.criteria_config[criterion.id] = { enabled: true, weight: criterion.weight, calibration_notes: '', min_score: null }; profile.criteria_config[criterion.id].min_score = isNaN(v) ? null : Math.min(1, Math.max(0, v)) }"
+                            min="0" max="1" step="0.05"
+                            class="weight-input"
+                            :disabled="!criterion.enabled"
+                            placeholder="—"
+                          />
+                        </div>
                       </div>
                     </div>
                     <textarea
@@ -323,7 +375,14 @@ onMounted(async () => {
                       </div>
                     </div>
                   </div>
-                  <button class="add-dashed-btn" @click="addJudgeToPanel(profile.id)">+ Add judge to panel</button>
+                  <div class="panel-actions">
+                    <button class="add-dashed-btn" @click="addJudgeToPanel(profile.id)">+ Add judge to panel</button>
+                    <button class="btn-auto-assign" @click="autoAssignPanel(profile.id)" title="Pre-fill panel using best judge per criterion from ground truth validity data">Auto-assign from ground truth</button>
+                  </div>
+                  <div v-if="generatorConflicts(profile.id).length" class="panel-warning">
+                    ⚠ {{ generatorConflicts(profile.id).map(m => m.replace('ollama/', '')).join(', ') }}
+                    {{ generatorConflicts(profile.id).length === 1 ? 'is' : 'are' }} also the preferred generator for a use case using this profile — a model should not judge its own outputs.
+                  </div>
                 </div>
 
               </div>
@@ -502,6 +561,11 @@ onMounted(async () => {
               </div>
             </label>
           </div>
+          <div v-if="store.config.routing_strategy === 'progression'" class="alpha-control">
+            <label class="field-label">α — balance instantaneous score vs trajectory <span class="field-hint">(0 = trajectory only · 1 = score only)</span></label>
+            <input type="range" v-model.number="store.config.alpha" min="0" max="1" step="0.05" class="alpha-slider" />
+            <span class="alpha-value">{{ (store.config.alpha ?? 0.5).toFixed(2) }}</span>
+          </div>
         </section>
 
         <section class="settings-section">
@@ -521,6 +585,10 @@ onMounted(async () => {
             <div class="threshold-field">
               <label class="field-label">Max error rate</label>
               <input type="number" v-model.number="store.config.error_rate_threshold" class="field-input" placeholder="e.g. 0.05" min="0" max="1" step="0.01" />
+            </div>
+            <div class="threshold-field">
+              <label class="field-label">Variance threshold ε <span class="field-hint">— σ ≥ ε flags for human review</span></label>
+              <input type="number" v-model.number="store.config.variance_threshold" class="field-input" placeholder="e.g. 0.1" min="0" max="1" step="0.01" />
             </div>
           </div>
         </section>
@@ -649,6 +717,9 @@ onMounted(async () => {
 .panel-criterion-chip { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; transition: all 0.15s; }
 .panel-criterion-chip input { display: none; }
 .panel-criterion-chip.active { color: var(--accent); border-color: rgba(0,229,255,0.4); background: var(--accent-dim); }
+.panel-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn-auto-assign { font-size: 11px; color: var(--accent); border: 1px dashed rgba(0,229,255,0.4); border-radius: 6px; padding: 7px 14px; background: none; cursor: pointer; transition: all 0.15s; }
+.btn-auto-assign:hover { background: var(--accent-dim); border-style: solid; }
 
 /* Arena judge panel */
 .arena-panel-list { display: flex; flex-direction: column; gap: 4px; }
@@ -658,6 +729,12 @@ onMounted(async () => {
 .arena-judge-name { font-size: 12px; color: var(--text); flex: 1; }
 .arena-judge-active { font-size: 10px; color: var(--accent); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; padding: 1px 7px; }
 .arena-panel-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.panel-warning { font-size: 11px; color: var(--yellow, #e8a838); background: rgba(232, 168, 56, 0.08); border: 1px solid rgba(232, 168, 56, 0.25); border-radius: 6px; padding: 7px 10px; margin-top: 8px; line-height: 1.5; }
+
+/* Alpha slider */
+.alpha-control { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; margin-top: 4px; }
+.alpha-slider { flex: 1; accent-color: var(--accent); }
+.alpha-value { font-family: var(--font-mono); font-size: 12px; color: var(--accent); min-width: 32px; text-align: right; }
 
 /* Routing strategies */
 .routing-strategies { display: flex; flex-direction: column; gap: 4px; }
@@ -670,7 +747,7 @@ onMounted(async () => {
 .strategy-desc { font-size: 11px; color: var(--text-dim); }
 
 /* Thresholds */
-.thresholds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.thresholds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .threshold-field { display: flex; flex-direction: column; gap: 6px; }
 
 /* Toast */

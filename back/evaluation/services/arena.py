@@ -264,7 +264,8 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
         ))
 
     sigma = _compute_sigma(judges)
-    logger.info(f"[arena] Session {session_id} complete — sigma={sigma}")
+    high_variance = sigma is not None and sigma >= config.variance_threshold
+    logger.info(f"[arena] Session {session_id} complete — sigma={sigma} high_variance={high_variance}")
 
     # Persist
     await _persist_session(session_id, request, judges, sigma)
@@ -277,6 +278,7 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
         prompt=request.prompt,
         profile_id=request.profile_id,
         sigma=sigma,
+        high_variance=high_variance,
         judges=judges,
         criteria_labels=criteria_labels,
     )
@@ -379,12 +381,14 @@ async def run_arena_stream(
         yield _sse({"type": "judge_done", "judge": judge.model_dump(mode="json")})
 
     sigma = _compute_sigma(judges)
-    logger.info(f"[arena/stream] Session {session_id} complete — sigma={sigma}")
+    high_variance = sigma is not None and sigma >= config.variance_threshold
+    logger.info(f"[arena/stream] Session {session_id} complete — sigma={sigma} high_variance={high_variance}")
     await _persist_session(session_id, request, judges, sigma)
 
     yield _sse({
         "type": "complete",
         "session_id": str(session_id),
         "sigma": sigma,
+        "high_variance": high_variance,
         "criteria_labels": {c.id: c.label for c in active_criteria},
     })

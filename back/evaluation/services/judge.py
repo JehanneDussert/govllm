@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 # Models that need thinking mode disabled explicitly
 _NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
+# All Ollama models get an extended context window to handle long judge prompts
+_LARGE_CTX_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b",
+                     "ollama/phi4-mini", "ollama/mistral:7b", "ollama/gemma3:4b"}
 
 
 def _build_judge_prompt(
@@ -95,14 +98,14 @@ def _build_system_prompt(
 
 
 def _repair_json(text: str) -> dict | None:
-    """Tentative de réparation sur les erreurs JSON courantes des LLMs."""
-    # Virgules trailing
+    """Fix common LLM JSON output errors."""
+    # Trailing commas
     text = re.sub(r",\s*([}\]])", r"\1", text)
-    # Scores tronqués : "score": 0. → "score": 0.0
+    # Truncated scores: "score": 0. → "score": 0.0
     text = re.sub(r':\s*(\d+)\.\s*([,}\]])', r': \1.0\2', text)
     # Single quotes → double quotes
     text = re.sub(r"(?<![\\])'", '"', text)
-    # Compléter les accolades manquantes (llama3.2 oublie parfois le } final)
+    # Complete missing closing braces (some small models omit the final })
     open_count = text.count("{") - text.count("}")
     if open_count > 0:
         text = text + "}" * open_count
@@ -115,7 +118,7 @@ def _repair_json(text: str) -> dict | None:
 
 def _extract_json_from_text(text: str) -> dict | None:
     """Extract first valid JSON object from a raw text string."""
-    # 1. Extraire les blocs ```json ... ``` ou ``` ... ```
+    # 1. Extract ```json ... ``` or ``` ... ``` code blocks
     code_block = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if code_block:
         candidate = code_block.group(1)
@@ -126,7 +129,7 @@ def _extract_json_from_text(text: str) -> dict | None:
             if repaired:
                 return repaired
 
-    # 2. Extraire le premier objet JSON complet par accolades balancées
+    # 2. Extract first complete JSON object by balanced braces
     start = text.find("{")
     if start == -1:
         return None
@@ -158,30 +161,30 @@ def _extract_json_from_text(text: str) -> dict | None:
                 except json.JSONDecodeError:
                     return _repair_json(candidate)
 
-    # 3. Fallback : depth jamais revenu à 0 — accolade(s) manquante(s)
+    # 3. Fallback: depth never reached 0 — missing closing brace(s)
     return _repair_json(text[start:])
 
 
 def _extract_json(text: str) -> dict | None:
     """Extract first valid JSON object from text, handling model-specific quirks."""
 
-    # 1. Supprimer les balises <think>...</think> (DeepSeek-r1, Qwen3)
+    # 1. Strip <think>...</think> tags (DeepSeek-r1, Qwen3)
     cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
-    # 2. Chercher le JSON dans le texte hors think
+    # 2. Search for JSON in the text outside the think block
     result = _extract_json_from_text(cleaned)
     if result:
         return result
 
-    # 3. Fallback : le modèle a mis le JSON à l'intérieur du bloc <think>
-    # (petits modèles qui n'écrivent rien après le bloc de réflexion)
+    # 3. Fallback: model placed JSON inside the <think> block
+    # (small models that write nothing after the reasoning block)
     think_match = re.search(r"<think>(.*?)</think>", text, re.DOTALL)
     if think_match:
         result = _extract_json_from_text(think_match.group(1))
         if result:
             return result
 
-    # 4. Dernier recours : texte brut sans strip des balises
+    # 4. Last resort: raw text without stripping tags
     return _extract_json_from_text(text)
 
 
@@ -195,7 +198,7 @@ async def _call_judge(
     # Placing it in the system prompt has no effect on Qwen3's thinking toggle.
     no_think_suffix = " /no_think" if judge_model in _NO_THINK_MODELS else ""
     try:
-        async with httpx.AsyncClient(timeout=300) as client:
+        async with httpx.AsyncClient(timeout=240) as client:
             r = await client.post(
                 f"{settings.litellm_base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {settings.litellm_api_key}"},
@@ -210,6 +213,8 @@ async def _call_judge(
                     ],
                     "stream": False,
                     "temperature": 0.0,
+                    "max_tokens": 2048,
+                    **({"options": {"num_ctx": 8192}} if judge_model in _LARGE_CTX_MODELS else {}),
                 },
             )
             r.raise_for_status()

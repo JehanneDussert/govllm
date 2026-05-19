@@ -13,6 +13,7 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    init: true
     container_name: ollama
     ports:
       - "11434:11434"

@@ -4,6 +4,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from db.database import get_pool
+from services.judge_config import get_judge_config
 from db.models import (
     ArenaRunRequest,
     ArenaRunResponse,
@@ -67,13 +68,24 @@ async def arena_vote(request: ArenaVoteRequest):
 @router.get("/sessions", response_model=list[ArenaSession])
 async def list_sessions(
     profile_id: str | None = Query(None),
+    high_variance: bool = Query(False),
     limit: int = Query(50, ge=1, le=200),
 ):
     """List recent Arena sessions with full judge scores."""
+    config = await get_judge_config()
+    variance_threshold = config.variance_threshold
+
     pool = await get_pool()
     async with pool.acquire() as conn:
-        where = "WHERE s.profile_id = $2" if profile_id else ""
-        params = [limit, profile_id] if profile_id else [limit]
+        conditions = []
+        params: list = [limit]
+        if profile_id:
+            params.append(profile_id)
+            conditions.append(f"s.profile_id = ${len(params)}")
+        if high_variance:
+            params.append(variance_threshold)
+            conditions.append(f"s.sigma >= ${len(params)}")
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         sessions_rows = await conn.fetch(
             f"""
             SELECT s.session_id, s.prompt, s.profile_id, s.use_case_id,
@@ -118,12 +130,14 @@ async def list_sessions(
                         ArenaCriterionScore(**dict(sr)) for sr in score_rows
                     ],
                 ))
+            s_sigma = row["sigma"]
             sessions.append(ArenaSession(
                 session_id=row["session_id"],
                 prompt=row["prompt"],
                 profile_id=row["profile_id"],
                 use_case_id=row["use_case_id"],
-                sigma=row["sigma"],
+                sigma=s_sigma,
+                high_variance=s_sigma is not None and s_sigma >= variance_threshold,
                 user_vote=row["user_vote"],
                 created_at=row["created_at"],
                 judges=judges,
