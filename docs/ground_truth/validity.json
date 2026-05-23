@@ -1,5 +1,15 @@
 {
-  "description": "Aggregated agreement rates (original + reversed) per judge x criterion",
+  "description": "Aggregated agreement rates (original + reversed + permuted) per judge x criterion. Weighted mean across all available orders. Corpus is intentionally bilingual (FR=4, EN=45).",
+  "orders_included": [
+    "original",
+    "reversed",
+    "permuted"
+  ],
+  "corpus_size": 49,
+  "languages": {
+    "fr": 4,
+    "en": 45
+  },
   "judges": [
     "phi4-mini",
     "qwen3-1.7b",
@@ -13,98 +23,382 @@
     "prompt_injection",
     "transparency"
   ],
+  "by_order": {
+    "original": {
+      "gemma3-4b": {
+        "data_privacy": {
+          "agreement": 0.475,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.575,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.7,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.75,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "global": 0.658
+      },
+      "mistral-7b": {
+        "data_privacy": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.722,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.515
+      },
+      "phi4-mini": {
+        "data_privacy": {
+          "agreement": 0.775,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.675,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.825,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.806,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "global": 0.719
+      },
+      "qwen3-1.7b": {
+        "data_privacy": {
+          "agreement": 0.65,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.7,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.725,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.417,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.75,
+          "n_cases": 10
+        },
+        "global": 0.653
+      }
+    },
+    "reversed": {
+      "gemma3-4b": {
+        "data_privacy": {
+          "agreement": 0.575,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.65,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.611,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.556,
+          "n_cases": 9
+        },
+        "global": 0.641
+      },
+      "mistral-7b": {
+        "data_privacy": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.722,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.515
+      },
+      "phi4-mini": {
+        "data_privacy": {
+          "agreement": 0.825,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.7,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.825,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.833,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.55,
+          "n_cases": 10
+        },
+        "global": 0.745
+      },
+      "qwen3-1.7b": {
+        "data_privacy": {
+          "agreement": 0.675,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.725,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.6,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.278,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.6,
+          "n_cases": 10
+        },
+        "global": 0.582
+      }
+    },
+    "permuted": {
+      "gemma3-4b": {
+        "data_privacy": {
+          "agreement": 0.611,
+          "n_cases": 9
+        },
+        "human_oversight": {
+          "agreement": 0.694,
+          "n_cases": 9
+        },
+        "non_manipulation": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.806,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.55,
+          "n_cases": 10
+        },
+        "global": 0.691
+      },
+      "mistral-7b": {
+        "data_privacy": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.722,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.515
+      },
+      "phi4-mini": {
+        "data_privacy": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.6,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.7,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.806,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.607
+      },
+      "qwen3-1.7b": {
+        "data_privacy": {
+          "agreement": 0.625,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.575,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.575,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.417,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.65,
+          "n_cases": 10
+        },
+        "global": 0.571
+      }
+    }
+  },
   "validity": {
     "phi4-mini": {
       "data_privacy": {
-        "agreement": 0.821,
-        "n": 14
+        "agreement": 0.708,
+        "n": 30
       },
       "human_oversight": {
-        "agreement": 0.875,
-        "n": 14
+        "agreement": 0.658,
+        "n": 30
       },
       "non_manipulation": {
-        "agreement": 0.893,
-        "n": 14
+        "agreement": 0.783,
+        "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.875,
-        "n": 12
+        "agreement": 0.815,
+        "n": 27
       },
       "transparency": {
-        "agreement": 0.554,
-        "n": 14
+        "agreement": 0.5,
+        "n": 30
       },
-      "global": 0.801
+      "global": 0.69
     },
     "qwen3-1.7b": {
       "data_privacy": {
-        "agreement": 0.696,
-        "n": 14
+        "agreement": 0.65,
+        "n": 30
       },
       "human_oversight": {
-        "agreement": 0.821,
-        "n": 14
+        "agreement": 0.667,
+        "n": 30
       },
       "non_manipulation": {
-        "agreement": 0.696,
-        "n": 14
+        "agreement": 0.633,
+        "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.354,
-        "n": 12
+        "agreement": 0.371,
+        "n": 27
       },
       "transparency": {
-        "agreement": 0.696,
-        "n": 14
+        "agreement": 0.667,
+        "n": 30
       },
-      "global": 0.662
+      "global": 0.602
     },
     "gemma3-4b": {
       "data_privacy": {
-        "agreement": 0.571,
-        "n": 14
+        "agreement": 0.552,
+        "n": 29
       },
       "human_oversight": {
-        "agreement": 0.732,
-        "n": 14
+        "agreement": 0.638,
+        "n": 29
       },
       "non_manipulation": {
-        "agreement": 0.786,
-        "n": 14
+        "agreement": 0.767,
+        "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.667,
-        "n": 12
+        "agreement": 0.722,
+        "n": 27
       },
       "transparency": {
-        "agreement": 0.696,
-        "n": 14
+        "agreement": 0.638,
+        "n": 29
       },
-      "global": 0.691
+      "global": 0.663
     },
     "mistral-7b": {
       "data_privacy": {
-        "agreement": 0.536,
-        "n": 14
+        "agreement": 0.525,
+        "n": 30
       },
       "human_oversight": {
-        "agreement": 0.423,
-        "n": 13
+        "agreement": 0.4,
+        "n": 30
       },
       "non_manipulation": {
-        "agreement": 0.464,
-        "n": 14
+        "agreement": 0.525,
+        "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.708,
-        "n": 12
+        "agreement": 0.722,
+        "n": 27
       },
       "transparency": {
-        "agreement": 0.393,
-        "n": 14
+        "agreement": 0.425,
+        "n": 30
       },
-      "global": 0.5
+      "global": 0.515
     }
   }
 }

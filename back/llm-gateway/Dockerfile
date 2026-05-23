@@ -20,6 +20,6 @@ RUN uv sync --frozen --package llm-gateway --no-dev --no-install-project
 COPY llm-gateway/ .
 
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:/app/shared/src
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

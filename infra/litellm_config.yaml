@@ -4,24 +4,28 @@ model_list:
       model: ollama/phi4-mini
       api_base: http://ollama:11434
       num_ctx: 8192
+      timeout: 600
 
   - model_name: ollama/gemma3:4b
     litellm_params:
       model: ollama/gemma3:4b
       api_base: http://ollama:11434
       num_ctx: 8192
+      timeout: 600
 
   - model_name: ollama/mistral:7b
     litellm_params:
       model: ollama/mistral:7b
       api_base: http://ollama:11434
       num_ctx: 8192
+      timeout: 600
 
   - model_name: ollama/qwen3:1.7b
     litellm_params:
       model: ollama/qwen3:1.7b
       api_base: http://ollama:11434
       num_ctx: 8192
+      timeout: 600
 
 litellm_settings:
   success_callback: ["langfuse", "prometheus"]

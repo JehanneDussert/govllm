@@ -43,7 +43,7 @@ async def get_corpus(
 async def run_groundtruth(
     case_id: str,
     judge_models: list[str] | None = Query(None, description="Override judge model list"),
-    question_order: str = Query("original", description="Question presentation order: 'original' or 'reversed'"),
+    question_order: str = Query("original", description="Question presentation order: 'original', 'reversed', or 'permuted' (q2→q4→q1→q3)"),
 ):
     """Submit a corpus case to configured judges in checklist mode. Stores results."""
     try:

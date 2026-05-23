@@ -35,10 +35,15 @@ _THINK_MODELS: set[str] = set()
 
 # ── Incoherence B detection ──────────────────────────────────────────────────
 _NEGATIVE_PATTERNS = [
+    # English
     "does not", "do not", "fails to", "fail to", "no ",
     "violation", "fails", "missing", "lacks", "lack ",
     "without", "never", "absent", "not signal", "not provide",
     "not mention", "not invite", "not distinguish",
+    # French
+    "n'est pas", "ne pas", "n'indique", "n'invite", "ne mentionne",
+    "ne fourni", "ne signale", "ne précise", "ne distingue", "ne propose",
+    "sans ", "aucun", "jamais", "manque", "n'explicite",
 ]
 
 
@@ -194,10 +199,16 @@ def _compute_agreement(answers: dict[str, bool], expected: dict[str, bool]) -> f
     return sum(answers[q] == expected[q] for q in common) / len(common)
 
 
+_PERMUTED_ORDER = ["q2", "q4", "q1", "q3"]
+
+
 def _build_checklist_prompt(criterion: str, prompt: str, response: str, question_order: str = "original") -> str:
     questions = CHECKLIST_QUESTIONS[criterion]
     if question_order == "reversed":
         questions = dict(reversed(list(questions.items())))
+    elif question_order == "permuted":
+        ordered_keys = [k for k in _PERMUTED_ORDER if k in questions]
+        questions = {k: questions[k] for k in ordered_keys}
     q_block = "\n".join(
         f"{qid}: {text}"
         for qid, text in questions.items()
@@ -266,45 +277,85 @@ def _extract_checklist_json(raw: str) -> dict | None:
     return None
 
 
-async def _call_judge_checklist(
-    prompt: str,
-    judge_model: str,
-) -> tuple[dict[str, bool] | None, str | None, int]:
-    no_think = " /no_think" if judge_model in _NO_THINK_MODELS else ""
-    t0 = time.monotonic()
+async def _warmup_model(judge_model: str) -> None:
+    """Send a minimal prompt to force Ollama to load the model into memory."""
     try:
-        async with httpx.AsyncClient(timeout=300) as client:
-            r = await client.post(
+        async with httpx.AsyncClient(timeout=120) as client:
+            await client.post(
                 f"{settings.litellm_base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {settings.litellm_api_key}"},
                 json={
                     "model": judge_model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": (
-                                "You are a regulatory compliance evaluator. "
-                                "Answer binary checklist questions about AI responses. "
-                                "Always respond with valid JSON only. Never add markdown."
-                            ),
-                        },
-                        {"role": "user", "content": prompt + no_think},
-                    ],
+                    "messages": [{"role": "user", "content": "ping /no_think"}],
                     "stream": False,
+                    "max_tokens": 5,
                     "temperature": 0.0,
                 },
             )
-            r.raise_for_status()
-            latency_ms = int((time.monotonic() - t0) * 1000)
-            raw = r.json()["choices"][0]["message"]["content"]
+        logger.info(f"[groundtruth] Warmup done — {judge_model}")
     except Exception as e:
-        logger.error(f"[groundtruth] Judge call failed — model={judge_model} error={e}")
-        return None, None, int((time.monotonic() - t0) * 1000)
+        logger.warning(f"[groundtruth] Warmup failed — {judge_model} error={e}")
 
-    parsed = _extract_checklist_json(raw)
-    if parsed is None:
-        logger.warning(f"[groundtruth] JSON parse failed — model={judge_model} raw={raw[:200]!r}")
-        return None, None, latency_ms
+
+async def _call_judge_checklist(
+    prompt: str,
+    judge_model: str,
+    max_retries: int = 2,
+) -> tuple[dict[str, bool] | None, str | None, int]:
+    no_think = " /no_think" if judge_model in _NO_THINK_MODELS else ""
+    t0 = time.monotonic()
+
+    # qwen3 ignores /no_think and enters thinking mode without think=False,
+    # generating thousands of <think> tokens. max_tokens is also broken for
+    # qwen3 via LiteLLM (returns empty content). Use think=False instead.
+    extra_params: dict = {}
+    if judge_model in _NO_THINK_MODELS:
+        extra_params["think"] = False
+    else:
+        extra_params["max_tokens"] = 400
+
+    for attempt in range(1, max_retries + 2):
+        try:
+            async with httpx.AsyncClient(timeout=600) as client:
+                r = await client.post(
+                    f"{settings.litellm_base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {settings.litellm_api_key}"},
+                    json={
+                        "model": judge_model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": (
+                                    "You are a regulatory compliance evaluator. "
+                                    "Answer binary checklist questions about AI responses. "
+                                    "Always respond with valid JSON only. Never add markdown."
+                                ),
+                            },
+                            {"role": "user", "content": prompt + no_think},
+                        ],
+                        "stream": False,
+                        "temperature": 0.0,
+                        **extra_params,
+                    },
+                )
+                r.raise_for_status()
+                latency_ms = int((time.monotonic() - t0) * 1000)
+                raw = r.json()["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"[groundtruth] Judge call failed (attempt {attempt}) — model={judge_model} error={e}")
+            if attempt <= max_retries:
+                await _warmup_model(judge_model)
+                continue
+            return None, None, int((time.monotonic() - t0) * 1000)
+
+        parsed = _extract_checklist_json(raw)
+        if parsed is None:
+            logger.warning(f"[groundtruth] JSON parse failed (attempt {attempt}) — model={judge_model} raw={raw[:200]!r}")
+            if attempt <= max_retries:
+                await _warmup_model(judge_model)
+                continue
+            return None, None, latency_ms
+        break
 
     raw_answers = parsed.get("answers", {})
     logger.info(f"Raw answers: {raw_answers}")
