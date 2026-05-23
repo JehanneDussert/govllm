@@ -20,6 +20,6 @@ RUN uv sync --frozen --package evaluation --no-dev --no-install-project
 COPY evaluation/ .
 
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:/app/shared/src
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]

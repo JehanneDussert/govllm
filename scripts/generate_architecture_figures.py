@@ -94,6 +94,8 @@ box(ax, 5.0, 0.6, 9.6, 0.65,
 # Frontend → llm-gateway
 elbow_arrow(ax, [(2.8, 5.65), (1.4, 5.65), (1.4, 4.87)],
             label='POST /chat', ldy=0.12)
+# Frontend → observability
+arrow(ax, 5.0, 5.65, 5.0, 4.87, label='GET /metrics · /traces', ldy=0.16)
 # Frontend → evaluation
 elbow_arrow(ax, [(7.2, 5.65), (8.6, 5.65), (8.6, 4.87)],
             label='POST /eval/score', ldy=0.12)
@@ -104,8 +106,9 @@ arrow(ax, 1.4, 4.12, 1.4, 3.35, label='pub LLMEvent', ldy=0.14)
 arrow(ax, 5.0, 4.12, 5.0, 3.35, label='read traces', ldy=0.14)
 # evaluation → PostgreSQL
 arrow(ax, 8.6, 4.12, 8.6, 3.35, label='write', ldy=0.14)
-# evaluation → Langfuse (push score, horizontal)
-arrow(ax, 7.3, 3.0, 6.2, 3.0, label='push score', lpos=0.5, ldy=0.16)
+# evaluation → Langfuse (push score, elbow from evaluation box)
+elbow_arrow(ax, [(8.6, 4.12), (8.6, 3.65), (6.2, 3.65), (6.2, 3.35)],
+            label='push score', ldy=0.15)
 # Redis → observability (config, dashed horizontal)
 arrow(ax, 2.6, 3.0, 3.8, 3.0, label='config', lpos=0.5, ldy=0.16, dashed=True)
 

@@ -133,7 +133,9 @@ The judge model runs locally (`ollama/gemma3:4b` by default). Evaluation calls a
 
 ## Ground truth validity
 
-Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliability**. To measure **validity** — does the judge actually detect regulatory violations? — govllm uses a curated binary-checklist corpus of 34 annotated cases anchored to CNIL decisions, ANSSI guidelines, and EU AI Act provisions.
+Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliability**. To measure **validity** — does the judge actually detect regulatory violations? — govllm uses a curated binary-checklist corpus of **49 annotated cases** (English and French) anchored to CNIL decisions, ANSSI guidelines, and EU AI Act provisions.
+
+Each case is evaluated across three question orderings (original, reversed, permuted) to quantify position bias in small LLM judges. Agreement ranges from 51.5% (mistral:7b) to 69.1% (phi4-mini), averaged across all three orderings. The permuted ordering degrades phi4-mini by 11 pp on average, with a 25 pp drop on `data_privacy` — showing that even the strongest judge is sensitive to question presentation order. mistral:7b is flat at 51.5% across all three orderings, confirming structural miscalibration rather than positional sensitivity.
 
 → See [docs/ground_truth/README.md](docs/ground_truth/README.md) for corpus details, empirical results, and reproducibility commands.
 
@@ -143,7 +145,9 @@ Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliabil
 
 48 prompts across 6 use cases and 4 difficulty levels (2 easy · 2 medium · 2 adversarial · 2 hard each). Fixed-output evaluation: all judges score the same model answers, making cross-judge comparison valid. 768 scored entries (48 × 4 generators × 4 judges), 32 per (model, use case) cell.
 
-→ See [docs/benchmark/README.md](docs/benchmark/README.md) for pipeline, file formats, and planned analyses.
+Completed analyses: specialised panel vs single-judge delta (hard prompts: +5.7 pp), model size vs score correlation (Pearson r = −0.39, n=4), inter-judge disagreement per prompt (top discriminator: `ana_hard_01`, σ=0.256), family bias matrix (no auto-preference detected — all SPR ≤ 0), and judge reliability classification.
+
+→ See [docs/benchmark/README.md](docs/benchmark/README.md) for pipeline, file formats, and analysis results.
 
 ---
 

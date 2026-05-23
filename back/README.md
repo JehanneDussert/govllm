@@ -117,7 +117,7 @@ back/
 │   ├── routers/traces.py          # judge trace filtering, model detection
 │   └── services/langfuse_client.py
 └── evaluation/
-    ├── jobs/eval_runner.py        # async evaluation orchestrator (panel dispatch)
+    ├── jobs/eval_runner.py        # async evaluation orchestrator (panel dispatch, dual-write Redis + PostgreSQL)
     ├── services/
     │   ├── judge.py               # _build_judge_prompt, _call_judge, _extract_json
     │   ├── judge_config.py        # built-in profiles + DEFAULT_CONFIG
@@ -125,7 +125,6 @@ back/
     │   ├── lifecycle.py           # get_status, set_zone, run_sas
     │   └── groundtruth.py         # checklist evaluation, agreement computation
     └── scripts/
-        ├── seed_groundtruth.py    # DROP+CREATE tables + seed 34 cases
-        ├── run_groundtruth.py     # run cases against judges, print agreement
+        ├── groundtruth.py         # unified entry point: seed / run / extend / compare
         └── fetch_lmsys.py         # download LMSYS regulatory subset (requires HF_TOKEN)
 ```

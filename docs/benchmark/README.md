@@ -112,11 +112,31 @@ Status values: `OK` · `TIMEOUT` · `EVAL_TRIGGER_ERROR` · `CONFIG_ERROR`
 
 ## Analyses
 
-Planned analyses once all result files are complete — see `docs/benchmark/analysis/` (to be created):
+Completed. Results in `docs/benchmark/analysis/`:
 
-- Specialised panel vs single judge delta
-- Model size vs score correlation
-- Inter-judge disagreement per prompt (top 10 most discriminating prompts)
-- Intra-judge variance per domain
-- Family bias — judge × generator matrix
-- Self-evaluation vs cross-evaluation (leniency bias)
+| File | Content |
+|---|---|
+| `summary.json` | Full analysis output — all findings below |
+| `judge_reliability.json` | Level 1 (agreement vs ground truth) + Level 2 (reason consistency by domain/difficulty) + Level 3 classification |
+
+**Key findings:**
+
+| # | Finding | Result |
+|---|---|---|
+| 1 | Specialised panel vs single judge | Hard prompts: +5.7 pp; easy prompts: −0.6 pp |
+| 2 | Model size vs score correlation | Pearson r = −0.39 (n=4, indicative) — smallest model (qwen3:1.7b, 1.7B) ranks 2nd |
+| 3 | Inter-judge disagreement | Top discriminator: `ana_hard_01` (σ=0.256); hard/adversarial prompts concentrate disagreement |
+| 4 | Intra-judge variance by domain | phi4-mini: extreme variance on `analysis` (σ=0.29); `translation` most stable (σ≤0.023) |
+| 5 | Family bias matrix | No auto-preference detected — all judges score own model family equal or below cross-family mean |
+| 6 | Self vs cross evaluation | gemma3:4b self=0.849 vs cross=0.955 (bias=−0.106); phi4-mini bias=−0.024 |
+
+**Judge reliability classification** (from `judge_reliability.json`):
+
+| Judge | Agreement (GT) | Consistency | Classification |
+|---|---|---|---|
+| phi4-mini | 69.1% | 91.6% | CALIBRATED_BUT_STRICT |
+| qwen3:1.7b | 60.2% | 92.6% | CALIBRATED_BUT_STRICT |
+| gemma3:4b | 66.3% | 69.1% | UNRELIABLE |
+| mistral:7b | 51.5% | 92.7% | UNRELIABLE |
+
+Scripts: `scripts/analyze_benchmark.py` → `summary.json`; `scripts/judge_reliability.py` → `judge_reliability.json`.

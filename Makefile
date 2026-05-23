@@ -2,7 +2,7 @@
         pull-models \
         flush-redis flush-judge flush-scores \
         benchmark benchmark-generate benchmark-evaluate \
-        gt-seed gt-status gt-kill gt-clean gt-run gt-run-reversed gt-log gt-log-reversed gt-summary \
+        gt-seed gt-status gt-kill gt-clean gt-run gt-run-reversed gt-run-permuted gt-log gt-log-reversed gt-log-permuted gt-summary \
         lint format clean reset
 
 # Config
@@ -16,6 +16,7 @@ GT_JUDGES   = ollama/qwen3:1.7b ollama/gemma3:4b ollama/phi4-mini ollama/mistral
 GT_CRITERIA = transparency data_privacy non_manipulation human_oversight prompt_injection
 GT_LOG_ORIG = /tmp/gt_run_original.log
 GT_LOG_REV  = /tmp/gt_run_reversed.log
+GT_LOG_PERM = /tmp/gt_run_permuted.log
 
 # Help
 help:
@@ -46,11 +47,13 @@ help:
 	@echo "  make benchmark TIMEOUT=600 Custom timeout per call"
 	@echo ""
 	@echo "  ── Ground truth corpus ──────────────────────────"
-	@echo "  make gt-seed               DROP+CREATE tables + insert 34 cases"
+	@echo "  make gt-seed               DROP+CREATE tables + insert 49 cases"
 	@echo "  make gt-run                Run all cases, original question order"
 	@echo "  make gt-run-reversed       Run all cases, reversed question order"
+	@echo "  make gt-run-permuted       Run all cases, permuted order (q2→q4→q1→q3)"
 	@echo "  make gt-log                Stream log (original order)"
 	@echo "  make gt-log-reversed       Stream log (reversed order)"
+	@echo "  make gt-log-permuted       Stream log (permuted order)"
 	@echo "  make gt-summary            Print SUMMARY block from original log"
 	@echo ""
 	@echo "  ── Quality ──────────────────────────────────────"
@@ -145,15 +148,15 @@ benchmark-evaluate:
 
 # Ground truth corpus
 gt-seed:
-	MSYS_NO_PATHCONV=1 docker exec evaluation python /app/scripts/seed_groundtruth.py
+	MSYS_NO_PATHCONV=1 docker exec evaluation python /app/scripts/groundtruth.py seed
 
 gt-status:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation python -c \
-	  "import glob; pids=[p.split('/')[2] for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/run_groundtruth' in open(p,'rb').read()]; print(f'{len(pids)} active run(s): {pids}') if pids else print('No active run.')"
+	  "import glob; pids=[p.split('/')[2] for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/groundtruth' in open(p,'rb').read()]; print(f'{len(pids)} active run(s): {pids}') if pids else print('No active run.')"
 
 gt-kill:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation python -c \
-	  "import os,glob,signal; pids=[int(p.split('/')[2]) for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/run_groundtruth' in open(p,'rb').read()]; [os.kill(p,signal.SIGKILL) for p in pids]; print(f'Killed {len(pids)} process(es).')" || true
+	  "import os,glob,signal; pids=[int(p.split('/')[2]) for p in glob.glob('/proc/[0-9]*/cmdline') if b'\x00/app/scripts/groundtruth' in open(p,'rb').read()]; [os.kill(p,signal.SIGKILL) for p in pids]; print(f'Killed {len(pids)} process(es).')" || true
 
 gt-clean: gt-kill
 	@MSYS_NO_PATHCONV=1 docker exec evaluation sh -c "rm -f $(GT_LOG_ORIG) $(GT_LOG_REV)"
@@ -161,16 +164,16 @@ gt-clean: gt-kill
 
 gt-run: gt-clean
 	@MSYS_NO_PATHCONV=1 docker exec -d evaluation sh -c \
-	  "PYTHONUNBUFFERED=1 python -u /app/scripts/run_groundtruth.py \
+	  "PYTHONUNBUFFERED=1 python -u /app/scripts/groundtruth.py run \
 	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
-	   --question-order original > $(GT_LOG_ORIG) 2>&1"
+	   --order original > $(GT_LOG_ORIG) 2>&1"
 	@echo "Original run started → use make gt-log to follow."
 
 gt-run-reversed: gt-clean
 	@MSYS_NO_PATHCONV=1 docker exec -d evaluation sh -c \
-	  "PYTHONUNBUFFERED=1 python -u /app/scripts/run_groundtruth.py \
+	  "PYTHONUNBUFFERED=1 python -u /app/scripts/groundtruth.py run \
 	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
-	   --question-order reversed > $(GT_LOG_REV) 2>&1"
+	   --order reversed > $(GT_LOG_REV) 2>&1"
 	@echo "Reversed run started → use make gt-log-reversed to follow."
 
 gt-log:
@@ -178,6 +181,16 @@ gt-log:
 
 gt-log-reversed:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation tail -f $(GT_LOG_REV)
+
+gt-run-permuted: gt-clean
+	@MSYS_NO_PATHCONV=1 docker exec -d evaluation sh -c \
+	  "PYTHONUNBUFFERED=1 python -u /app/scripts/groundtruth.py run \
+	   --criterion $(GT_CRITERIA) --judges $(GT_JUDGES) \
+	   --order permuted > $(GT_LOG_PERM) 2>&1"
+	@echo "Permuted run started (q2→q4→q1→q3) → use make gt-log-permuted to follow."
+
+gt-log-permuted:
+	@MSYS_NO_PATHCONV=1 docker exec evaluation tail -f $(GT_LOG_PERM)
 
 gt-summary:
 	@MSYS_NO_PATHCONV=1 docker exec evaluation sh -c \
