@@ -140,3 +140,7 @@ Completed. Results in `docs/benchmark/analysis/`:
 | mistral:7b | 51.5% | 92.7% | UNRELIABLE |
 
 Scripts: `scripts/analyze_benchmark.py` → `summary.json`; `scripts/judge_reliability.py` → `judge_reliability.json`.
+
+**Few-shot calibration** (supplementary — ground truth corpus, not benchmark pipeline):
+
+Injecting 5 annotated examples per criterion into the checklist judge prompt improves agreement on 3 of 4 judges: +11.8 pp (gemma3:4b), +8.3 pp (phi4-mini), +5.1 pp (mistral:7b). qwen3:1.7b shows no net gain (−0.2 pp). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.

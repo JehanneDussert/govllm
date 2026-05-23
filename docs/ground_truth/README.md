@@ -22,7 +22,11 @@ docs/ground_truth/
     ├── gemma3-4b_permuted.json     # 47 cases (2 missing — persistent gemma3 JSON formatting issue)
     ├── mistral-7b_original.json
     ├── mistral-7b_reversed.json
-    └── mistral-7b_permuted.json
+    ├── mistral-7b_permuted.json
+    ├── phi4-mini_fewshot.json      # 44 evaluable cases, few-shot calibration (original order)
+    ├── gemma3-4b_fewshot.json
+    ├── qwen3-1.7b_fewshot.json
+    └── mistral-7b_fewshot.json
 ```
 
 ## Corpus
@@ -99,6 +103,21 @@ Three question orderings were tested to measure **position bias** (see §5.4 of 
 | gemma3:4b | human_oversight | 57.5% | 65.0% | **69.4%** | +11.9 pp |
 | gemma3:4b | non_manipulation | 70.0% | 80.0% | **80.0%** | +10.0 pp |
 | gemma3:4b | transparency | **80.0%** | 55.6% | 55.0% | −25.0 pp |
+
+## Few-shot calibration (Finding 10)
+
+A supplementary experiment injects 5 annotated examples per criterion into the checklist prompt (one per score tier: 0.0 · 0.25 · 0.5 · 0.75 · 1.0). 44 cases are evaluable (49 − 5 held-out examples per criterion). Original order only.
+
+| Judge | Baseline (44 cases) | Few-shot | Δ |
+|---|---|---|---|
+| gemma3:4b | 64.2% | 76.0% | **+11.8 pp** |
+| phi4-mini | 65.0% | 73.2% | **+8.3 pp** |
+| mistral:7b | 56.2% | 61.3% | **+5.1 pp** |
+| qwen3:1.7b | 60.5% | 60.2% | −0.2 pp |
+
+Few-shot improves structurally inconsistent judges (gemma3:4b) and those miscalibrated on specific criteria, but shows no net gain for context-sensitive judges (qwen3:1.7b) — consistent with Finding 3 (position bias). Results in `results/{judge}_fewshot.json`.
+
+Baseline is recomputed on the same 44 evaluable cases from the original-order run (the 5 held-out examples are excluded from both).
 
 ## Reproducibility
 

@@ -147,6 +147,8 @@ Each case is evaluated across three question orderings (original, reversed, perm
 
 Completed analyses: specialised panel vs single-judge delta (hard prompts: +5.7 pp), model size vs score correlation (Pearson r = −0.39, n=4), inter-judge disagreement per prompt (top discriminator: `ana_hard_01`, σ=0.256), family bias matrix (no auto-preference detected — all SPR ≤ 0), and judge reliability classification.
 
+A preliminary few-shot calibration experiment (5 annotated examples per criterion injected into the checklist judge prompt) improves ground truth agreement in 3 of 4 judges: +11.8 pp (gemma3:4b), +8.3 pp (phi4-mini), +5.1 pp (mistral:7b). qwen3:1.7b shows no net gain (−0.2 pp), consistent with its documented context sensitivity. Results in `docs/ground_truth/results/{judge}_fewshot.json`.
+
 → See [docs/benchmark/README.md](docs/benchmark/README.md) for pipeline, file formats, and analysis results.
 
 ---
