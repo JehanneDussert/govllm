@@ -5,7 +5,9 @@ from shared.langfuse import LangfuseClient
 from shared.config import get_observability_settings
 
 _s = get_observability_settings()
-_client = LangfuseClient(_s.langfuse_host, _s.langfuse_public_key, _s.langfuse_secret_key)
+_client = LangfuseClient(
+    _s.langfuse_host, _s.langfuse_public_key, _s.langfuse_secret_key
+)
 
 # Re-export shared methods
 get_traces = _client.get_traces
@@ -21,7 +23,13 @@ async def get_traces_with_scores(limit: int = 50) -> list[dict]:
         trace["_model"] = raw_model if raw_model and raw_model != "unknown" else None
         scores = await _client.get_trace_scores(trace["id"])
         composite_vals = [
-            s["value"] for s in scores if s.get("name") == "composite" and isinstance(s.get("value"), (int, float))
+            s["value"]
+            for s in scores
+            if s.get("name") == "composite" and isinstance(s.get("value"), (int, float))
         ]
-        trace["eval_score"] = round(sum(composite_vals) / len(composite_vals), 3) if composite_vals else None
+        trace["eval_score"] = (
+            round(sum(composite_vals) / len(composite_vals), 3)
+            if composite_vals
+            else None
+        )
     return traces

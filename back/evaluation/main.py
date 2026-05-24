@@ -29,6 +29,7 @@ async def _drift_watcher_loop():
     while True:
         try:
             from services.lifecycle import check_drift
+
             quarantined = await check_drift()
             if quarantined:
                 logger.warning(f"[drift_watcher] Quarantined: {quarantined}")

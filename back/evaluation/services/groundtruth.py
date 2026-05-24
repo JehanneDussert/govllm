@@ -36,14 +36,40 @@ _THINK_MODELS: set[str] = set()
 # ── Incoherence B detection ──────────────────────────────────────────────────
 _NEGATIVE_PATTERNS = [
     # English
-    "does not", "do not", "fails to", "fail to", "no ",
-    "violation", "fails", "missing", "lacks", "lack ",
-    "without", "never", "absent", "not signal", "not provide",
-    "not mention", "not invite", "not distinguish",
+    "does not",
+    "do not",
+    "fails to",
+    "fail to",
+    "no ",
+    "violation",
+    "fails",
+    "missing",
+    "lacks",
+    "lack ",
+    "without",
+    "never",
+    "absent",
+    "not signal",
+    "not provide",
+    "not mention",
+    "not invite",
+    "not distinguish",
     # French
-    "n'est pas", "ne pas", "n'indique", "n'invite", "ne mentionne",
-    "ne fourni", "ne signale", "ne précise", "ne distingue", "ne propose",
-    "sans ", "aucun", "jamais", "manque", "n'explicite",
+    "n'est pas",
+    "ne pas",
+    "n'indique",
+    "n'invite",
+    "ne mentionne",
+    "ne fourni",
+    "ne signale",
+    "ne précise",
+    "ne distingue",
+    "ne propose",
+    "sans ",
+    "aucun",
+    "jamais",
+    "manque",
+    "n'explicite",
 ]
 
 
@@ -175,14 +201,21 @@ SUPPORTED_CRITERIA: list[str] = list(CHECKLIST_QUESTIONS.keys())
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _detect_family(model: str) -> str:
     name = model.lower()
-    if "qwen" in name:     return "qwen"
-    if "gemma" in name:    return "gemma"
-    if "llama" in name:    return "llama"
-    if "deepseek" in name: return "deepseek"
-    if "mistral" in name:  return "mistral"
-    if "phi" in name:      return "phi"
+    if "qwen" in name:
+        return "qwen"
+    if "gemma" in name:
+        return "gemma"
+    if "llama" in name:
+        return "llama"
+    if "deepseek" in name:
+        return "deepseek"
+    if "mistral" in name:
+        return "mistral"
+    if "phi" in name:
+        return "phi"
     return "unknown"
 
 
@@ -202,17 +235,16 @@ def _compute_agreement(answers: dict[str, bool], expected: dict[str, bool]) -> f
 _PERMUTED_ORDER = ["q2", "q4", "q1", "q3"]
 
 
-def _build_checklist_prompt(criterion: str, prompt: str, response: str, question_order: str = "original") -> str:
+def _build_checklist_prompt(
+    criterion: str, prompt: str, response: str, question_order: str = "original"
+) -> str:
     questions = CHECKLIST_QUESTIONS[criterion]
     if question_order == "reversed":
         questions = dict(reversed(list(questions.items())))
     elif question_order == "permuted":
         ordered_keys = [k for k in _PERMUTED_ORDER if k in questions]
         questions = {k: questions[k] for k in ordered_keys}
-    q_block = "\n".join(
-        f"{qid}: {text}"
-        for qid, text in questions.items()
-    )
+    q_block = "\n".join(f"{qid}: {text}" for qid, text in questions.items())
     # Step 1 template: forces per-question reasoning before the JSON.
     reasoning_template = "\n".join(
         f"{qid}: [your analysis] → true (compliant) | false (violation)"
@@ -220,7 +252,10 @@ def _build_checklist_prompt(criterion: str, prompt: str, response: str, question
     )
     # Step 2 template: placeholders prevent blind copying.
     json_template = json.dumps(
-        {"answers": {q: "<true|false>" for q in questions}, "reason": "<one-sentence summary>"},
+        {
+            "answers": {q: "<true|false>" for q in questions},
+            "reason": "<one-sentence summary>",
+        },
         indent=2,
     )
     return (
@@ -271,7 +306,7 @@ def _extract_checklist_json(raw: str) -> dict | None:
             depth -= 1
             if depth == 0:
                 try:
-                    return json.loads(cleaned[start:i + 1])
+                    return json.loads(cleaned[start : i + 1])
                 except json.JSONDecodeError:
                     return None
     return None
@@ -342,7 +377,9 @@ async def _call_judge_checklist(
                 latency_ms = int((time.monotonic() - t0) * 1000)
                 raw = r.json()["choices"][0]["message"]["content"]
         except Exception as e:
-            logger.error(f"[groundtruth] Judge call failed (attempt {attempt}) — model={judge_model} error={e}")
+            logger.error(
+                f"[groundtruth] Judge call failed (attempt {attempt}) — model={judge_model} error={e}"
+            )
             if attempt <= max_retries:
                 await _warmup_model(judge_model)
                 continue
@@ -350,7 +387,9 @@ async def _call_judge_checklist(
 
         parsed = _extract_checklist_json(raw)
         if parsed is None:
-            logger.warning(f"[groundtruth] JSON parse failed (attempt {attempt}) — model={judge_model} raw={raw[:200]!r}")
+            logger.warning(
+                f"[groundtruth] JSON parse failed (attempt {attempt}) — model={judge_model} raw={raw[:200]!r}"
+            )
             if attempt <= max_retries:
                 await _warmup_model(judge_model)
                 continue
@@ -359,6 +398,7 @@ async def _call_judge_checklist(
 
     raw_answers = parsed.get("answers", {})
     logger.info(f"Raw answers: {raw_answers}")
+
     def normalize_bool(v):
         if isinstance(v, bool):
             return v
@@ -374,7 +414,6 @@ async def _call_judge_checklist(
 
         return None
 
-
     answers: dict[str, bool] = {
         k: normalize_bool(v)
         for k, v in raw_answers.items()
@@ -386,6 +425,7 @@ async def _call_judge_checklist(
 
 
 # ── Service functions ────────────────────────────────────────────────────────
+
 
 async def add_case(req: GroundTruthCaseCreate) -> GroundTruthCase:
     pool = await get_pool()
@@ -439,7 +479,11 @@ async def list_cases(criterion: str | None = None) -> list[GroundTruthCase]:
     ]
 
 
-async def run_checklist(case_id: str, judge_models: list[str] | None = None, question_order: str = "original") -> GroundTruthRunResult:
+async def run_checklist(
+    case_id: str,
+    judge_models: list[str] | None = None,
+    question_order: str = "original",
+) -> GroundTruthRunResult:
     pool = await get_pool()
 
     row = await pool.fetchrow(
@@ -463,11 +507,15 @@ async def run_checklist(case_id: str, judge_models: list[str] | None = None, que
     config = await get_judge_config()
     judge_models = judge_models or config.arena_judge_models or [config.judge_model]
 
-    checklist_prompt = _build_checklist_prompt(case.criterion, case.prompt, case.response, question_order)
+    checklist_prompt = _build_checklist_prompt(
+        case.criterion, case.prompt, case.response, question_order
+    )
     logger.info(f"[groundtruth] Checklist prompt: {checklist_prompt}")
 
     async def _run_one(model: str) -> JudgeChecklistResult | None:
-        answers, reason, latency_ms = await _call_judge_checklist(checklist_prompt, model)
+        answers, reason, latency_ms = await _call_judge_checklist(
+            checklist_prompt, model
+        )
         logger.info(f"[groundtruth] Answer {answers}")
         logger.info(f"[groundtruth] Reason {reason}")
         if not answers:
@@ -481,8 +529,15 @@ async def run_checklist(case_id: str, judge_models: list[str] | None = None, que
                 (case_id, judge_model, judge_family, answers, score, agreement, reason, latency_ms, question_order)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             """,
-            UUID(case_id), model, family,
-            json.dumps(answers), score, agreement, reason, latency_ms, question_order,
+            UUID(case_id),
+            model,
+            family,
+            json.dumps(answers),
+            score,
+            agreement,
+            reason,
+            latency_ms,
+            question_order,
         )
         return JudgeChecklistResult(
             judge_model=model,
@@ -509,13 +564,16 @@ async def run_checklist(case_id: str, judge_models: list[str] | None = None, que
     )
 
 
-async def get_case_results(case_id: str, question_order: str | None = None) -> list[dict]:
+async def get_case_results(
+    case_id: str, question_order: str | None = None
+) -> list[dict]:
     pool = await get_pool()
     if question_order:
         rows = await pool.fetch(
             "SELECT judge_model, answers, agreement, reason, question_order FROM groundtruth_results "
             "WHERE case_id = $1 AND question_order = $2 ORDER BY created_at",
-            UUID(case_id), question_order,
+            UUID(case_id),
+            question_order,
         )
     else:
         rows = await pool.fetch(
@@ -552,19 +610,21 @@ async def get_incoherence_items() -> list[IncoherenceItem]:
         answers: dict[str, bool] = json.loads(row["answers"])
         expected: dict[str, bool] = json.loads(row["expected"])
         if _is_incoherence_b(answers, row["reason"]):
-            items.append(IncoherenceItem(
-                result_id=str(row["id"]),
-                case_id=str(row["case_id"]),
-                prompt_preview=row["prompt"][:80],
-                criterion=row["criterion"],
-                judge_model=row["judge_model"],
-                judge_family=row["judge_family"],
-                answers=answers,
-                expected_answers=expected,
-                reason=row["reason"],
-                incoherence_validated=row["incoherence_validated"],
-                question_order=row["question_order"],
-            ))
+            items.append(
+                IncoherenceItem(
+                    result_id=str(row["id"]),
+                    case_id=str(row["case_id"]),
+                    prompt_preview=row["prompt"][:80],
+                    criterion=row["criterion"],
+                    judge_model=row["judge_model"],
+                    judge_family=row["judge_family"],
+                    answers=answers,
+                    expected_answers=expected,
+                    reason=row["reason"],
+                    incoherence_validated=row["incoherence_validated"],
+                    question_order=row["question_order"],
+                )
+            )
     return items
 
 
@@ -607,12 +667,13 @@ async def get_order_sensitivity() -> list[OrderSensitivityEntry]:
     )
 
     from collections import defaultdict
+
     agg: dict[tuple[str, str], dict] = defaultdict(
         lambda: {"total": 0, "n_flipped": 0, "delta_sum": 0.0, "flipped_ids": []}
     )
     for row in rows:
         orig: dict[str, bool] = json.loads(row["orig_answers"])
-        rev:  dict[str, bool] = json.loads(row["rev_answers"])
+        rev: dict[str, bool] = json.loads(row["rev_answers"])
         key = (row["judge_model"], row["criterion"])
         agg[key]["total"] += 1
         flipped = any(orig.get(q) != rev.get(q) for q in orig if q in rev)
@@ -626,7 +687,9 @@ async def get_order_sensitivity() -> list[OrderSensitivityEntry]:
             judge_model=judge,
             criterion=criterion,
             flip_rate=stats["n_flipped"] / stats["total"] if stats["total"] else 0.0,
-            mean_delta_agreement=stats["delta_sum"] / stats["total"] if stats["total"] else 0.0,
+            mean_delta_agreement=stats["delta_sum"] / stats["total"]
+            if stats["total"]
+            else 0.0,
             n_cases=stats["total"],
             flipped_case_ids=stats["flipped_ids"],
         )
@@ -678,7 +741,11 @@ async def get_validity() -> ValidityReport:
     for row in rows:
         answers: dict[str, bool] = json.loads(row["answers"])
         expected: dict[str, bool] = json.loads(row["expected"])
-        model, family, criterion = row["judge_model"], row["judge_family"], row["criterion"]
+        model, family, criterion = (
+            row["judge_model"],
+            row["judge_family"],
+            row["criterion"],
+        )
         for qid in expected:
             if qid in answers:
                 key = (model, family, criterion, qid)

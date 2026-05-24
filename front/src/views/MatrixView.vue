@@ -7,7 +7,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/client'
-import type { MatrixResponse, ModelLifecycleStatus, LifecycleTransition, LifecycleZone, SasResult, SasLmsysResult } from '@/api/client'
+import type {
+  MatrixResponse,
+  MatrixCell,
+  MatrixUseCase,
+  ModelLifecycleStatus,
+  LifecycleTransition,
+  LifecycleZone,
+  SasResult,
+  SasLmsysResult,
+} from '@/api/client'
 import { useJudgeStore } from '@/stores/judge'
 import { useIntervalFn } from '@vueuse/core'
 import { modelShortName as shortName } from '@/utils/model'
@@ -47,7 +56,7 @@ function zoneClass(zone: LifecycleZone) {
 }
 
 function modelZone(model: string): LifecycleZone {
-  return lifecycleStatus.value.find(s => s.model === model)?.zone ?? 'test'
+  return lifecycleStatus.value.find((s) => s.model === model)?.zone ?? 'test'
 }
 
 async function loadLifecycle() {
@@ -142,7 +151,7 @@ const gridStyle = computed(() => ({
   gridTemplateColumns: `180px repeat(${models.value.length}, 1fr)`,
 }))
 
-function cellClass(cell: any) {
+function cellClass(cell: MatrixCell | null | undefined) {
   if (!cell || cell.avg_score === null) return 'cell-empty'
   if (cell.avg_score >= 0.7) return 'cell-good'
   if (cell.avg_score >= 0.4) return 'cell-medium'
@@ -179,7 +188,7 @@ function sparklineColor(modelIndex: number) {
 
 const matrixWithWinner = computed(() => {
   if (!matrix.value) return {}
-  const result: Record<string, any> = {}
+  const result: Record<string, MatrixUseCase & { winner: string | null; winnerScore: number | null; winnerIndex: number }> = {}
   for (const [id, data] of Object.entries(matrix.value)) {
     let winner = null
     let winnerScore: number | null = null
@@ -199,7 +208,10 @@ const matrixWithWinner = computed(() => {
   return result
 })
 
-onMounted(() => { refresh(); loadLifecycle() })
+onMounted(() => {
+  refresh()
+  loadLifecycle()
+})
 useIntervalFn(refresh, 60000)
 </script>
 
@@ -246,7 +258,7 @@ useIntervalFn(refresh, 60000)
             v-for="model in models"
             :key="model"
             @click="openDrawer(model)"
-            style="cursor:pointer"
+            style="cursor: pointer"
           >
             <span>{{ shortName(model) }}</span>
             <span class="zone-badge" :class="zoneClass(modelZone(model))">
@@ -309,7 +321,9 @@ useIntervalFn(refresh, 60000)
                     {{ trendIcon(data.models[model].trend) }}
                   </span>
                 </div>
-                <div class="tooltip-meta">{{ data.models[model].sample_size }} samples · {{ shortName(model) }}</div>
+                <div class="tooltip-meta">
+                  {{ data.models[model].sample_size }} samples · {{ shortName(model) }}
+                </div>
                 <div class="tooltip-scores" v-if="data.models[model].scores.length">
                   <span class="tooltip-scores-label">last scores</span>
                   <div class="tooltip-score-pills">
@@ -318,7 +332,8 @@ useIntervalFn(refresh, 60000)
                       :key="idx"
                       class="score-pill"
                       :class="scoreClass(s)"
-                    >{{ s.toFixed(2) }}</span>
+                      >{{ s.toFixed(2) }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -367,9 +382,18 @@ useIntervalFn(refresh, 60000)
 
         <!-- SAS result banner -->
         <div v-if="sasResult" class="sas-result" :class="`sas-${sasResult.decision}`">
-          <div class="sas-decision">{{ sasResult.decision === 'promote' ? '↑ Promoted' : sasResult.decision === 'quarantine' ? '⚠ Quarantined' : '— No data' }}</div>
+          <div class="sas-decision">
+            {{
+              sasResult.decision === 'promote'
+                ? '↑ Promoted'
+                : sasResult.decision === 'quarantine'
+                  ? '⚠ Quarantined'
+                  : '— No data'
+            }}
+          </div>
           <div class="sas-meta" v-if="sasResult.avg_score !== null">
-            avg {{ sasResult.avg_score.toFixed(3) }} · threshold {{ sasResult.threshold }} · {{ sasResult.sample_size }} samples
+            avg {{ sasResult.avg_score.toFixed(3) }} · threshold {{ sasResult.threshold }} ·
+            {{ sasResult.sample_size }} samples
           </div>
           <div class="sas-meta" v-else>No evaluation data in Redis yet</div>
         </div>
@@ -377,14 +401,26 @@ useIntervalFn(refresh, 60000)
         <!-- LMSYS SAS result -->
         <div v-if="lmsysResult" class="sas-result" :class="`sas-${lmsysResult.decision}`">
           <div class="sas-decision">
-            LMSYS — {{ lmsysResult.decision === 'promote' ? '↑ Promoted' : lmsysResult.decision === 'quarantine' ? '⚠ Quarantined' : '— No data' }}
+            LMSYS —
+            {{
+              lmsysResult.decision === 'promote'
+                ? '↑ Promoted'
+                : lmsysResult.decision === 'quarantine'
+                  ? '⚠ Quarantined'
+                  : '— No data'
+            }}
           </div>
           <div class="sas-meta" v-if="lmsysResult.avg_score !== null">
-            avg {{ lmsysResult.avg_score.toFixed(3) }} · {{ lmsysResult.prompts_tested }} prompts tested
+            avg {{ lmsysResult.avg_score.toFixed(3) }} · {{ lmsysResult.prompts_tested }} prompts
+            tested
           </div>
           <div class="sas-meta" v-else>Model call failed or no results</div>
           <div class="lmsys-breakdown" v-if="Object.keys(lmsysResult.criteria_breakdown).length">
-            <div v-for="(score, cid) in lmsysResult.criteria_breakdown" :key="cid" class="breakdown-row">
+            <div
+              v-for="(score, cid) in lmsysResult.criteria_breakdown"
+              :key="cid"
+              class="breakdown-row"
+            >
               <span class="breakdown-cid">{{ String(cid).replace('_', ' ') }}</span>
               <span class="breakdown-score" :class="scoreClass(score)">{{ score.toFixed(2) }}</span>
             </div>
@@ -399,10 +435,18 @@ useIntervalFn(refresh, 60000)
           <button class="action-btn btn-quarantine" @click="quarantine(drawerModel!)">
             ⚠ Quarantine
           </button>
-          <button class="action-btn btn-sas" @click="runSas(drawerModel!)" :disabled="sasRunning || lmsysRunning">
+          <button
+            class="action-btn btn-sas"
+            @click="runSas(drawerModel!)"
+            :disabled="sasRunning || lmsysRunning"
+          >
             {{ sasRunning ? 'Running…' : '▶ SAS' }}
           </button>
-          <button class="action-btn btn-lmsys" @click="runLmsysSas(drawerModel!)" :disabled="sasRunning || lmsysRunning">
+          <button
+            class="action-btn btn-lmsys"
+            @click="runLmsysSas(drawerModel!)"
+            :disabled="sasRunning || lmsysRunning"
+          >
             {{ lmsysRunning ? 'Running…' : '▶ LMSYS' }}
           </button>
         </div>
@@ -412,7 +456,9 @@ useIntervalFn(refresh, 60000)
         <div v-if="drawerLoading" class="drawer-loading">
           <div class="loading-dots"><span /><span /><span /></div>
         </div>
-        <div v-else-if="!drawerHistory.length" class="drawer-empty">No transitions recorded yet.</div>
+        <div v-else-if="!drawerHistory.length" class="drawer-empty">
+          No transitions recorded yet.
+        </div>
         <div v-else class="timeline">
           <div v-for="t in drawerHistory" :key="t.id" class="timeline-item">
             <span class="zone-badge" :class="zoneClass(t.zone as LifecycleZone)">
@@ -607,15 +653,27 @@ useIntervalFn(refresh, 60000)
   font-size: 18px;
   font-weight: 600;
 }
-.tooltip-score.green { color: var(--green); }
-.tooltip-score.yellow { color: var(--yellow); }
-.tooltip-score.red { color: var(--red); }
+.tooltip-score.green {
+  color: var(--green);
+}
+.tooltip-score.yellow {
+  color: var(--yellow);
+}
+.tooltip-score.red {
+  color: var(--red);
+}
 .tooltip-trend {
   font-size: 14px;
 }
-.tooltip-trend.up { color: var(--green); }
-.tooltip-trend.down { color: var(--red); }
-.tooltip-trend.stable { color: var(--text-dim); }
+.tooltip-trend.up {
+  color: var(--green);
+}
+.tooltip-trend.down {
+  color: var(--red);
+}
+.tooltip-trend.stable {
+  color: var(--text-dim);
+}
 
 .tooltip-meta {
   font-size: 10px;
@@ -645,9 +703,18 @@ useIntervalFn(refresh, 60000)
   background: var(--bg-2);
   border: 1px solid var(--border);
 }
-.score-pill.green { color: var(--green); border-color: rgba(63, 185, 80, 0.3); }
-.score-pill.yellow { color: var(--yellow); border-color: rgba(210, 153, 34, 0.3); }
-.score-pill.red { color: var(--red); border-color: rgba(248, 81, 73, 0.3); }
+.score-pill.green {
+  color: var(--green);
+  border-color: rgba(63, 185, 80, 0.3);
+}
+.score-pill.yellow {
+  color: var(--yellow);
+  border-color: rgba(210, 153, 34, 0.3);
+}
+.score-pill.red {
+  color: var(--red);
+  border-color: rgba(248, 81, 73, 0.3);
+}
 
 .cell-label {
   font-size: 10px;
@@ -814,16 +881,32 @@ useIntervalFn(refresh, 60000)
   border: 1px solid;
   white-space: nowrap;
 }
-.zone-test        { color: #7d8590; border-color: #7d8590; background: rgba(125,133,144,0.08); }
-.zone-validation  { color: #f0883e; border-color: #f0883e; background: rgba(240,136,62,0.08); }
-.zone-production  { color: var(--green); border-color: var(--green); background: rgba(63,185,80,0.08); }
-.zone-quarantine  { color: var(--red); border-color: var(--red); background: rgba(248,81,73,0.08); }
+.zone-test {
+  color: #7d8590;
+  border-color: #7d8590;
+  background: rgba(125, 133, 144, 0.08);
+}
+.zone-validation {
+  color: #f0883e;
+  border-color: #f0883e;
+  background: rgba(240, 136, 62, 0.08);
+}
+.zone-production {
+  color: var(--green);
+  border-color: var(--green);
+  background: rgba(63, 185, 80, 0.08);
+}
+.zone-quarantine {
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(248, 81, 73, 0.08);
+}
 
 /* Drawer */
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 200;
   display: flex;
   justify-content: flex-end;
@@ -863,7 +946,9 @@ useIntervalFn(refresh, 60000)
   cursor: pointer;
   padding: 4px 8px;
 }
-.drawer-close:hover { color: var(--text); }
+.drawer-close:hover {
+  color: var(--text);
+}
 
 .drawer-actions {
   display: flex;
@@ -881,11 +966,30 @@ useIntervalFn(refresh, 60000)
   border: 1px solid;
   transition: opacity 0.15s;
 }
-.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-validate  { background: rgba(63,185,80,0.1); color: var(--green); border-color: var(--green); }
-.btn-quarantine { background: rgba(248,81,73,0.1); color: var(--red); border-color: var(--red); }
-.btn-sas       { background: rgba(0,229,255,0.1); color: var(--accent); border-color: var(--accent); }
-.btn-lmsys     { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: #a78bfa; }
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-validate {
+  background: rgba(63, 185, 80, 0.1);
+  color: var(--green);
+  border-color: var(--green);
+}
+.btn-quarantine {
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--red);
+  border-color: var(--red);
+}
+.btn-sas {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.btn-lmsys {
+  background: rgba(167, 139, 250, 0.1);
+  color: #a78bfa;
+  border-color: #a78bfa;
+}
 
 .lmsys-breakdown {
   margin-top: 8px;
@@ -898,11 +1002,21 @@ useIntervalFn(refresh, 60000)
   justify-content: space-between;
   font-size: 10px;
 }
-.breakdown-cid  { color: var(--text-dim); }
-.breakdown-score { font-weight: 600; }
-.breakdown-score.green  { color: var(--green); }
-.breakdown-score.yellow { color: var(--yellow); }
-.breakdown-score.red    { color: var(--red); }
+.breakdown-cid {
+  color: var(--text-dim);
+}
+.breakdown-score {
+  font-weight: 600;
+}
+.breakdown-score.green {
+  color: var(--green);
+}
+.breakdown-score.yellow {
+  color: var(--yellow);
+}
+.breakdown-score.red {
+  color: var(--red);
+}
 
 .sas-result {
   margin: 12px 20px 0;
@@ -910,11 +1024,26 @@ useIntervalFn(refresh, 60000)
   border-radius: 8px;
   border: 1px solid var(--border);
 }
-.sas-promote   { border-color: var(--green); background: rgba(63,185,80,0.07); }
-.sas-quarantine { border-color: var(--red); background: rgba(248,81,73,0.07); }
-.sas-no_data   { border-color: var(--border); }
-.sas-decision  { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-.sas-meta      { font-size: 11px; color: var(--text-dim); }
+.sas-promote {
+  border-color: var(--green);
+  background: rgba(63, 185, 80, 0.07);
+}
+.sas-quarantine {
+  border-color: var(--red);
+  background: rgba(248, 81, 73, 0.07);
+}
+.sas-no_data {
+  border-color: var(--border);
+}
+.sas-decision {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.sas-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
 
 .drawer-section-title {
   font-size: 9px;
@@ -922,7 +1051,8 @@ useIntervalFn(refresh, 60000)
   color: var(--text-dim);
   padding: 16px 20px 8px;
 }
-.drawer-loading, .drawer-empty {
+.drawer-loading,
+.drawer-empty {
   padding: 20px;
   color: var(--text-dim);
   font-size: 12px;
@@ -948,14 +1078,44 @@ useIntervalFn(refresh, 60000)
   flex-wrap: wrap;
   align-items: center;
 }
-.tl-operator { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-.tl-date     { font-size: 10px; color: var(--text-dim); }
-.tl-score    { font-size: 10px; color: var(--text-dim); background: var(--bg-3); border: 1px solid var(--border); border-radius: 20px; padding: 1px 6px; }
-.tl-note     { font-size: 11px; color: var(--text-dim); font-style: italic; }
+.tl-operator {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.tl-date {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.tl-score {
+  font-size: 10px;
+  color: var(--text-dim);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 6px;
+}
+.tl-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+}
 
 /* Drawer slide transition */
-.drawer-enter-active, .drawer-leave-active { transition: opacity 0.2s; }
-.drawer-enter-from, .drawer-leave-to { opacity: 0; }
-.drawer-enter-active .drawer, .drawer-leave-active .drawer { transition: transform 0.25s ease; }
-.drawer-enter-from .drawer, .drawer-leave-to .drawer { transform: translateX(100%); }
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.2s;
+}
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+}
+.drawer-enter-active .drawer,
+.drawer-leave-active .drawer {
+  transition: transform 0.25s ease;
+}
+.drawer-enter-from .drawer,
+.drawer-leave-to .drawer {
+  transform: translateX(100%);
+}
 </style>

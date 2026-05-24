@@ -116,13 +116,21 @@ watch(
 
       <!-- Routing bar -->
       <div class="routing-bar">
-        <div class="routing-bar-left" @click="routingExpanded = !routingExpanded" style="flex:1; cursor:pointer">
+        <div
+          class="routing-bar-left"
+          @click="routingExpanded = !routingExpanded"
+          style="flex: 1; cursor: pointer"
+        >
           <span class="routing-label">ROUTING</span>
           <button
             class="auto-route-toggle"
             :class="{ active: autoRoute }"
             @click.stop="toggleAutoRoute"
-            :title="autoRoute ? 'Auto-routing ON — click to switch to manual' : 'Manual mode — click to enable auto-routing'"
+            :title="
+              autoRoute
+                ? 'Auto-routing ON — click to switch to manual'
+                : 'Manual mode — click to enable auto-routing'
+            "
           >
             {{ autoRoute ? 'AUTO' : 'MANUAL' }}
           </button>
@@ -138,11 +146,18 @@ watch(
             }}
           </span>
           <span v-else class="routing-score-empty">no data yet</span>
-          <span class="routing-reason" v-if="autoRoute && routing?.recommended === store.currentModel"
+          <span
+            class="routing-reason"
+            v-if="autoRoute && routing?.recommended === store.currentModel"
             >— best for this profile + use case</span
           >
         </div>
-        <span class="routing-toggle" @click="routingExpanded = !routingExpanded" style="cursor:pointer">{{ routingExpanded ? 'collapse ↑' : 'show all ↓' }}</span>
+        <span
+          class="routing-toggle"
+          @click="routingExpanded = !routingExpanded"
+          style="cursor: pointer"
+          >{{ routingExpanded ? 'collapse ↑' : 'show all ↓' }}</span
+        >
       </div>
 
       <!-- Scoreboard expanded -->

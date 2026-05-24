@@ -5,7 +5,9 @@ from shared.langfuse import LangfuseClient
 from shared.config import get_evaluation_settings
 
 _s = get_evaluation_settings()
-_client = LangfuseClient(_s.langfuse_host, _s.langfuse_public_key, _s.langfuse_secret_key)
+_client = LangfuseClient(
+    _s.langfuse_host, _s.langfuse_public_key, _s.langfuse_secret_key
+)
 
 # Re-export shared methods
 get_traces = _client.get_traces

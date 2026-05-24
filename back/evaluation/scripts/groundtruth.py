@@ -37,7 +37,9 @@ import httpx
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-ARENA_DB_URL   = os.environ.get("ARENA_DB_URL",   "postgresql://langfuse:langfuse@langfuse-db:5432/langfuse")
+ARENA_DB_URL = os.environ.get(
+    "ARENA_DB_URL", "postgresql://langfuse:langfuse@langfuse-db:5432/langfuse"
+)
 EVALUATION_URL = os.environ.get("EVALUATION_URL", "http://localhost:8003")
 
 # ── Corpus (49 cases) ────────────────────────────────────────────────────────
@@ -535,14 +537,40 @@ CREATE INDEX IF NOT EXISTS idx_gt_results_judge   ON groundtruth_results(judge_m
 
 _NEGATIVE_PATTERNS = [
     # English
-    "does not", "do not", "fails to", "fail to", "no ",
-    "violation", "fails", "missing", "lacks", "lack ",
-    "without", "never", "absent", "not signal", "not provide",
-    "not mention", "not invite", "not distinguish",
+    "does not",
+    "do not",
+    "fails to",
+    "fail to",
+    "no ",
+    "violation",
+    "fails",
+    "missing",
+    "lacks",
+    "lack ",
+    "without",
+    "never",
+    "absent",
+    "not signal",
+    "not provide",
+    "not mention",
+    "not invite",
+    "not distinguish",
     # French
-    "n'est pas", "ne pas", "n'indique", "n'invite", "ne mentionne",
-    "ne fourni", "ne signale", "ne précise", "ne distingue", "ne propose",
-    "sans ", "aucun", "jamais", "manque", "n'explicite",
+    "n'est pas",
+    "ne pas",
+    "n'indique",
+    "n'invite",
+    "ne mentionne",
+    "ne fourni",
+    "ne signale",
+    "ne précise",
+    "ne distingue",
+    "ne propose",
+    "sans ",
+    "aucun",
+    "jamais",
+    "manque",
+    "n'explicite",
 ]
 
 
@@ -560,12 +588,19 @@ def _find_negative_snippet(reason: str) -> str | None:
 
 
 def _print_case_result(
-    case_id: str, crit: str, prompt: str, judge_short: str,
-    agreement: float, answers: dict, expected: dict, reason: str,
-    summary: dict, question_order: str = "original",
+    case_id: str,
+    crit: str,
+    prompt: str,
+    judge_short: str,
+    agreement: float,
+    answers: dict,
+    expected: dict,
+    reason: str,
+    summary: dict,
+    question_order: str = "original",
 ) -> None:
     order_tag = f"  [order={question_order}]" if question_order != "original" else ""
-    print(f"{'─'*80}")
+    print(f"{'─' * 80}")
     print(f"  case    : {case_id[:8]}…  [{crit}]{order_tag}")
     print(f"  prompt  : {prompt[:70]}{'…' if len(prompt) > 70 else ''}")
     print(f"  judge   : {judge_short}   agreement={agreement:.2f}")
@@ -599,10 +634,14 @@ def _print_case_result(
 
 def _print_summary(summary: dict, order_label: str) -> None:
     print("=" * 90)
-    print(f"SUMMARY — mean agreement & incoherence-B rate  by judge × criterion  [{order_label}]")
+    print(
+        f"SUMMARY — mean agreement & incoherence-B rate  by judge × criterion  [{order_label}]"
+    )
     print("=" * 90)
-    print(f"  {'judge':<30}  {'criterion':<22}  {'agreement':>10}  {'incoherence_B':>14}  {'n':>4}")
-    print(f"  {'-'*30}  {'-'*22}  {'-'*10}  {'-'*14}  {'-'*4}")
+    print(
+        f"  {'judge':<30}  {'criterion':<22}  {'agreement':>10}  {'incoherence_B':>14}  {'n':>4}"
+    )
+    print(f"  {'-' * 30}  {'-' * 22}  {'-' * 10}  {'-' * 14}  {'-' * 4}")
 
     by_criterion: dict[str, list] = defaultdict(list)
     for (judge, crit), stats in sorted(summary.items()):
@@ -612,12 +651,15 @@ def _print_summary(summary: dict, order_label: str) -> None:
         for judge, stats in sorted(by_criterion[crit]):
             values = stats["agreements"]
             mean_a = sum(values) / len(values) if values else 0.0
-            inc_r  = stats["pattern_b"] / stats["total"] if stats["total"] else 0.0
-            print(f"  {judge:<30}  {crit:<22}  {mean_a:>9.1%}  {inc_r:>13.1%}  {len(values):>4}")
+            inc_r = stats["pattern_b"] / stats["total"] if stats["total"] else 0.0
+            print(
+                f"  {judge:<30}  {crit:<22}  {mean_a:>9.1%}  {inc_r:>13.1%}  {len(values):>4}"
+            )
         print()
 
 
 # ── seed ──────────────────────────────────────────────────────────────────────
+
 
 async def cmd_seed(args: argparse.Namespace) -> None:
     import asyncpg
@@ -648,6 +690,7 @@ async def cmd_seed(args: argparse.Namespace) -> None:
 
 # ── run ───────────────────────────────────────────────────────────────────────
 
+
 async def _print_comparison(client: httpx.AsyncClient, run_results: list[dict]) -> None:
     print("\n" + "=" * 90)
     print("COMPARISON — original (q1→q4) vs reversed (q4→q1) — qid rows, order columns")
@@ -670,24 +713,26 @@ async def _print_comparison(client: httpx.AsyncClient, run_results: list[dict]) 
 
         for judge_short, orders in sorted(by_judge.items()):
             orig = orders.get("original")
-            rev  = orders.get("reversed")
+            rev = orders.get("reversed")
             if not orig or not rev:
                 continue
 
             print(f"\n  [{crit}] {case_id[:8]}…  judge={judge_short}")
             print(f"  prompt: {prompt_preview}…")
-            print(f"  {'qid':<4}  {'expected':<8}  {'original':<10}  {'reversed':<10}  delta")
-            print(f"  {'─'*4}  {'─'*8}  {'─'*10}  {'─'*10}  {'─'*5}")
+            print(
+                f"  {'qid':<4}  {'expected':<8}  {'original':<10}  {'reversed':<10}  delta"
+            )
+            print(f"  {'─' * 4}  {'─' * 8}  {'─' * 10}  {'─' * 10}  {'─' * 5}")
 
             flips = 0
             for qid in sorted(expected):
-                exp   = expected[qid]
+                exp = expected[qid]
                 o_ans = orig["answers"].get(qid)
                 r_ans = rev["answers"].get(qid)
-                exp_s = "True " if exp   else "False"
-                o_s   = "True " if o_ans else "False"
-                r_s   = "True " if r_ans else "False"
-                flip  = "FLIP" if o_ans != r_ans else "—"
+                exp_s = "True " if exp else "False"
+                o_s = "True " if o_ans else "False"
+                r_s = "True " if r_ans else "False"
+                flip = "FLIP" if o_ans != r_ans else "—"
                 if o_ans != r_ans:
                     flips += 1
                 print(f"  {qid:<4}  {exp_s:<8}  {o_s:<10}  {r_s:<10}  {flip}")
@@ -695,8 +740,10 @@ async def _print_comparison(client: httpx.AsyncClient, run_results: list[dict]) 
             o_agr = orig["agreement"]
             r_agr = rev["agreement"]
             delta = r_agr - o_agr
-            sign  = "+" if delta >= 0 else ""
-            print(f"  agreement: original={o_agr:.2f}  reversed={r_agr:.2f}  delta={sign}{delta:.2f}  flips={flips}/4")
+            sign = "+" if delta >= 0 else ""
+            print(
+                f"  agreement: original={o_agr:.2f}  reversed={r_agr:.2f}  delta={sign}{delta:.2f}  flips={flips}/4"
+            )
 
 
 async def cmd_run(args: argparse.Namespace) -> None:
@@ -722,7 +769,9 @@ async def cmd_run(args: argparse.Namespace) -> None:
             print("No cases found.")
             return
 
-        print(f"\n{len(cases)} case(s) — running checklists…  [question_order={question_order}]\n")
+        print(
+            f"\n{len(cases)} case(s) — running checklists…  [question_order={question_order}]\n"
+        )
         if args.judges:
             print(f"Judges override: {args.judges}\n")
 
@@ -732,12 +781,14 @@ async def cmd_run(args: argparse.Namespace) -> None:
         run_results: list[dict] = []
 
         for case in cases:
-            case_id  = case["id"]
-            crit     = case["criterion"]
+            case_id = case["id"]
+            crit = case["criterion"]
             expected = case["expected_answers"]
 
             # Per-judge skip: only run judges not yet evaluated for this (case, order)
-            existing_r = await client.get(f"/groundtruth/results/{case_id}?question_order={question_order}")
+            existing_r = await client.get(
+                f"/groundtruth/results/{case_id}?question_order={question_order}"
+            )
             evaluated_judges: set[str] = set()
             if existing_r.status_code == 200 and existing_r.json():
                 evaluated_judges = {row["judge_model"] for row in existing_r.json()}
@@ -747,42 +798,57 @@ async def cmd_run(args: argparse.Namespace) -> None:
                 judges_to_run = [j for j in judges_to_run if j not in evaluated_judges]
             elif evaluated_judges:
                 # no explicit override but some judges already done → skip all (original behaviour)
-                print(f"  [skip] {case_id[:8]}… already has {len(evaluated_judges)} result(s) for order={question_order}")
+                print(
+                    f"  [skip] {case_id[:8]}… already has {len(evaluated_judges)} result(s) for order={question_order}"
+                )
                 continue
 
             if not judges_to_run and args.judges:
-                print(f"  [skip] {case_id[:8]}… all requested judges already evaluated for order={question_order}")
+                print(
+                    f"  [skip] {case_id[:8]}… all requested judges already evaluated for order={question_order}"
+                )
                 continue
 
-            for judge_model in (judges_to_run if judges_to_run else [None]):
+            for judge_model in judges_to_run if judges_to_run else [None]:
                 params: list[str] = []
                 if judge_model:
                     params.append(f"judge_models={judge_model}")
                 if question_order != "original":
                     params.append(f"question_order={question_order}")
-                run_url = f"/groundtruth/run/{case_id}" + (f"?{'&'.join(params)}" if params else "")
+                run_url = f"/groundtruth/run/{case_id}" + (
+                    f"?{'&'.join(params)}" if params else ""
+                )
 
                 r = await client.post(run_url)
                 r.raise_for_status()
                 result = r.json()
 
                 for judge in result["judges"]:
-                    short   = judge["judge_model"].split("/")[-1]
+                    short = judge["judge_model"].split("/")[-1]
                     answers = judge["answers"]
-                    reason  = (judge.get("reason") or "").strip()
+                    reason = (judge.get("reason") or "").strip()
                     _print_case_result(
-                        case_id, crit, case["prompt"], short,
-                        judge["agreement"], answers, expected, reason,
-                        summary, question_order,
+                        case_id,
+                        crit,
+                        case["prompt"],
+                        short,
+                        judge["agreement"],
+                        answers,
+                        expected,
+                        reason,
+                        summary,
+                        question_order,
                     )
 
             if args.compare:
-                run_results.append({
-                    "case_id": case_id,
-                    "criterion": crit,
-                    "expected_answers": expected,
-                    "prompt": case["prompt"],
-                })
+                run_results.append(
+                    {
+                        "case_id": case_id,
+                        "criterion": crit,
+                        "expected_answers": expected,
+                        "prompt": case["prompt"],
+                    }
+                )
 
         _print_summary(summary, f"order={question_order}")
 
@@ -791,6 +857,7 @@ async def cmd_run(args: argparse.Namespace) -> None:
 
 
 # ── extend ────────────────────────────────────────────────────────────────────
+
 
 async def cmd_extend(args: argparse.Namespace) -> None:
     eval_url = args.eval_url or EVALUATION_URL
@@ -811,12 +878,14 @@ async def cmd_extend(args: argparse.Namespace) -> None:
             r = await client.post("/groundtruth/corpus", json=case)
             r.raise_for_status()
             data = r.json()
-            added.append({
-                "id": data["id"],
-                "criterion": data["criterion"],
-                "prompt": case["prompt"],
-                "expected_answers": case["expected_answers"],
-            })
+            added.append(
+                {
+                    "id": data["id"],
+                    "criterion": data["criterion"],
+                    "prompt": case["prompt"],
+                    "expected_answers": case["expected_answers"],
+                }
+            )
             print(f"  [{data['criterion']}] {data['id']}  {case['prompt'][:55]}…")
 
         print(f"\n{len(added)} cases added.\n")
@@ -831,9 +900,9 @@ async def cmd_extend(args: argparse.Namespace) -> None:
         )
 
         for order in orders:
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print(f"RUNNING question_order={order} on {len(added)} new cases")
-            print(f"{'='*80}\n")
+            print(f"{'=' * 80}\n")
 
             for item in added:
                 params: list[str] = []
@@ -850,23 +919,37 @@ async def cmd_extend(args: argparse.Namespace) -> None:
                 result = r.json()
 
                 for judge in result["judges"]:
-                    short   = judge["judge_model"].split("/")[-1]
+                    short = judge["judge_model"].split("/")[-1]
                     answers = judge["answers"]
-                    reason  = (judge.get("reason") or "").strip()
+                    reason = (judge.get("reason") or "").strip()
                     _print_case_result(
-                        item["id"], item["criterion"], item["prompt"], short,
-                        judge["agreement"], answers, item["expected_answers"], reason,
-                        summary, order,
+                        item["id"],
+                        item["criterion"],
+                        item["prompt"],
+                        short,
+                        judge["agreement"],
+                        answers,
+                        item["expected_answers"],
+                        reason,
+                        summary,
+                        order,
                     )
 
-        _print_summary(summary, "both orders" if args.both_orders else f"order={args.order}")
+        _print_summary(
+            summary, "both orders" if args.both_orders else f"order={args.order}"
+        )
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+
 def _add_eval_url_arg(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--eval-url", default=None, metavar="URL",
-                   help=f"Evaluation service URL (default: {EVALUATION_URL})")
+    p.add_argument(
+        "--eval-url",
+        default=None,
+        metavar="URL",
+        help=f"Evaluation service URL (default: {EVALUATION_URL})",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -877,37 +960,85 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     # seed
-    p_seed = sub.add_parser("seed", help="Drop + recreate tables and insert all corpus cases.")
-    p_seed.add_argument("--db-url", default=None, metavar="DSN",
-                        help=f"asyncpg DSN (default: {ARENA_DB_URL})")
+    p_seed = sub.add_parser(
+        "seed", help="Drop + recreate tables and insert all corpus cases."
+    )
+    p_seed.add_argument(
+        "--db-url",
+        default=None,
+        metavar="DSN",
+        help=f"asyncpg DSN (default: {ARENA_DB_URL})",
+    )
     _add_eval_url_arg(p_seed)
 
     # run
     p_run = sub.add_parser("run", help="Run checklist evaluations on the corpus.")
-    p_run.add_argument("--criterion", nargs="+", default=None, metavar="CRITERION",
-                       help="Filter by criterion (one or more). Omit for all.")
-    p_run.add_argument("--judges", nargs="+", default=None, metavar="MODEL",
-                       help="Override judge model list (e.g. ollama/gemma3:4b ollama/phi4-mini).")
-    p_run.add_argument("--cases", nargs="+", default=None, metavar="ID_PREFIX",
-                       help="Run only on cases whose ID starts with these prefixes.")
-    p_run.add_argument("--order", choices=["original", "reversed", "permuted"], default="original",
-                       help="Question presentation order (default: original). 'permuted' = q2→q4→q1→q3.")
-    p_run.add_argument("--compare", action="store_true",
-                       help="After the run, show original vs reversed comparison per case.")
+    p_run.add_argument(
+        "--criterion",
+        nargs="+",
+        default=None,
+        metavar="CRITERION",
+        help="Filter by criterion (one or more). Omit for all.",
+    )
+    p_run.add_argument(
+        "--judges",
+        nargs="+",
+        default=None,
+        metavar="MODEL",
+        help="Override judge model list (e.g. ollama/gemma3:4b ollama/phi4-mini).",
+    )
+    p_run.add_argument(
+        "--cases",
+        nargs="+",
+        default=None,
+        metavar="ID_PREFIX",
+        help="Run only on cases whose ID starts with these prefixes.",
+    )
+    p_run.add_argument(
+        "--order",
+        choices=["original", "reversed", "permuted"],
+        default="original",
+        help="Question presentation order (default: original). 'permuted' = q2→q4→q1→q3.",
+    )
+    p_run.add_argument(
+        "--compare",
+        action="store_true",
+        help="After the run, show original vs reversed comparison per case.",
+    )
     _add_eval_url_arg(p_run)
 
     # extend
-    p_ext = sub.add_parser("extend", help="Add new cases from a JSON file and evaluate them.")
-    p_ext.add_argument("cases_json", metavar="CASES_JSON",
-                       help="Path to a JSON file containing a list of new cases.")
-    p_ext.add_argument("--skip-run", action="store_true",
-                       help="Only insert cases, do not evaluate them.")
-    p_ext.add_argument("--judges", nargs="+", default=None, metavar="MODEL",
-                       help="Override judge model list.")
-    p_ext.add_argument("--order", choices=["original", "reversed"], default="original",
-                       help="Question order to run (ignored if --both-orders is set).")
-    p_ext.add_argument("--both-orders", action="store_true",
-                       help="Run both original and reversed orders (default for corpus extension).")
+    p_ext = sub.add_parser(
+        "extend", help="Add new cases from a JSON file and evaluate them."
+    )
+    p_ext.add_argument(
+        "cases_json",
+        metavar="CASES_JSON",
+        help="Path to a JSON file containing a list of new cases.",
+    )
+    p_ext.add_argument(
+        "--skip-run",
+        action="store_true",
+        help="Only insert cases, do not evaluate them.",
+    )
+    p_ext.add_argument(
+        "--judges",
+        nargs="+",
+        default=None,
+        metavar="MODEL",
+        help="Override judge model list.",
+    )
+    p_ext.add_argument(
+        "--order",
+        choices=["original", "reversed"],
+        default="original",
+        help="Question order to run (ignored if --both-orders is set).",
+    )
+    p_ext.add_argument(
+        "--both-orders",
+        action="store_true",
+        help="Run both original and reversed orders (default for corpus extension).",
+    )
     _add_eval_url_arg(p_ext)
 
     return parser

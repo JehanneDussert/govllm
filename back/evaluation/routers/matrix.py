@@ -147,10 +147,12 @@ async def get_routing():
 
     # ── Apply routing strategy ───────────────────────────────────────────────
     if strategy == "progression":
+
         def _progression_key(m: dict) -> float:
             avg = m["avg_score"] if m["avg_score"] is not None else 0.0
             delta = m["delta_score"] if m["delta_score"] is not None else 0.0
             return alpha * avg + (1.0 - alpha) * delta
+
         model_scores.sort(key=_progression_key, reverse=True)
 
     elif strategy == "stability":
@@ -160,7 +162,8 @@ async def get_routing():
 
     elif strategy == "strict":
         eligible = [
-            m for m in model_scores
+            m
+            for m in model_scores
             if _passes_global_threshold(m) and _passes_criterion_gate(m)
         ]
         eligible.sort(
@@ -174,7 +177,9 @@ async def get_routing():
         )
         recommended = eligible[0]["model"] if eligible else None
         for m in model_scores:
-            m["meets_threshold"] = _passes_global_threshold(m) and _passes_criterion_gate(m)
+            m["meets_threshold"] = _passes_global_threshold(
+                m
+            ) and _passes_criterion_gate(m)
         # Remove internal fields before returning
         for m in model_scores:
             m.pop("delta_score", None)
@@ -185,7 +190,9 @@ async def get_routing():
             "profile_id": config.active_profile_id,
             "min_threshold": min_threshold,
             "models": model_scores,
-            "active_criteria": [{"id": c.id, "label": c.label} for c in active_criteria],
+            "active_criteria": [
+                {"id": c.id, "label": c.label} for c in active_criteria
+            ],
         }
 
     else:  # best_score (default)

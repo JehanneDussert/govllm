@@ -42,12 +42,19 @@ async def get_corpus(
 @router.post("/run/{case_id}", response_model=GroundTruthRunResult)
 async def run_groundtruth(
     case_id: str,
-    judge_models: list[str] | None = Query(None, description="Override judge model list"),
-    question_order: str = Query("original", description="Question presentation order: 'original', 'reversed', or 'permuted' (q2→q4→q1→q3)"),
+    judge_models: list[str] | None = Query(
+        None, description="Override judge model list"
+    ),
+    question_order: str = Query(
+        "original",
+        description="Question presentation order: 'original', 'reversed', or 'permuted' (q2→q4→q1→q3)",
+    ),
 ):
     """Submit a corpus case to configured judges in checklist mode. Stores results."""
     try:
-        return await gt_service.run_checklist(case_id, judge_models=judge_models, question_order=question_order)
+        return await gt_service.run_checklist(
+            case_id, judge_models=judge_models, question_order=question_order
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:

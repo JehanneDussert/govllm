@@ -1,21 +1,48 @@
+# Secrets & environment
 .env
 *.env
 .env.*
 *.pem
 *.key
+
+# Python
 __pycache__/
 *.pyc
 .venv/
 .uv/
-dist/
 *.egg-info/
+
+# uv — per-service lock files (workspace uses back/uv.lock)
+back/evaluation/uv.lock
+back/llm-gateway/uv.lock
+back/observability/uv.lock
+
+# Node / frontend
 node_modules/
+dist/
 .nuxt/
 .output/
-dist/
-front/node_modules
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Generated figures (reproduced by scripts/)
+docs/arxiv/figures/
+
+# Local scripts (not committed) 
 add_license_headers.sh
-CLAUDE.md 
+
+# Private directories 
+CLAUDE.md
 .claude
+audit/
 docs/arxiv/draft
 docs/paper*

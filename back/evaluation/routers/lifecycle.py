@@ -34,14 +34,20 @@ async def validate_model(model: str, note: str | None = Query(None)):
             status_code=400,
             detail=f"Model is already in '{current_zone}' — validate is a no-op.",
         )
-    return await set_zone(model, "production", operator="human", note=note or "Human validation")
+    return await set_zone(
+        model, "production", operator="human", note=note or "Human validation"
+    )
 
 
 @router.post("/quarantine/{model}", response_model=LifecycleTransition)
-async def quarantine_model(model: str, note: str | None = Query(None), criterion_id: str | None = Query(None)):
+async def quarantine_model(
+    model: str, note: str | None = Query(None), criterion_id: str | None = Query(None)
+):
     """Manual quarantine — suspends the model from production routing."""
     return await set_zone(
-        model, "quarantine", operator="human",
+        model,
+        "quarantine",
+        operator="human",
         criterion_id=criterion_id,
         note=note or "Manual quarantine",
     )
@@ -54,7 +60,9 @@ async def sas(req: SasRequest):
     compares to score_threshold and advances or quarantines accordingly.
     """
     if req.model not in settings.benchmark_models:
-        raise HTTPException(status_code=404, detail=f"Model '{req.model}' not in benchmark_models.")
+        raise HTTPException(
+            status_code=404, detail=f"Model '{req.model}' not in benchmark_models."
+        )
     return await run_sas(req.model, req.profile_id)
 
 
@@ -66,7 +74,9 @@ async def sas_lmsys(req: SasRequest, n_prompts: int = Query(10, ge=1, le=20)):
     evaluates each response with the judge, returns per-criterion breakdown.
     """
     if req.model not in settings.benchmark_models:
-        raise HTTPException(status_code=404, detail=f"Model '{req.model}' not in benchmark_models.")
+        raise HTTPException(
+            status_code=404, detail=f"Model '{req.model}' not in benchmark_models."
+        )
     return await run_sas_lmsys(req.model, req.profile_id, n_prompts)
 
 

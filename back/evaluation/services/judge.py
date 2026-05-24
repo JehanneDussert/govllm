@@ -25,8 +25,14 @@ logger = logging.getLogger(__name__)
 # Models that need thinking mode disabled explicitly
 _NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
 # All Ollama models get an extended context window to handle long judge prompts
-_LARGE_CTX_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b",
-                     "ollama/phi4-mini", "ollama/mistral:7b", "ollama/gemma3:4b"}
+_LARGE_CTX_MODELS = {
+    "ollama/qwen3:1.7b",
+    "ollama/qwen3:4b",
+    "ollama/qwen3:8b",
+    "ollama/phi4-mini",
+    "ollama/mistral:7b",
+    "ollama/gemma3:4b",
+}
 
 
 def _build_judge_prompt(
@@ -41,22 +47,37 @@ def _build_judge_prompt(
     def _fmt(c: JudgeCriterion) -> str:
         line = f'- "{c.id}": {c.description}'
         if calibration_notes and calibration_notes.get(c.id):
-            line += f'\n  [Calibration: {calibration_notes[c.id]}]'
+            line += f"\n  [Calibration: {calibration_notes[c.id]}]"
         return line
 
     criteria_block = "\n".join(_fmt(c) for c in criteria)
-    use_case_block = f'\nUse case context: {use_case_label}' if use_case_label else ""
-    policy_block = f'\nPolicy rules to enforce: {policy_rules}' if policy_rules.strip() else ""
+    use_case_block = f"\nUse case context: {use_case_label}" if use_case_label else ""
+    policy_block = (
+        f"\nPolicy rules to enforce: {policy_rules}" if policy_rules.strip() else ""
+    )
     ids = ", ".join(f'"{c.id}"' for c in criteria)
 
     # Concrete example values so small models imitate correctly
     # (empty reason or 0.0 placeholder → model copies the placeholder)
-    example_ids = [c.id for c in criteria[:2]] if len(criteria) >= 2 else [c.id for c in criteria]
+    example_ids = (
+        [c.id for c in criteria[:2]] if len(criteria) >= 2 else [c.id for c in criteria]
+    )
     example_scores = {
-        example_ids[0]: {"score": 0.85, "flag": False, "reason": "Response is clear and well-structured"},
+        example_ids[0]: {
+            "score": 0.85,
+            "flag": False,
+            "reason": "Response is clear and well-structured",
+        },
         **(
-            {example_ids[1]: {"score": 0.30, "flag": True, "reason": "Critical data exposed without consent"}}
-            if len(example_ids) > 1 else {}
+            {
+                example_ids[1]: {
+                    "score": 0.30,
+                    "flag": True,
+                    "reason": "Critical data exposed without consent",
+                }
+            }
+            if len(example_ids) > 1
+            else {}
         ),
     }
     json_format = json.dumps({"scores": example_scores}, indent=2)
@@ -102,7 +123,7 @@ def _repair_json(text: str) -> dict | None:
     # Trailing commas
     text = re.sub(r",\s*([}\]])", r"\1", text)
     # Truncated scores: "score": 0. → "score": 0.0
-    text = re.sub(r':\s*(\d+)\.\s*([,}\]])', r': \1.0\2', text)
+    text = re.sub(r":\s*(\d+)\.\s*([,}\]])", r": \1.0\2", text)
     # Single quotes → double quotes
     text = re.sub(r"(?<![\\])'", '"', text)
     # Complete missing closing braces (some small models omit the final })
@@ -155,7 +176,7 @@ def _extract_json_from_text(text: str) -> dict | None:
         elif ch == "}":
             depth -= 1
             if depth == 0:
-                candidate = text[start:i + 1]
+                candidate = text[start : i + 1]
                 try:
                     return json.loads(candidate)
                 except json.JSONDecodeError:
@@ -207,14 +228,20 @@ async def _call_judge(
                     "messages": [
                         {
                             "role": "system",
-                            "content": _build_system_prompt(judge_model, context_system_prompt),
+                            "content": _build_system_prompt(
+                                judge_model, context_system_prompt
+                            ),
                         },
                         {"role": "user", "content": prompt + no_think_suffix},
                     ],
                     "stream": False,
                     "temperature": 0.0,
                     "max_tokens": 2048,
-                    **({"options": {"num_ctx": 8192}} if judge_model in _LARGE_CTX_MODELS else {}),
+                    **(
+                        {"options": {"num_ctx": 8192}}
+                        if judge_model in _LARGE_CTX_MODELS
+                        else {}
+                    ),
                 },
             )
             r.raise_for_status()
