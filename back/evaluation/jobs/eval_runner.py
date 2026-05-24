@@ -16,10 +16,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 settings = get_evaluation_settings()
- 
+
 EVAL_RESULT_TTL = 3600 * 24 * 7  # 7 days
- 
- 
+
+
 def _compute_composite(
     scores: list[CriterionScore],
     criteria: list[JudgeCriterion],
@@ -30,8 +30,8 @@ def _compute_composite(
         return 0.0
     weighted_sum = sum(s.score * weight_map.get(s.criterion_id, 1.0) for s in scores)
     return round(weighted_sum / total_weight, 3)
- 
- 
+
+
 async def evaluate_trace(
     trace_id: str,
     model: str,
@@ -47,12 +47,16 @@ async def evaluate_trace(
     if not active_criteria:
         return None
 
-    active_uc = next((u for u in config.use_cases if u.id == config.active_use_case_id), None)
+    active_uc = next(
+        (u for u in config.use_cases if u.id == config.active_use_case_id), None
+    )
     use_case_label = active_uc.label if active_uc else None
     uc_prompt = active_uc.judge_system_prompt if active_uc else None
 
     # Calibration notes keyed by criterion_id from the active profile
-    active_profile = next((p for p in config.profiles if p.id == config.active_profile_id), None)
+    active_profile = next(
+        (p for p in config.profiles if p.id == config.active_profile_id), None
+    )
     calibration_notes: dict[str, str] = {}
     if active_profile:
         for cid, cc in active_profile.criteria_config.items():
@@ -71,7 +75,11 @@ async def evaluate_trace(
         judge_model: str,
         extra_system: str | None,
     ) -> list[CriterionScore]:
-        cal = {cid: v for cid, v in calibration_notes.items() if cid in {c.id for c in judge_criteria}}
+        cal = {
+            cid: v
+            for cid, v in calibration_notes.items()
+            if cid in {c.id for c in judge_criteria}
+        }
         prompt = _build_judge_prompt(
             question=question,
             answer=answer,
@@ -90,22 +98,30 @@ async def evaluate_trace(
             if raw2:
                 parsed = _extract_json(raw2)
         if parsed is None:
-            logger.warning(f"[eval] JSON parse failed — judge={judge_model} model={model} raw={raw[:200]!r}")
+            logger.warning(
+                f"[eval] JSON parse failed — judge={judge_model} model={model} raw={raw[:200]!r}"
+            )
             return []
         scores_raw = parsed.get("scores", {})
         if isinstance(scores_raw, list):
-            scores_raw = {s.get("id") or s.get("criterion_id", ""): s for s in scores_raw if isinstance(s, dict)}
+            scores_raw = {
+                s.get("id") or s.get("criterion_id", ""): s
+                for s in scores_raw
+                if isinstance(s, dict)
+            }
         result = []
         for c in judge_criteria:
             s = scores_raw.get(c.id, {})
             if not isinstance(s, dict):
                 s = {}
-            result.append(CriterionScore(
-                criterion_id=c.id,
-                score=float(s.get("score", 0.0)),
-                flag=bool(s.get("flag", False)),
-                reason=str(s.get("reason", "")),
-            ))
+            result.append(
+                CriterionScore(
+                    criterion_id=c.id,
+                    score=float(s.get("score", 0.0)),
+                    flag=bool(s.get("flag", False)),
+                    reason=str(s.get("reason", "")),
+                )
+            )
         return result
 
     criteria_scores: list[CriterionScore] = []
@@ -119,11 +135,15 @@ async def evaluate_trace(
         tasks = []
         covered_ids: set[str] = set()
         for member in active_panel.judges:
-            member_criteria = [c for c in active_criteria if c.id in member.assigned_criteria]
+            member_criteria = [
+                c for c in active_criteria if c.id in member.assigned_criteria
+            ]
             if not member_criteria:
                 continue
             covered_ids |= {c.id for c in member_criteria}
-            sys_prompt = "\n".join(filter(None, [uc_prompt, member.persona_prompt])) or None
+            sys_prompt = (
+                "\n".join(filter(None, [uc_prompt, member.persona_prompt])) or None
+            )
             tasks.append(_score_with_judge(member_criteria, member.model, sys_prompt))
         results = await asyncio.gather(*tasks)
         criteria_scores = [cs for member_scores in results for cs in member_scores]
@@ -133,7 +153,9 @@ async def evaluate_trace(
             fallback = await _score_with_judge(uncovered, config.judge_model, uc_prompt)
             criteria_scores.extend(fallback)
     else:
-        criteria_scores = await _score_with_judge(active_criteria, config.judge_model, uc_prompt)
+        criteria_scores = await _score_with_judge(
+            active_criteria, config.judge_model, uc_prompt
+        )
 
     if not criteria_scores:
         r_err = await aioredis.from_url(settings.redis_url, decode_responses=True)
@@ -147,7 +169,11 @@ async def evaluate_trace(
                 criteria_scores=[],
                 evaluated_at=datetime.now(timezone.utc).isoformat(),
             )
-            await r_err.setex(f"eval:result:{trace_id}", EVAL_RESULT_TTL, error_result.model_dump_json())
+            await r_err.setex(
+                f"eval:result:{trace_id}",
+                EVAL_RESULT_TTL,
+                error_result.model_dump_json(),
+            )
         finally:
             await r_err.aclose()
         return None
@@ -166,7 +192,9 @@ async def evaluate_trace(
 
     r_client = await aioredis.from_url(settings.redis_url, decode_responses=True)
     try:
-        await r_client.setex(f"eval:result:{trace_id}", EVAL_RESULT_TTL, result.model_dump_json())
+        await r_client.setex(
+            f"eval:result:{trace_id}", EVAL_RESULT_TTL, result.model_dump_json()
+        )
         if config.active_use_case_id:
             key = f"eval:scores:{model}:{config.active_use_case_id}"
             existing_raw = await r_client.get(key)
@@ -216,8 +244,8 @@ async def evaluate_trace(
             await push_score(trace_id, cs.score, name=cs.criterion_id)
 
     return result
- 
- 
+
+
 async def get_eval_result(trace_id: str) -> EvalResult | None:
     r_client = await aioredis.from_url(settings.redis_url, decode_responses=True)
     try:

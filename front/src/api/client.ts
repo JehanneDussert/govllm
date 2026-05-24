@@ -25,12 +25,12 @@ export interface ChatResponse {
   model: string
   latency_ms: number
 }
- 
+
 export interface MetricsResponse {
   models: ModelMetrics[]
   window: string
 }
- 
+
 export interface ModelMetrics {
   model: string
   request_count: number
@@ -38,12 +38,12 @@ export interface ModelMetrics {
   latency: { p50_ms: number; p95_ms: number; p99_ms: number }
   avg_tokens_per_request: number
 }
- 
+
 export interface TracesResponse {
   traces: TraceItem[]
   total: number
 }
- 
+
 export interface TraceItem {
   trace_id: string
   model: string
@@ -54,13 +54,13 @@ export interface TraceItem {
   eval_score: number | null
   timestamp: string
 }
- 
+
 export interface BenchmarkResponse {
   models: ModelBenchmarkStats[]
   winner: string | null
   window: string
 }
- 
+
 export interface ModelBenchmarkStats {
   model: string
   sample_size: number
@@ -69,7 +69,7 @@ export interface ModelBenchmarkStats {
   error_rate: number
   avg_tokens: number
 }
- 
+
 export interface JudgeCriterion {
   id: string
   label: string
@@ -77,7 +77,7 @@ export interface JudgeCriterion {
   enabled: boolean
   weight: number
 }
- 
+
 export interface UseCase {
   id: string
   label: string
@@ -88,14 +88,14 @@ export interface UseCase {
   min_score_threshold: number | null
   judge_system_prompt: string | null
 }
- 
+
 export interface ArenaCriterionScore {
   criterion_id: string
   score: number
   flag: boolean
   reason: string | null
 }
- 
+
 export interface ArenaJudge {
   judge_id: string
   model_name: string
@@ -105,7 +105,7 @@ export interface ArenaJudge {
   latency_ms: number | null
   scores: ArenaCriterionScore[]
 }
- 
+
 export interface ArenaRunRequest {
   prompt: string
   answer: string
@@ -113,7 +113,7 @@ export interface ArenaRunRequest {
   use_case_id?: string | null
   judge_models?: string[] | null
 }
- 
+
 export interface ArenaRunResponse {
   session_id: string
   prompt: string
@@ -140,16 +140,16 @@ export interface ArenaVoteRequest {
   session_id: string
   chosen_model: string
 }
- 
+
 export interface ModelRoutingScore {
   model: string
   avg_score: number | null
   sample_size: number
   trend: 'up' | 'down' | 'stable' | null
   criteria_scores: Record<string, number | null>
-  meets_threshold: boolean | null  // null = no threshold set or no data
+  meets_threshold: boolean | null // null = no threshold set or no data
 }
- 
+
 export interface RoutingResult {
   recommended: string
   use_case_id: string
@@ -158,21 +158,21 @@ export interface RoutingResult {
   models: ModelRoutingScore[]
   active_criteria: { id: string; label: string }[]
 }
- 
+
 export interface CriterionConfig {
   enabled: boolean
   weight: number
   calibration_notes?: string
   min_score: number | null
 }
- 
+
 export interface GovernanceProfile {
   id: string
   label: string
   description: string
   criteria_config: Record<string, CriterionConfig>
 }
- 
+
 export interface JudgePanelMember {
   model: string
   persona_prompt: string
@@ -195,19 +195,20 @@ export interface JudgeConfig {
   arena_judge_models: string[]
   routing_strategy: string
   alpha: number
+  variance_threshold: number
   latency_threshold_ms: number | null
   score_threshold: number | null
   error_rate_threshold: number | null
   policy_rules: string
 }
- 
+
 export interface CriterionScore {
   criterion_id: string
   score: number
   flag: boolean
   reason: string
 }
- 
+
 export interface EvalResult {
   trace_id: string
   model: string
@@ -216,19 +217,19 @@ export interface EvalResult {
   criteria_scores: CriterionScore[]
   evaluated_at: string
 }
- 
+
 export interface MatrixCell {
   avg_score: number | null
   sample_size: number
   trend: 'up' | 'down' | 'stable' | null
   scores: number[]
 }
- 
+
 export interface MatrixUseCase {
   label: string
   models: Record<string, MatrixCell>
 }
- 
+
 export type MatrixResponse = Record<string, MatrixUseCase>
 
 export interface VariancePoint {
@@ -401,7 +402,6 @@ export interface OrderSensitivityEntry {
   flipped_case_ids: string[]
 }
 
-
 // ── API calls ─────────────────────────────────────────────────
 
 export const api = {
@@ -412,42 +412,47 @@ export const api = {
       stream: false,
     }),
 
-  metrics: (window = '1h') =>
-    observability.get<MetricsResponse>(`/metrics?window=${window}`),
+  metrics: (window = '1h') => observability.get<MetricsResponse>(`/metrics?window=${window}`),
 
   traces: (limit = 200, model?: string) =>
     observability.get<TracesResponse>(`/traces?limit=${limit}${model ? `&model=${model}` : ''}`),
 
-  abResults: () =>
-    evaluation.get<BenchmarkResponse>('/benchmark/results'),
+  abResults: () => evaluation.get<BenchmarkResponse>('/benchmark/results'),
 
-  health: () => Promise.all([
-    gateway.get('/health').then(() => true).catch(() => false),
-    observability.get('/health').then(() => true).catch(() => false),
-    evaluation.get('/health').then(() => true).catch(() => false),
-  ]),
+  health: () =>
+    Promise.all([
+      gateway
+        .get('/health')
+        .then(() => true)
+        .catch(() => false),
+      observability
+        .get('/health')
+        .then(() => true)
+        .catch(() => false),
+      evaluation
+        .get('/health')
+        .then(() => true)
+        .catch(() => false),
+    ]),
 
   // Judge config
-  getJudgeConfig: () =>
-    evaluation.get<JudgeConfig>('/config/judge'),
+  getJudgeConfig: () => evaluation.get<JudgeConfig>('/config/judge'),
 
-  saveJudgeConfig: (config: JudgeConfig) =>
-    evaluation.put<JudgeConfig>('/config/judge', config),
+  saveJudgeConfig: (config: JudgeConfig) => evaluation.put<JudgeConfig>('/config/judge', config),
 
   // Matrix
-  getMatrix: () =>
-    evaluation.get<MatrixResponse>('/matrix'),
+  getMatrix: () => evaluation.get<MatrixResponse>('/matrix'),
 
   // Arena
-  arenaRun: (req: ArenaRunRequest) =>
-    evaluation.post<ArenaRunResponse>('/arena/run', req),
+  arenaRun: (req: ArenaRunRequest) => evaluation.post<ArenaRunResponse>('/arena/run', req),
 
   arenaRunStream: async (
     req: ArenaRunRequest,
     onEvent: (event: Record<string, unknown>) => void,
     signal?: AbortSignal,
   ): Promise<void> => {
-    const url = (import.meta.env.VITE_EVALUATION_URL ?? 'http://localhost:8003') + '/arena/run/stream'
+    const url =
+      (import.meta.env.VITE_EVALUATION_URL ?? 'http://localhost:8003') + '/arena/run/stream'
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -466,14 +471,15 @@ export const api = {
       buffer = lines.pop() ?? ''
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          try { onEvent(JSON.parse(line.slice(6))) } catch {}
+          try {
+            onEvent(JSON.parse(line.slice(6)))
+          } catch {}
         }
       }
     }
   },
 
-  arenaVote: (req: ArenaVoteRequest) =>
-    evaluation.post('/arena/vote', req),
+  arenaVote: (req: ArenaVoteRequest) => evaluation.post('/arena/vote', req),
   arenaSessions: (profileId?: string, highVariance?: boolean) => {
     const params = new URLSearchParams()
     if (profileId) params.set('profile_id', profileId)
@@ -501,40 +507,52 @@ export const api = {
   },
 
   // Available models
-  availableModels: () =>
-    evaluation.get<{ models: string[] }>('/config/models/available'),
+  availableModels: () => evaluation.get<{ models: string[] }>('/config/models/available'),
 
   // Lifecycle
-  lifecycleStatus: () =>
-    evaluation.get<ModelLifecycleStatus[]>('/lifecycle/status'),
+  lifecycleStatus: () => evaluation.get<ModelLifecycleStatus[]>('/lifecycle/status'),
   lifecycleHistory: (model?: string) =>
-    evaluation.get<LifecycleHistory>('/lifecycle/history' + (model ? `?model=${encodeURIComponent(model)}` : '')),
+    evaluation.get<LifecycleHistory>(
+      '/lifecycle/history' + (model ? `?model=${encodeURIComponent(model)}` : ''),
+    ),
   lifecycleValidate: (model: string, note?: string) =>
-    evaluation.post<LifecycleTransition>(`/lifecycle/validate/${encodeURIComponent(model)}` + (note ? `?note=${encodeURIComponent(note)}` : '')),
+    evaluation.post<LifecycleTransition>(
+      `/lifecycle/validate/${encodeURIComponent(model)}` +
+        (note ? `?note=${encodeURIComponent(note)}` : ''),
+    ),
   lifecycleQuarantine: (model: string, note?: string) =>
-    evaluation.post<LifecycleTransition>(`/lifecycle/quarantine/${encodeURIComponent(model)}` + (note ? `?note=${encodeURIComponent(note)}` : '')),
+    evaluation.post<LifecycleTransition>(
+      `/lifecycle/quarantine/${encodeURIComponent(model)}` +
+        (note ? `?note=${encodeURIComponent(note)}` : ''),
+    ),
   lifecycleSas: (model: string, profileId?: string) =>
     evaluation.post<SasResult>('/lifecycle/sas', { model, profile_id: profileId ?? null }),
   lifecycleSasLmsys: (model: string, profileId?: string, nPrompts = 10) =>
-    evaluation.post<SasLmsysResult>(`/lifecycle/sas/lmsys?n_prompts=${nPrompts}`, { model, profile_id: profileId ?? null }),
+    evaluation.post<SasLmsysResult>(`/lifecycle/sas/lmsys?n_prompts=${nPrompts}`, {
+      model,
+      profile_id: profileId ?? null,
+    }),
 
   // Ground truth corpus
   groundtruthCorpus: (criterion?: string) =>
-    evaluation.get<GroundTruthCase[]>('/groundtruth/corpus' + (criterion ? `?criterion=${encodeURIComponent(criterion)}` : '')),
+    evaluation.get<GroundTruthCase[]>(
+      '/groundtruth/corpus' + (criterion ? `?criterion=${encodeURIComponent(criterion)}` : ''),
+    ),
   addGroundTruthCase: (req: GroundTruthCaseCreate) =>
     evaluation.post<GroundTruthCase>('/groundtruth/corpus', req),
   runGroundtruth: (caseId: string) =>
     evaluation.post<GroundTruthRunResult>(`/groundtruth/run/${encodeURIComponent(caseId)}`),
   groundtruthResults: (caseId: string, questionOrder?: string) =>
-    evaluation.get<StoredCaseResult[]>(`/groundtruth/results/${encodeURIComponent(caseId)}` + (questionOrder ? `?question_order=${encodeURIComponent(questionOrder)}` : '')),
+    evaluation.get<StoredCaseResult[]>(
+      `/groundtruth/results/${encodeURIComponent(caseId)}` +
+        (questionOrder ? `?question_order=${encodeURIComponent(questionOrder)}` : ''),
+    ),
   groundtruthBestJudges: () =>
     evaluation.get<Record<string, string>>('/groundtruth/validity/best-judges'),
-  groundtruthValidity: () =>
-    evaluation.get<ValidityReport>('/groundtruth/validity'),
+  groundtruthValidity: () => evaluation.get<ValidityReport>('/groundtruth/validity'),
   groundtruthOrderSensitivity: () =>
     evaluation.get<OrderSensitivityEntry[]>('/groundtruth/order-sensitivity'),
-  groundtruthIncoherence: () =>
-    evaluation.get<IncoherenceItem[]>('/groundtruth/incoherence'),
+  groundtruthIncoherence: () => evaluation.get<IncoherenceItem[]>('/groundtruth/incoherence'),
   validateIncoherence: (resultId: string, validated: boolean | null) =>
     evaluation.patch<{ result_id: string; incoherence_validated: boolean | null }>(
       `/groundtruth/results/${encodeURIComponent(resultId)}/validate`,
@@ -542,8 +560,7 @@ export const api = {
     ),
 
   // Routing
-  getRouting: () =>
-    evaluation.get<RoutingResult>('/matrix/routing'),
+  getRouting: () => evaluation.get<RoutingResult>('/matrix/routing'),
 
   // Profile activation
   activateProfile: (profileId: string) =>
@@ -557,6 +574,5 @@ export const api = {
   triggerEval: (payload: { trace_id: string; model: string; question: string; answer: string }) =>
     evaluation.post('/eval/score', payload),
 
-  getEvalResult: (traceId: string) =>
-    evaluation.get<EvalResult | null>(`/eval/result/${traceId}`),
+  getEvalResult: (traceId: string) => evaluation.get<EvalResult | null>(`/eval/result/${traceId}`),
 }

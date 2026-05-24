@@ -28,19 +28,36 @@ import pathlib
 import sys
 
 GOVERNANCE_KEYWORDS = [
-    "personal data", "privacy", "transparency", "consent",
-    "security", "manipulation", "gdpr", "confidential",
-    "sensitive", "personal information", "data protection",
-    "inject", "override", "ignore instructions", "jailbreak",
-    "medical advice", "legal advice", "financial advice",
-    "bias", "discrimination", "oversight",
+    "personal data",
+    "privacy",
+    "transparency",
+    "consent",
+    "security",
+    "manipulation",
+    "gdpr",
+    "confidential",
+    "sensitive",
+    "personal information",
+    "data protection",
+    "inject",
+    "override",
+    "ignore instructions",
+    "jailbreak",
+    "medical advice",
+    "legal advice",
+    "financial advice",
+    "bias",
+    "discrimination",
+    "oversight",
 ]
 
-DEFAULT_MAX_ROWS = 50_000   # rows to scan from the dataset
-DEFAULT_MIN_MATCHES = 2     # keyword hits required to keep a conversation
-DEFAULT_MAX_OUTPUT = 200    # max conversations in output file
+DEFAULT_MAX_ROWS = 50_000  # rows to scan from the dataset
+DEFAULT_MIN_MATCHES = 2  # keyword hits required to keep a conversation
+DEFAULT_MAX_OUTPUT = 200  # max conversations in output file
 
-_OUTPUT_DEFAULT = pathlib.Path(__file__).parent.parent / "data" / "lmsys_regulatory_subset.json"
+_OUTPUT_DEFAULT = (
+    pathlib.Path(__file__).parent.parent / "data" / "lmsys_regulatory_subset.json"
+)
 
 
 def _load_token() -> str | None:
@@ -63,27 +80,50 @@ def _keywords_in(text: str) -> list[str]:
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch LMSYS governance subset")
-    parser.add_argument("--max-rows", type=int, default=DEFAULT_MAX_ROWS,
-                        help=f"Rows to scan (default {DEFAULT_MAX_ROWS})")
-    parser.add_argument("--max-output", type=int, default=DEFAULT_MAX_OUTPUT,
-                        help=f"Max conversations to keep (default {DEFAULT_MAX_OUTPUT})")
-    parser.add_argument("--min-matches", type=int, default=DEFAULT_MIN_MATCHES,
-                        help=f"Min keyword hits to include a conversation (default {DEFAULT_MIN_MATCHES})")
-    parser.add_argument("--out", type=pathlib.Path, default=_OUTPUT_DEFAULT,
-                        help=f"Output path (default {_OUTPUT_DEFAULT})")
+    parser.add_argument(
+        "--max-rows",
+        type=int,
+        default=DEFAULT_MAX_ROWS,
+        help=f"Rows to scan (default {DEFAULT_MAX_ROWS})",
+    )
+    parser.add_argument(
+        "--max-output",
+        type=int,
+        default=DEFAULT_MAX_OUTPUT,
+        help=f"Max conversations to keep (default {DEFAULT_MAX_OUTPUT})",
+    )
+    parser.add_argument(
+        "--min-matches",
+        type=int,
+        default=DEFAULT_MIN_MATCHES,
+        help=f"Min keyword hits to include a conversation (default {DEFAULT_MIN_MATCHES})",
+    )
+    parser.add_argument(
+        "--out",
+        type=pathlib.Path,
+        default=_OUTPUT_DEFAULT,
+        help=f"Output path (default {_OUTPUT_DEFAULT})",
+    )
     args = parser.parse_args()
 
     try:
         from datasets import load_dataset
     except ImportError:
-        print("ERROR: 'datasets' package not installed. Run: pip install datasets huggingface-hub", file=sys.stderr)
+        print(
+            "ERROR: 'datasets' package not installed. Run: pip install datasets huggingface-hub",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     token = _load_token()
     if not token:
-        print("WARNING: HF_TOKEN not found in env or infra/.env — dataset may be inaccessible if gated.")
+        print(
+            "WARNING: HF_TOKEN not found in env or infra/.env — dataset may be inaccessible if gated."
+        )
 
-    print(f"Loading lmsys/lmsys-chat-1m (streaming, scanning up to {args.max_rows} rows)…")
+    print(
+        f"Loading lmsys/lmsys-chat-1m (streaming, scanning up to {args.max_rows} rows)…"
+    )
     try:
         ds = load_dataset(
             "lmsys/lmsys-chat-1m",
@@ -108,8 +148,12 @@ def main():
             continue
 
         # Extract first user turn and first assistant turn
-        prompt = next((m["content"] for m in conversation if m.get("role") == "user"), None)
-        response = next((m["content"] for m in conversation if m.get("role") == "assistant"), None)
+        prompt = next(
+            (m["content"] for m in conversation if m.get("role") == "user"), None
+        )
+        response = next(
+            (m["content"] for m in conversation if m.get("role") == "assistant"), None
+        )
         if not prompt or not response:
             continue
 
@@ -117,17 +161,21 @@ def main():
         if len(matched) < args.min_matches:
             continue
 
-        results.append({
-            "prompt": prompt[:2000],        # cap to avoid very long prompts
-            "response": response[:2000],
-            "topics": list(dict.fromkeys(matched)),  # deduplicated, order preserved
-        })
+        results.append(
+            {
+                "prompt": prompt[:2000],  # cap to avoid very long prompts
+                "response": response[:2000],
+                "topics": list(dict.fromkeys(matched)),  # deduplicated, order preserved
+            }
+        )
 
         if len(results) % 20 == 0:
             print(f"  Kept {len(results)} conversations (scanned {scanned})…")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+    args.out.write_text(
+        json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(f"\nDone. {len(results)} conversations saved to {args.out}")
     print(f"Scanned {scanned} rows from LMSYS-Chat-1M.")
 

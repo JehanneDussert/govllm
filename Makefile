@@ -198,13 +198,13 @@ gt-summary:
 
 # Quality
 lint:
-	$(UV) tool run ruff check back/
-	cd front && npx prettier --check "src/**/*.{ts,vue}"
+	$(UV) tool run --native-tls ruff check back/
+	cd front && npm run lint
 
 format:
-	$(UV) tool run ruff check --fix back/
-	$(UV) tool run ruff format back/
-	cd front && npx prettier --write "src/**/*.{ts,vue}"
+	$(UV) tool run --native-tls ruff check --fix back/
+	$(UV) tool run --native-tls ruff format back/
+	cd front && npm run format
 
 # Cleanup
 clean:

@@ -100,21 +100,23 @@ class LangfuseClient:
                 end_ts = (start_dt + timedelta(milliseconds=latency_ms)).isoformat()
             except Exception:
                 end_ts = ts
-            batch.append({
-                "type": "generation-create",
-                "id": str(_uuid.uuid4()),
-                "timestamp": ts,
-                "body": {
+            batch.append(
+                {
+                    "type": "generation-create",
                     "id": str(_uuid.uuid4()),
-                    "traceId": trace_id,
-                    "name": "llm-generation",
-                    "model": model,
-                    "input": [{"role": "user", "content": input}],
-                    "output": output,
-                    "startTime": ts,
-                    "endTime": end_ts,
-                },
-            })
+                    "timestamp": ts,
+                    "body": {
+                        "id": str(_uuid.uuid4()),
+                        "traceId": trace_id,
+                        "name": "llm-generation",
+                        "model": model,
+                        "input": [{"role": "user", "content": input}],
+                        "output": output,
+                        "startTime": ts,
+                        "endTime": end_ts,
+                    },
+                }
+            )
         async with httpx.AsyncClient(timeout=15) as client:
             await client.post(
                 f"{self.host}/api/public/ingestion",

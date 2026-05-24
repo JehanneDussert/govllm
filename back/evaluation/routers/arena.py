@@ -119,29 +119,31 @@ async def list_sessions(
                     """,
                     jr["id"],
                 )
-                judges.append(ArenaJudge(
-                    judge_id=jr["id"],
-                    model_name=jr["model_name"],
-                    model_family=jr["model_family"],
-                    assigned_criteria=jr["assigned_criteria"],
-                    global_score=jr["global_score"],
-                    latency_ms=jr["latency_ms"],
-                    scores=[
-                        ArenaCriterionScore(**dict(sr)) for sr in score_rows
-                    ],
-                ))
+                judges.append(
+                    ArenaJudge(
+                        judge_id=jr["id"],
+                        model_name=jr["model_name"],
+                        model_family=jr["model_family"],
+                        assigned_criteria=jr["assigned_criteria"],
+                        global_score=jr["global_score"],
+                        latency_ms=jr["latency_ms"],
+                        scores=[ArenaCriterionScore(**dict(sr)) for sr in score_rows],
+                    )
+                )
             s_sigma = row["sigma"]
-            sessions.append(ArenaSession(
-                session_id=row["session_id"],
-                prompt=row["prompt"],
-                profile_id=row["profile_id"],
-                use_case_id=row["use_case_id"],
-                sigma=s_sigma,
-                high_variance=s_sigma is not None and s_sigma >= variance_threshold,
-                user_vote=row["user_vote"],
-                created_at=row["created_at"],
-                judges=judges,
-            ))
+            sessions.append(
+                ArenaSession(
+                    session_id=row["session_id"],
+                    prompt=row["prompt"],
+                    profile_id=row["profile_id"],
+                    use_case_id=row["use_case_id"],
+                    sigma=s_sigma,
+                    high_variance=s_sigma is not None and s_sigma >= variance_threshold,
+                    user_vote=row["user_vote"],
+                    created_at=row["created_at"],
+                    judges=judges,
+                )
+            )
         return sessions
 
 
@@ -285,8 +287,11 @@ async def incoherence_report(
             model_family=r["model_family"],
             total_scores=int(r["total_scores"]),
             incoherent_count=int(r["incoherent_count"]),
-            incoherence_rate=round(int(r["incoherent_count"]) / int(r["total_scores"]), 3)
-            if int(r["total_scores"]) > 0 else 0.0,
+            incoherence_rate=round(
+                int(r["incoherent_count"]) / int(r["total_scores"]), 3
+            )
+            if int(r["total_scores"]) > 0
+            else 0.0,
         )
         for r in rows
     ]
@@ -304,15 +309,30 @@ async def export_variance(
 ):
     """CSV export for paper figures."""
     from fastapi.responses import StreamingResponse
-    import csv, io
+    import csv
+    import io
+
     history = await variance_history(profile_id=profile_id, window_days=window_days)
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["session_id", "created_at", "sigma", "profile_id", "prompt_preview"])
+    writer = csv.DictWriter(
+        output,
+        fieldnames=[
+            "session_id",
+            "created_at",
+            "sigma",
+            "profile_id",
+            "prompt_preview",
+        ],
+    )
     writer.writeheader()
     for p in history.points:
         writer.writerow(p.model_dump())
     output.seek(0)
-    return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=variance.csv"})
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=variance.csv"},
+    )
 
 
 @router.get("/bias-matrix/export")
@@ -322,12 +342,27 @@ async def export_bias_matrix(
 ):
     """CSV export for paper figures."""
     from fastapi.responses import StreamingResponse
-    import csv, io
+    import csv
+    import io
+
     matrix = await bias_matrix(profile_id=profile_id, criterion_id=criterion_id)
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["judge_family", "evaluated_model", "mean_score", "sample_size", "is_self_preference"])
+    writer = csv.DictWriter(
+        output,
+        fieldnames=[
+            "judge_family",
+            "evaluated_model",
+            "mean_score",
+            "sample_size",
+            "is_self_preference",
+        ],
+    )
     writer.writeheader()
     for c in matrix.cells:
         writer.writerow(c.model_dump())
     output.seek(0)
-    return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=bias_matrix.csv"})
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=bias_matrix.csv"},
+    )

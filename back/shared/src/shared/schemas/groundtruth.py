@@ -8,15 +8,17 @@ from pydantic import BaseModel
 
 class GroundTruthCaseCreate(BaseModel):
     """Payload to add a case to the ground truth corpus."""
-    criterion: str               # criterion_id, e.g. "transparency"
-    prompt: str                  # original user question
-    response: str                # AI response to evaluate
-    source: str | None = None    # origin (CNIL decision ref, etc.)
+
+    criterion: str  # criterion_id, e.g. "transparency"
+    prompt: str  # original user question
+    response: str  # AI response to evaluate
+    source: str | None = None  # origin (CNIL decision ref, etc.)
     expected_answers: dict[str, bool]  # {"q1": True, ...} — True=compliant
 
 
 class GroundTruthCase(BaseModel):
     """Corpus case with expert-validated expected answers."""
+
     id: str
     criterion: str
     prompt: str
@@ -28,17 +30,19 @@ class GroundTruthCase(BaseModel):
 
 class JudgeChecklistResult(BaseModel):
     """One judge's checklist answers for a single corpus case."""
+
     judge_model: str
     judge_family: str
-    answers: dict[str, bool]   # {"q1": True, ...} — True=compliant
-    score: float               # mean(answers.values())
-    agreement: float           # fraction matching expected_answers
+    answers: dict[str, bool]  # {"q1": True, ...} — True=compliant
+    score: float  # mean(answers.values())
+    agreement: float  # fraction matching expected_answers
     reason: str | None
     latency_ms: int | None
 
 
 class GroundTruthRunResult(BaseModel):
     """Outcome of running a corpus case through all configured judges."""
+
     case_id: str
     criterion: str
     expected_answers: dict[str, bool]
@@ -47,6 +51,7 @@ class GroundTruthRunResult(BaseModel):
 
 class ValidityEntry(BaseModel):
     """Agreement rate for one judge × criterion × sub-question cell."""
+
     judge_model: str
     judge_family: str
     criterion: str
@@ -57,6 +62,7 @@ class ValidityEntry(BaseModel):
 
 class ValidityReport(BaseModel):
     """Aggregated validity metrics across the full corpus."""
+
     entries: list[ValidityEntry]
     criteria: list[str]
     judge_models: list[str]
@@ -64,6 +70,7 @@ class ValidityReport(BaseModel):
 
 class IncoherenceItem(BaseModel):
     """One groundtruth result row where incoherence pattern B is detected."""
+
     result_id: str
     case_id: str
     prompt_preview: str
@@ -79,9 +86,10 @@ class IncoherenceItem(BaseModel):
 
 class OrderSensitivityEntry(BaseModel):
     """Flip rate and agreement delta for one judge × criterion pair (original vs reversed order)."""
+
     judge_model: str
     criterion: str
-    flip_rate: float            # fraction of cases with ≥1 answer flip
-    mean_delta_agreement: float # mean(agreement_reversed − agreement_original)
+    flip_rate: float  # fraction of cases with ≥1 answer flip
+    mean_delta_agreement: float  # mean(agreement_reversed − agreement_original)
     n_cases: int
     flipped_case_ids: list[str]

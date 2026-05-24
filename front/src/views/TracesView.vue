@@ -44,13 +44,13 @@ async function refresh() {
 
 const filtered = computed(() => {
   if (!judgeFilter.value) return allTraces.value
-  return allTraces.value.filter(t => t.judge_model === judgeFilter.value)
+  return allTraces.value.filter((t) => t.judge_model === judgeFilter.value)
 })
 
 const totalPages = computed(() => Math.ceil(filtered.value.length / PAGE_SIZE))
 
 const pageTraces = computed(() =>
-  filtered.value.slice(page.value * PAGE_SIZE, (page.value + 1) * PAGE_SIZE)
+  filtered.value.slice(page.value * PAGE_SIZE, (page.value + 1) * PAGE_SIZE),
 )
 
 function prevPage() {
@@ -217,7 +217,9 @@ onMounted(refresh)
               <div class="expanded-meta">
                 <span>{{ trace.trace_id }}</span>
                 <span v-if="trace.judge_model">· judge {{ shortName(trace.judge_model) }}</span>
-                <span v-if="trace.eval_score !== null">· score {{ trace.eval_score?.toFixed(3) }}</span>
+                <span v-if="trace.eval_score !== null"
+                  >· score {{ trace.eval_score?.toFixed(3) }}</span
+                >
                 <span>· {{ trace.latency_ms.toFixed(2) }}s</span>
               </div>
             </div>
@@ -228,7 +230,9 @@ onMounted(refresh)
       <div v-if="totalPages > 1" class="pagination">
         <button class="page-btn" :disabled="page === 0" @click="prevPage">← prev</button>
         <span class="page-info">{{ page + 1 }} / {{ totalPages }}</span>
-        <button class="page-btn" :disabled="page === totalPages - 1" @click="nextPage">next →</button>
+        <button class="page-btn" :disabled="page === totalPages - 1" @click="nextPage">
+          next →
+        </button>
       </div>
     </div>
   </div>
@@ -387,10 +391,18 @@ onMounted(refresh)
   font-family: var(--font-mono);
   font-size: 12px;
 }
-.green { color: var(--green); }
-.yellow { color: var(--yellow); }
-.red { color: var(--red); }
-.no-score { color: var(--text-dim); }
+.green {
+  color: var(--green);
+}
+.yellow {
+  color: var(--yellow);
+}
+.red {
+  color: var(--red);
+}
+.no-score {
+  color: var(--text-dim);
+}
 
 .expanded-content {
   grid-column: 1 / -1;

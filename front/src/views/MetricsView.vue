@@ -68,9 +68,9 @@ const latencyChartOption = computed(() => ({
     backgroundColor: '#161b22',
     borderColor: '#30363d',
     textStyle: { color: '#e6edf3', fontFamily: 'DM Mono', fontSize: 12 },
-    formatter: (params: any[]) =>
+    formatter: (params: { color: string; seriesName: string; value: number }[]) =>
       params
-        .map((p: any) => `<span style="color:${p.color}">●</span> ${p.seriesName}: ${p.value}ms`)
+        .map((p) => `<span style="color:${p.color}">●</span> ${p.seriesName}: ${p.value}ms`)
         .join('<br/>'),
   },
   legend: {
@@ -440,5 +440,4 @@ useIntervalFn(refresh, 30000)
   padding: 80px 0;
   color: var(--text-dim);
 }
-
 </style>

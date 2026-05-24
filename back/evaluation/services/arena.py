@@ -1,21 +1,12 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
 
-# SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
-# SPDX-License-Identifier: EUPL-1.2
-
 from __future__ import annotations
-import asyncio
 import json
 import logging
-import re
-import time
 import uuid
 from collections.abc import AsyncGenerator
 from statistics import variance
-
-logger = logging.getLogger(__name__)
-
 
 from shared.schemas.judge import JudgeCriterion
 from shared.config import get_evaluation_settings
@@ -26,9 +17,9 @@ from db.models import (
     ArenaJudge,
     ArenaRunRequest,
     ArenaRunResponse,
-    ArenaCriterionScore,
-    ArenaSession,
 )
+
+logger = logging.getLogger(__name__)
 
 
 settings = get_evaluation_settings()
@@ -36,11 +27,11 @@ settings = get_evaluation_settings()
 # ── Judge family detection ────────────────────────────────────
 
 FAMILY_MAP = {
-    "qwen":     "qwen",
-    "gemma":    "gemma",
-    "llama":    "llama",
+    "qwen": "qwen",
+    "gemma": "gemma",
+    "llama": "llama",
     "deepseek": "deepseek",
-    "mistral":  "mistral",
+    "mistral": "mistral",
 }
 
 
@@ -53,6 +44,7 @@ def _detect_family(model_name: str) -> str:
 
 
 # ── Criterion assignment per judge ────────────────────────────
+
 
 def _assign_criteria(
     judges: list[str],
@@ -71,13 +63,13 @@ def _assign_criteria(
       - fallback        → round-robin
     """
     DOMAIN_PREFERENCES: dict[str, list[str]] = {
-        "security":   ["deepseek", "llama", "qwen", "gemma"],
+        "security": ["deepseek", "llama", "qwen", "gemma"],
         "compliance": ["qwen", "gemma", "llama", "deepseek"],
-        "ethics":     ["gemma", "qwen", "llama", "deepseek"],
-        "ai_act":     ["gemma", "qwen", "llama", "deepseek"],
-        "rgpd":       ["qwen", "gemma", "llama", "deepseek"],
-        "quality":    ["llama", "qwen", "gemma", "deepseek"],
-        "inclusion":  ["qwen", "gemma", "llama", "deepseek"],
+        "ethics": ["gemma", "qwen", "llama", "deepseek"],
+        "ai_act": ["gemma", "qwen", "llama", "deepseek"],
+        "rgpd": ["qwen", "gemma", "llama", "deepseek"],
+        "quality": ["llama", "qwen", "gemma", "deepseek"],
+        "inclusion": ["qwen", "gemma", "llama", "deepseek"],
     }
 
     families = {m: _detect_family(m) for m in judges}
@@ -107,6 +99,7 @@ def _assign_criteria(
 
 # ── Inter-judge variance ──────────────────────────────────────
 
+
 def _compute_sigma(judges: list[ArenaJudge]) -> float | None:
     """
     Mean per-criterion variance across all judges.
@@ -119,9 +112,7 @@ def _compute_sigma(judges: list[ArenaJudge]) -> float | None:
             by_criterion.setdefault(score.criterion_id, []).append(score.score)
 
     variances = [
-        variance(scores)
-        for scores in by_criterion.values()
-        if len(scores) >= 2
+        variance(scores) for scores in by_criterion.values() if len(scores) >= 2
     ]
     if not variances:
         return None
@@ -129,6 +120,7 @@ def _compute_sigma(judges: list[ArenaJudge]) -> float | None:
 
 
 # ── Persist session to PostgreSQL ─────────────────────────────
+
 
 async def _persist_session(
     session_id: uuid.UUID,
@@ -185,6 +177,7 @@ async def _persist_session(
 
 # ── Main entry point ──────────────────────────────────────────
 
+
 async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
     config = await get_judge_config()
 
@@ -196,10 +189,12 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
     # Active criteria for this profile
     # Active criteria — read weights from profile.criteria_config
     active_criteria = [
-        c.model_copy(update={
-            "enabled": True,
-            "weight": profile.criteria_config[c.id].weight,
-        })
+        c.model_copy(
+            update={
+                "enabled": True,
+                "weight": profile.criteria_config[c.id].weight,
+            }
+        )
         for c in config.criteria
         if c.id in profile.criteria_config and profile.criteria_config[c.id].enabled
     ]
@@ -207,7 +202,9 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
         raise ValueError(f"Profile '{request.profile_id}' has no active criteria")
 
     # Judge models
-    judge_models = request.judge_models or config.arena_judge_models or settings.benchmark_models
+    judge_models = (
+        request.judge_models or config.arena_judge_models or settings.benchmark_models
+    )
 
     # Use case context prompt
     active_uc = next(
@@ -223,7 +220,9 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
     weight_map = {c.id: c.weight for c in active_criteria}
     total_weight = sum(weight_map.values()) or 1.0
 
-    logger.info(f"[arena] Starting session — profile={request.profile_id} judges={len(assignment)} criteria={len(active_criteria)}")
+    logger.info(
+        f"[arena] Starting session — profile={request.profile_id} judges={len(assignment)} criteria={len(active_criteria)}"
+    )
     results_by_model: dict[str, tuple] = {}
     for model in assignment:
         logger.info(f"[arena] Calling judge {model} on {len(active_criteria)} criteria")
@@ -250,22 +249,29 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
                 / total_weight,
                 3,
             )
-            if scores else None
+            if scores
+            else None
         )
 
-        judges.append(ArenaJudge(
-            judge_id=uuid.uuid4(),
-            model_name=model,
-            model_family=_detect_family(model),
-            assigned_criteria=[c.id for c in assigned_criteria],  # primary specialisation label
-            global_score=global_score,
-            latency_ms=latency_ms,
-            scores=scores,
-        ))
+        judges.append(
+            ArenaJudge(
+                judge_id=uuid.uuid4(),
+                model_name=model,
+                model_family=_detect_family(model),
+                assigned_criteria=[
+                    c.id for c in assigned_criteria
+                ],  # primary specialisation label
+                global_score=global_score,
+                latency_ms=latency_ms,
+                scores=scores,
+            )
+        )
 
     sigma = _compute_sigma(judges)
     high_variance = sigma is not None and sigma >= config.variance_threshold
-    logger.info(f"[arena] Session {session_id} complete — sigma={sigma} high_variance={high_variance}")
+    logger.info(
+        f"[arena] Session {session_id} complete — sigma={sigma} high_variance={high_variance}"
+    )
 
     # Persist
     await _persist_session(session_id, request, judges, sigma)
@@ -286,6 +292,7 @@ async def run_arena(request: ArenaRunRequest) -> ArenaRunResponse:
 
 # ── Streaming entry point ─────────────────────────────────────
 
+
 async def run_arena_stream(
     request: ArenaRunRequest,
 ) -> AsyncGenerator[str, None]:
@@ -300,6 +307,7 @@ async def run_arena_stream(
       {"type": "complete",   "session_id": ..., "sigma": ..., "criteria_labels": {...}}
       {"type": "error",      "detail": "..."}
     """
+
     def _sse(payload: dict) -> str:
         return f"data: {json.dumps(payload, default=str)}\n\n"
 
@@ -307,39 +315,54 @@ async def run_arena_stream(
 
     profile = next((p for p in config.profiles if p.id == request.profile_id), None)
     if profile is None:
-        yield _sse({"type": "error", "detail": f"Profile '{request.profile_id}' not found"})
+        yield _sse(
+            {"type": "error", "detail": f"Profile '{request.profile_id}' not found"}
+        )
         return
 
     active_criteria = [
-        c.model_copy(update={
-            "enabled": True,
-            "weight": profile.criteria_config[c.id].weight,
-        })
+        c.model_copy(
+            update={
+                "enabled": True,
+                "weight": profile.criteria_config[c.id].weight,
+            }
+        )
         for c in config.criteria
         if c.id in profile.criteria_config and profile.criteria_config[c.id].enabled
     ]
     if not active_criteria:
-        yield _sse({"type": "error", "detail": f"Profile '{request.profile_id}' has no active criteria"})
+        yield _sse(
+            {
+                "type": "error",
+                "detail": f"Profile '{request.profile_id}' has no active criteria",
+            }
+        )
         return
 
-    judge_models = request.judge_models or config.arena_judge_models or settings.benchmark_models
-    active_uc = next((uc for uc in config.use_cases if uc.id == request.use_case_id), None)
+    judge_models = (
+        request.judge_models or config.arena_judge_models or settings.benchmark_models
+    )
+    active_uc = next(
+        (uc for uc in config.use_cases if uc.id == request.use_case_id), None
+    )
     uc_prompt = active_uc.judge_system_prompt if active_uc else None
 
     assignment = _assign_criteria(judge_models, active_criteria)
 
     # Immediately announce all judge cards so the frontend can render shells
-    yield _sse({
-        "type": "init",
-        "judges": [
-            {
-                "model_name": model,
-                "model_family": _detect_family(model),
-                "assigned_criteria": [c.id for c in crits],
-            }
-            for model, crits in assignment.items()
-        ],
-    })
+    yield _sse(
+        {
+            "type": "init",
+            "judges": [
+                {
+                    "model_name": model,
+                    "model_family": _detect_family(model),
+                    "assigned_criteria": [c.id for c in crits],
+                }
+                for model, crits in assignment.items()
+            ],
+        }
+    )
 
     # All judges evaluate all active criteria — assignment is specialisation metadata only
     weight_map = {c.id: c.weight for c in active_criteria}
@@ -364,14 +387,17 @@ async def run_arena_stream(
                 / total_weight,
                 3,
             )
-            if scores else None
+            if scores
+            else None
         )
 
         judge = ArenaJudge(
             judge_id=uuid.uuid4(),
             model_name=model,
             model_family=_detect_family(model),
-            assigned_criteria=[c.id for c in assigned_criteria],  # primary specialisation label
+            assigned_criteria=[
+                c.id for c in assigned_criteria
+            ],  # primary specialisation label
             global_score=global_score,
             latency_ms=latency,
             scores=scores,
@@ -382,13 +408,17 @@ async def run_arena_stream(
 
     sigma = _compute_sigma(judges)
     high_variance = sigma is not None and sigma >= config.variance_threshold
-    logger.info(f"[arena/stream] Session {session_id} complete — sigma={sigma} high_variance={high_variance}")
+    logger.info(
+        f"[arena/stream] Session {session_id} complete — sigma={sigma} high_variance={high_variance}"
+    )
     await _persist_session(session_id, request, judges, sigma)
 
-    yield _sse({
-        "type": "complete",
-        "session_id": str(session_id),
-        "sigma": sigma,
-        "high_variance": high_variance,
-        "criteria_labels": {c.id: c.label for c in active_criteria},
-    })
+    yield _sse(
+        {
+            "type": "complete",
+            "session_id": str(session_id),
+            "sigma": sigma,
+            "high_variance": high_variance,
+            "criteria_labels": {c.id: c.label for c in active_criteria},
+        }
+    )

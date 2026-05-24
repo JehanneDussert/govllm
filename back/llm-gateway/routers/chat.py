@@ -32,11 +32,19 @@ async def _governance_system_prompt() -> str | None:
         active_profile_id = cfg.get("active_profile_id")
         active_use_case_id = cfg.get("active_use_case_id")
         profile_label = next(
-            (p["label"] for p in cfg.get("profiles", []) if p["id"] == active_profile_id),
+            (
+                p["label"]
+                for p in cfg.get("profiles", [])
+                if p["id"] == active_profile_id
+            ),
             active_profile_id,
         )
         uc_label = next(
-            (u["label"] for u in cfg.get("use_cases", []) if u["id"] == active_use_case_id),
+            (
+                u["label"]
+                for u in cfg.get("use_cases", [])
+                if u["id"] == active_use_case_id
+            ),
             active_use_case_id,
         )
         if not profile_label and not uc_label:
