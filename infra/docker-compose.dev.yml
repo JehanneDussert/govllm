@@ -4,16 +4,24 @@ services:
     volumes:
       - ../back/llm-gateway:/app
       - ../back/shared/src/shared:/app/shared
+      - llm_gateway_venv:/app/.venv
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
 
   observability:
     volumes:
       - ../back/observability:/app
       - ../back/shared/src/shared:/app/shared
+      - observability_venv:/app/.venv
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
 
   evaluation:
     volumes:
       - ../back/evaluation:/app
       - ../back/shared/src/shared:/app/shared
+      - evaluation_venv:/app/.venv
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
+
+volumes:
+  llm_gateway_venv:
+  observability_venv:
+  evaluation_venv:

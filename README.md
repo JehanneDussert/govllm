@@ -74,7 +74,7 @@ cp infra/.env.example infra/.env
 
 make dev        # hot reload — code changes reflected immediately
 # or
-make prod       # built images + nginx front
+make prod       # built images + static front container + Caddy reverse proxy
 
 make pull-models
 ```
@@ -203,7 +203,7 @@ govllm/
 
 **Judge traces filtered.** Evaluation calls to LiteLLM are excluded from the traces view so only user interactions appear.
 
-**Dev/prod parity via compose overrides.** `make dev` mounts source volumes with `--reload`. `make prod` builds images and serves the front via nginx. Same base compose file, no drift.
+**Dev/prod parity via compose overrides.** `make dev` mounts source volumes with `--reload`. `make prod` builds images and serves the front as a static container (nginx inside, served through Caddy as reverse proxy). Same base compose file, no drift.
 
 ---
 
