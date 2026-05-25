@@ -246,9 +246,9 @@ Where charters articulate what should be done, govllm provides a technical layer
 
 ---
 
-## Built with Claude Code
+## Development notes
 
-[Claude Code](https://claude.ai/code) was used throughout development: generating the benchmark pipeline (`scripts/run_full_benchmark.py`), the ground truth corpus scripts (`back/evaluation/scripts/`), documenting the codebase (API reference, sub-READMEs), and iterative code review.
+Some documentation and automation scripts were generated with [Claude Code](https://claude.ai/code) — specifically the benchmark pipeline (`scripts/run_full_benchmark.py`) and the ground truth corpus scripts (`back/evaluation/scripts/`). The core architecture, governance framework, and evaluation design are original work.
 
 ---
 
