@@ -7,7 +7,7 @@ Self-hosted LLM governance monitoring for regulated environments. Continuous sco
 Built out of a question I couldn't find a good answer to, working on LLM deployment in the French public sector. Directly applicable to AI Act Article 9 requirements (ongoing risk management) and NIS2 operational continuity constraints.
 
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-00d4b8.svg)](LICENSE)
-[![Paper](https://img.shields.io/badge/arXiv-2505.XXXXX-b31b1b.svg)](https://arxiv.org/abs/2605.24737)
+[![Paper](https://img.shields.io/badge/arXiv-2605.24737-b31b1b.svg)](https://arxiv.org/abs/2605.24737)
 [![Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20Vue%203%20%7C%20Ollama-3a3a3a)](https://github.com/JehanneDussert/govllm)
 
 ![govllm demo](docs/screenshots/govllm-demo.gif)
