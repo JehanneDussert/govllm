@@ -37,7 +37,7 @@ Jehanne Dussert · arXiv:2605.24737 · May 2026
 
 Key findings: panel specialisation outperforms best single judge by +3.5 pp · position bias degrades agreement by up to 25 pp · parameter count is a poor proxy for governance quality.
 
-[Read the paper →](https://arxiv.org/abs/2605.24737) · [Annotated corpus (49 cases)](lien_corpus)
+[Read the paper →](https://arxiv.org/abs/2605.24737) · [Annotated corpus (49 cases)](https://github.com/JehanneDussert/govllm/blob/main/docs/ground_truth/corpus.json)
 
 ---
 
