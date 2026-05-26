@@ -1,5 +1,7 @@
 # govllm
 
+> ⚠️ *Personal project — not affiliated with, funded by, or endorsed by any French public administration.*
+
 > How do you justify a model choice six months after go-live?
 
 Self-hosted LLM governance monitoring for regulated environments. Continuous scoring against EU AI Act, GDPR, and ANSSI — not a one-shot benchmark.
