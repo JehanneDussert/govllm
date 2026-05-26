@@ -28,6 +28,19 @@ No data leaves your infrastructure. Local models via Ollama. Observable via Graf
 
 ---
 
+## Research
+
+This project is accompanied by a peer-reviewed preprint:
+
+**Who Judges the Judges? Governance from Metrics: A Runtime Framework for Continuous LLM Compliance Monitoring**
+Jehanne Dussert · arXiv:2605.24737 · May 2026
+
+Key findings: panel specialisation outperforms best single judge by +3.5 pp · position bias degrades agreement by up to 25 pp · parameter count is a poor proxy for governance quality.
+
+[Read the paper →](https://arxiv.org/abs/2605.24737) · [Annotated corpus (49 cases)](lien_corpus)
+
+---
+
 ## Architecture
 
 ```
