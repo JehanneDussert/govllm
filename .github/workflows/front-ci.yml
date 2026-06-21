@@ -1,0 +1,35 @@
+name: Front CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'front/**'
+      - '.github/workflows/front-ci.yml'
+  pull_request:
+    paths:
+      - 'front/**'
+      - '.github/workflows/front-ci.yml'
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: front/package-lock.json
+
+      # Enforces engine-strict (node + npm version gate) via engine-strict=true in .npmrc.
+      # min-release-age only applies during resolution (npm install/update), not npm ci.
+      # The age gate is effective when devs have npm >= 11.10.0 locally.
+      - name: Upgrade npm to >=11.10.0
+        run: npm install -g npm@11
+
+      - name: Install dependencies
+        working-directory: front
+        run: npm ci
