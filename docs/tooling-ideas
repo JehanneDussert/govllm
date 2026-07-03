@@ -1,0 +1,117 @@
+# Méthodologie de tooling — Gouvernance agentique
+
+## Principe directeur
+
+Le profil de gouvernance n'est plus un fichier de config déclaré à part (poids + critères) — il **émerge de l'assemblage** de composants de gouvernance branchés sur l'agent, chacun avec son propre mécanisme de décision.
+
+---
+
+## 1. La chaîne complète
+
+```
+Principe (guideline humaine)
+   ↓
+Policy-as-code (règle Rego/Cedar exécutable, versionnée, testable)
+   ↓
+Composant de gouvernance (unité catalogable, typée — voir §3)
+   ↓
+Profil de gouvernance (assemblage de composants pour un agent donné)
+   ↓
+Validation (design-time, qualification à l'entrée catalogue)
+   ↓
+Gate + Agent régulateur (runtime — voir §2)
+   ↓
+Catalogage (métadonnées machine-readable, versioning)
+   ↓
+Mutualisation inter-structures
+   ↓
+Boucle de rétroaction → affine les principes de départ
+```
+
+---
+
+## 2. Distinguer Validation / Gate / Agent régulateur
+
+| Élément | Moment | Logique | Répond à |
+|---|---|---|---|
+| **Validation** | Design-time, une fois (+ à chaque nouvelle version) | Qualification binaire | "Peut-on le mettre au catalogue ?" |
+| **Gate** | Runtime, à chaque action | Déterministe, répétée | "Peut-il faire ça maintenant ?" |
+| **Agent régulateur** | Runtime, en continu | Probabiliste/sémantique | "Son comportement global reste-t-il dans les clous ?" |
+
+Le gate consomme le vocabulaire de décision standard : **ALLOW / DENY / REQUIRE_HUMAN / THROTTLE / CONSTRAIN**. L'agent régulateur, lui, peut dégrader dynamiquement le profil et durcir le gate (boucle de retour).
+
+**Objets distincts sur lesquels ça porte :**
+- **Outil** = capacité concrète appelée (API, écriture DB) → objet *gaté*
+- **Composant d'agent** = brique réutilisable (prompt, planner, mémoire) → objet *catalogué/validé*
+- **Agent** = assemblage composants + outils + profil → objet *validé + gaté + régulé*
+
+---
+
+## 3. Composants de gouvernance "en kit"
+
+Chaque composant catalogué doit se déclarer sur 2 axes + exposer 1 contrat commun.
+
+**Axe A — Mécanisme (comment il décide)**
+- Déterministe (règle Rego/Cedar — hard gate, rapide, explicable)
+- LLM-judge (jugement sémantique — score, plus lent, capte la nuance)
+- Métrique/statistique (seuils sur historique — throttle progressif)
+
+**Axe B — Domaine (sur quoi il porte)**
+- Privacy / PII
+- Risque métier
+- Sécurité (cf. OWASP Agentic AI Top 10 : goal hijacking, tool misuse, identity abuse, memory poisoning...)
+- Comportemental (dérive d'intention, cohérence dans le temps)
+
+**Contrat d'interface commun (obligatoire pour être assemblable)**
+- Input attendu (action, contexte, historique)
+- Output normalisé → mappé sur ALLOW/DENY/REQUIRE_HUMAN/THROTTLE/CONSTRAIN
+- Poids/priorité (arbitrage en cas de désaccord entre composants)
+- Coût (latence — critique si LLM-judge à chaque appel d'outil)
+
+**Décision d'architecture à trancher :** cascade (premier DENY arrête tout) vs agrégation (chaque composant vote/score, fonction d'agrégation décide).
+
+---
+
+## 4. Étapes opérationnelles détaillées
+
+1. **Spécifier** — traduire le principe en critère vérifiable et testable
+2. **Coder** — implémenter en policy-as-code (Rego/Cedar/YAML selon le mécanisme)
+3. **Typer** — déclarer le composant (mécanisme + domaine + contrat)
+4. **Packager** — fiche standardisée : owner, niveau de risque, dépendances, version
+5. **Valider** — passage qualification avant entrée catalogue (test → validation → prod → quarantaine)
+6. **Cataloguer** — publication avec métadonnées machine-readable, taggé aux principes respectés
+7. **Assembler** — un agent pioche les composants compatibles avec son niveau de risque → profil émergent
+8. **Gater** — enforcement runtime pré-dispatch, avant chaque action
+9. **Réguler** — supervision continue par agent régulateur, feedback vers le gate
+10. **Boucler** — retours terrain remontent vers les principes pour affiner le référentiel
+
+---
+
+## 5. Volet humain — immersions métiers
+
+À faire en amont ou en parallèle de l'étape 1 (spécifier), pour éviter de coder une gouvernance rigoureuse sur le papier mais contournée en pratique.
+
+- **Risk** → arbitrages tacites de pondération → nourrit la logique cascade/agrégation
+- **Compliance** → où ils interprètent plutôt qu'appliquent mécaniquement → matière pour traduire un principe flou sans perdre l'esprit du texte + gestion des exceptions
+- **MLOps** → vocabulaire lifecycle déjà éprouvé (staging/prod/rollback/drift) + outillage réutilisable (model registries, feature stores)
+
+Format le plus utile : observation sur cas concrets ("montrez-moi un cas ambigu récent, comment vous l'avez tranché") plutôt qu'entretien général.
+
+---
+
+## 6. Stack technique de référence (état de l'art 2026)
+
+- **Moteurs de policy** : Open Policy Agent / Rego (CNCF), Cedar (AWS)
+- **Taxonomie de risque** : OWASP Agentic AI Top 10 (déc. 2025)
+- **Toolkit open-source** : Microsoft Agent Governance Toolkit — interfaces publiques (ToolCallInterceptor, PluginInterface, PolicyProviderInterface) pour brancher des composants tiers sans toucher au core
+- **Identité/traçabilité** : modèle Singapour IMDA (janv. 2026) — identité vérifiable + audit trail par agent
+- **Pattern architectural** : pre-dispatch governance — chaque action passe le policy engine avant exécution, pas de contrôle a posteriori
+
+---
+
+## 7. Points encore ouverts
+
+- [ ] Cascade vs agrégation pour la composition des composants
+- [ ] Format concret du catalogue (repo Git + CI vs plateforme/registre interrogeable)
+- [ ] Granularité de mutualisation (composant seul vs agent complet)
+- [ ] Format des immersions métiers (exploratoire courte vs shadowing structuré)
