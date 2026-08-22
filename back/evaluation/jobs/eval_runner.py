@@ -17,7 +17,8 @@ import logging
 logger = logging.getLogger(__name__)
 settings = get_evaluation_settings()
 
-EVAL_RESULT_TTL = 3600 * 24 * 7  # 7 days
+EVAL_RESULT_HOT_TTL = 3600  # eval:result:{trace_id} — hot cache for frontend polling only, eval_results (PostgreSQL) is the source of truth
+EVAL_SCORES_ROLLING_TTL = 3600 * 24 * 7  # eval:scores:{model}:{use_case} — rolling cache read by /matrix
 
 
 def _compute_composite(
@@ -171,7 +172,7 @@ async def evaluate_trace(
             )
             await r_err.setex(
                 f"eval:result:{trace_id}",
-                EVAL_RESULT_TTL,
+                EVAL_RESULT_HOT_TTL,
                 error_result.model_dump_json(),
             )
         finally:
@@ -193,7 +194,7 @@ async def evaluate_trace(
     r_client = await aioredis.from_url(settings.redis_url, decode_responses=True)
     try:
         await r_client.setex(
-            f"eval:result:{trace_id}", EVAL_RESULT_TTL, result.model_dump_json()
+            f"eval:result:{trace_id}", EVAL_RESULT_HOT_TTL, result.model_dump_json()
         )
         if config.active_use_case_id:
             key = f"eval:scores:{model}:{config.active_use_case_id}"
@@ -201,7 +202,7 @@ async def evaluate_trace(
             existing = json.loads(existing_raw) if existing_raw else []
             existing.append({"score": composite, "ts": result.evaluated_at})
             existing = existing[-100:]
-            await r_client.setex(key, EVAL_RESULT_TTL, json.dumps(existing))
+            await r_client.setex(key, EVAL_SCORES_ROLLING_TTL, json.dumps(existing))
     finally:
         await r_client.aclose()
 
