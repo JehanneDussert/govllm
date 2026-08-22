@@ -27,6 +27,34 @@ model_list:
       num_ctx: 8192
       timeout: 600
 
+  - model_name: ollama/ministral-3:8b
+    litellm_params:
+      model: ollama/ministral-3:8b
+      api_base: http://ollama:11434
+      num_ctx: 8192
+      timeout: 600
+
+  - model_name: ollama/granite4
+    litellm_params:
+      model: ollama/granite4
+      api_base: http://ollama:11434
+      num_ctx: 8192
+      timeout: 600
+
+  - model_name: ollama/gemma4:e4b
+    litellm_params:
+      model: ollama/gemma4:e4b
+      api_base: http://ollama:11434
+      num_ctx: 8192
+      timeout: 600
+
+  - model_name: ollama/hf.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF:latest
+    litellm_params:
+      model: ollama/hf.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF:latest
+      api_base: http://ollama:11434
+      num_ctx: 8192
+      timeout: 600
+
 litellm_settings:
   success_callback: ["langfuse", "prometheus"]
   failure_callback: ["prometheus"]
