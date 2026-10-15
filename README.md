@@ -33,12 +33,12 @@ No data leaves your infrastructure. Local models via Ollama. Observable via Graf
 
 ## Research
 
-This project is accompanied by a peer-reviewed preprint:
+This project is accompanied by a preprint:
 
 **Who Judges the Judges? Governance from Metrics: A Runtime Framework for Continuous LLM Compliance Monitoring**
 Jehanne Dussert · arXiv:2605.24737 · May 2026
 
-Key findings: panel specialisation outperforms best single judge by +3.5 pp · position bias degrades agreement by up to 25 pp · parameter count is a poor proxy for governance quality.
+Key findings: small-judge validity varies widely (51.5%–69.0% agreement with a 49-case ground truth, averaged over three question orderings) · question order matters (phi4-mini: −11 pp, 95% CI [−20, −3], when sub-questions are permuted) · parameter count is a poor proxy for governance quality. A specialised per-criterion judge panel and few-shot calibration gave positive but not statistically significant gains (details below).
 
 [Read the paper →](https://arxiv.org/abs/2605.24737) · [Annotated corpus (49 cases)](https://github.com/JehanneDussert/govllm/blob/main/docs/ground_truth/corpus.json)
 
@@ -152,7 +152,7 @@ The judge model runs locally (`ollama/gemma3:4b` by default). Evaluation calls a
 
 Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliability**. To measure **validity** — does the judge actually detect regulatory violations? — govllm uses a curated binary-checklist corpus of **49 annotated cases** (English and French) anchored to CNIL decisions, ANSSI guidelines, and EU AI Act provisions.
 
-Each case is evaluated across three question orderings (original, reversed, permuted) to quantify position bias in small LLM judges. Agreement ranges from 51.5% (mistral:7b) to 69.1% (phi4-mini), averaged across all three orderings. The permuted ordering degrades phi4-mini by 11 pp on average, with a 25 pp drop on `data_privacy` — showing that even the strongest judge is sensitive to question presentation order. mistral:7b is flat at 51.5% across all three orderings, confirming structural miscalibration rather than positional sensitivity.
+Each case is evaluated across three question orderings (original, reversed, permuted) to quantify position bias in small LLM judges. Agreement ranges from 51.5% (mistral:7b) to 69.0% (phi4-mini), averaged across all three orderings. The permuted ordering changes phi4-mini's agreement by −11.2 pp (95% CI [−19.9, −3.1], 49 cases): even the strongest of these judges is sensitive to question presentation order. Per-criterion drops look larger (−25 pp on `data_privacy`) but rest on 10 cases and are not statistically significant. mistral:7b is flat at 51.5% across all three orderings, confirming structural miscalibration rather than positional sensitivity.
 
 → See [docs/ground_truth/README.md](docs/ground_truth/README.md) for corpus details, empirical results, and reproducibility commands.
 
@@ -162,9 +162,11 @@ Each case is evaluated across three question orderings (original, reversed, perm
 
 48 prompts across 6 use cases and 4 difficulty levels (2 easy · 2 medium · 2 adversarial · 2 hard each). Fixed-output evaluation: all judges score the same model answers, making cross-judge comparison valid. 768 scored entries (48 × 4 generators × 4 judges), 32 per (model, use case) cell.
 
-Completed analyses: specialised panel vs single-judge delta (hard prompts: +5.7 pp), model size vs score correlation (Pearson r = −0.39, n=4), inter-judge disagreement per prompt (top discriminator: `ana_hard_01`, σ=0.256), family bias matrix (no auto-preference detected — all SPR ≤ 0), and judge reliability classification.
+Completed analyses: domain-specific profiles vs the quality-baseline profile on hard prompts (+5.7 pp, 95% CI [+0.4, +10.9]; only 12 prompts from different use cases, so indicative), model size vs score correlation (Pearson r = −0.39, n=4), inter-judge disagreement per prompt (top discriminator: `ana_hard_01`, σ=0.256), family bias matrix (no significant self-preference among these 4 models), and judge reliability classification.
 
-A preliminary few-shot calibration experiment (5 annotated examples per criterion injected into the checklist judge prompt) improves ground truth agreement in 3 of 4 judges: +11.8 pp (gemma3:4b), +8.3 pp (phi4-mini), +5.1 pp (mistral:7b). qwen3:1.7b shows no net gain (−0.2 pp), consistent with its documented context sensitivity. Results in `docs/ground_truth/results/{judge}_fewshot.json`.
+A specialised per-criterion judge panel (each criterion assigned to its most valid judge) scores 72.6% against 69.0% for the best single judge on the ground truth. The +3.5 pp difference is not statistically significant (95% CI [−0.9, +9.0], case-level bootstrap), and the panel was selected on the same data it is evaluated on, so it should be confirmed on held-out cases.
+
+A preliminary few-shot calibration experiment (5 annotated examples per criterion injected into the checklist judge prompt) shows positive point estimates for 3 of 4 judges (gemma3:4b, phi4-mini, mistral:7b) and none for qwen3:1.7b. With 24 evaluable cases, none of these gains is statistically significant after correction for multiple comparisons (largest: gemma3:4b +12.5 pp, 95% CI [+1.0, +25.0], paired). Treat few-shot calibration as a direction to test on a larger corpus, not an established improvement. Results in `docs/ground_truth/results/{judge}_fewshot.json`.
 
 → See [docs/benchmark/README.md](docs/benchmark/README.md) for pipeline, file formats, and analysis results.
 
@@ -260,6 +262,12 @@ govllm's differentiator: fully local inference, governance criteria mapped to EU
 **On AI ethics charters**
 
 Where charters articulate what should be done, govllm provides a technical layer to verify that it is actually being done, continuously, in production. Principles need observability to become practice.
+
+---
+
+## Contributing
+
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, monorepo structure, development conventions, running the ground truth tests, and how to propose a new governance profile or criterion. Self-contained starting points are tagged [`good first issue`](https://github.com/JehanneDussert/govllm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
 ---
 
