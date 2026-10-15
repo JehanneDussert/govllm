@@ -121,6 +121,8 @@ Four built-in profiles, each activating a targeted set of criteria and weights:
 
 Profiles are applied at runtime — switching a profile updates which criteria are active and their weights without restarting any service. Custom profiles can be created from the Settings view.
 
+**Experimental — Identity & Access Governance.** A fifth profile (`identity_access_governance`) applies the same checklist judging to account access logs instead of LLM outputs: scope, volume and temporal conformity, session geo-consistency, and sensitive export justification (ANSSI, GDPR Art. 9/32, NIS2 Art. 21). A rolling per-account baseline flags candidate windows, which are then judged via `POST /identity-access/evaluate`. Its 5 criteria are disabled by default; there is no annotated corpus yet, so no validity figures are reported for it.
+
 ---
 
 ## Judge criteria
