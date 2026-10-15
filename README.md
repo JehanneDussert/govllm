@@ -33,7 +33,7 @@ No data leaves your infrastructure. Local models via Ollama. Observable via Graf
 
 ## Research
 
-This project is accompanied by a peer-reviewed preprint:
+This project is accompanied by a preprint:
 
 **Who Judges the Judges? Governance from Metrics: A Runtime Framework for Continuous LLM Compliance Monitoring**
 Jehanne Dussert · arXiv:2605.24737 · May 2026
@@ -260,6 +260,12 @@ govllm's differentiator: fully local inference, governance criteria mapped to EU
 **On AI ethics charters**
 
 Where charters articulate what should be done, govllm provides a technical layer to verify that it is actually being done, continuously, in production. Principles need observability to become practice.
+
+---
+
+## Contributing
+
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, monorepo structure, development conventions, running the ground truth tests, and how to propose a new governance profile or criterion. Self-contained starting points are tagged [`good first issue`](https://github.com/JehanneDussert/govllm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
 ---
 
