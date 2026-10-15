@@ -1,0 +1,24 @@
+{
+  "_comment": "Single source of truth for judge-model-specific call quirks. Read by services/judge.py, services/groundtruth.py, and scripts/run_fewshot_groundtruth.py — see CONTRIBUTING.md.",
+  "no_think_models": [
+    "ollama/qwen3:1.7b",
+    "ollama/qwen3:4b",
+    "ollama/qwen3:8b"
+  ],
+  "extended_token_models": [
+    "ollama/hf.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF:latest",
+    "ollama/gemma4:e4b"
+  ],
+  "large_ctx_models": [
+    "ollama/qwen3:1.7b",
+    "ollama/qwen3:4b",
+    "ollama/qwen3:8b",
+    "ollama/phi4-mini",
+    "ollama/mistral:7b",
+    "ollama/gemma3:4b",
+    "ollama/hf.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF:latest",
+    "ollama/gemma4:e4b"
+  ],
+  "extended_max_tokens": 6144,
+  "extended_num_ctx": 8192
+}

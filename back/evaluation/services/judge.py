@@ -12,6 +12,7 @@ import json
 import logging
 import re
 import time
+from pathlib import Path
 
 import httpx
 
@@ -22,17 +23,13 @@ from db.models import ArenaCriterionScore
 settings = get_evaluation_settings()
 logger = logging.getLogger(__name__)
 
-# Models that need thinking mode disabled explicitly
-_NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
-# All Ollama models get an extended context window to handle long judge prompts
-_LARGE_CTX_MODELS = {
-    "ollama/qwen3:1.7b",
-    "ollama/qwen3:4b",
-    "ollama/qwen3:8b",
-    "ollama/phi4-mini",
-    "ollama/mistral:7b",
-    "ollama/gemma3:4b",
-}
+# Judge-model-specific call quirks — single source of truth, see model_quirks.json
+_QUIRKS = json.loads((Path(__file__).parent.parent / "model_quirks.json").read_text())
+_NO_THINK_MODELS = set(_QUIRKS["no_think_models"])
+_EXTENDED_TOKEN_MODELS = set(_QUIRKS["extended_token_models"])
+_LARGE_CTX_MODELS = set(_QUIRKS["large_ctx_models"])
+_EXTENDED_MAX_TOKENS = _QUIRKS["extended_max_tokens"]
+_EXTENDED_NUM_CTX = _QUIRKS["extended_num_ctx"]
 
 
 def _build_judge_prompt(
@@ -236,9 +233,13 @@ async def _call_judge(
                     ],
                     "stream": False,
                     "temperature": 0.0,
-                    "max_tokens": 2048,
+                    "max_tokens": (
+                        _EXTENDED_MAX_TOKENS
+                        if judge_model in _EXTENDED_TOKEN_MODELS
+                        else 2048
+                    ),
                     **(
-                        {"options": {"num_ctx": 8192}}
+                        {"options": {"num_ctx": _EXTENDED_NUM_CTX}}
                         if judge_model in _LARGE_CTX_MODELS
                         else {}
                     ),

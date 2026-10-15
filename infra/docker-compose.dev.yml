@@ -1,5 +1,17 @@
 services:
 
+  front:
+    build:
+      context: ../front
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ../front:/app
+      - front_node_modules:/app/node_modules
+    ports: !override
+      - "5173:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
   llm-gateway:
     volumes:
       - ../back/llm-gateway:/app
@@ -18,6 +30,7 @@ services:
     volumes:
       - ../back/evaluation:/app
       - ../back/shared/src/shared:/app/shared
+      - ../docs/ground_truth:/app/docs_ground_truth:ro
       - evaluation_venv:/app/.venv
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
 
@@ -25,3 +38,4 @@ volumes:
   llm_gateway_venv:
   observability_venv:
   evaluation_venv:
+  front_node_modules:

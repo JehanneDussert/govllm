@@ -52,7 +52,13 @@ ALL_JUDGES = [
     "ollama/mistral:7b",
 ]
 
-_NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
+# Judge-model-specific call quirks — single source of truth, see
+# back/evaluation/model_quirks.json (also read by judge.py / groundtruth.py).
+_QUIRKS = json.loads((ROOT / "back" / "evaluation" / "model_quirks.json").read_text())
+_NO_THINK_MODELS = set(_QUIRKS["no_think_models"])
+_EXTENDED_TOKEN_MODELS = set(_QUIRKS["extended_token_models"])
+_EXTENDED_MAX_TOKENS = _QUIRKS["extended_max_tokens"]
+_EXTENDED_NUM_CTX = _QUIRKS["extended_num_ctx"]
 
 # Cases excluded from evaluation per criterion (they are the few-shot examples).
 # Identified by 8-char UUID prefix — must match exactly one case per criterion.
@@ -307,6 +313,9 @@ def call_judge(prompt_text: str, judge_model: str, dry_run: bool = False) -> tup
     extra_params: dict = {}
     if judge_model in _NO_THINK_MODELS:
         extra_params["think"] = False
+    elif judge_model in _EXTENDED_TOKEN_MODELS:
+        extra_params["max_tokens"] = _EXTENDED_MAX_TOKENS
+        extra_params["options"] = {"num_ctx": _EXTENDED_NUM_CTX}
     else:
         extra_params["max_tokens"] = 500
 

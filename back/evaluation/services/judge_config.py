@@ -321,12 +321,39 @@ async def get_redis() -> aioredis.Redis:
     return await aioredis.from_url(settings.redis_url, decode_responses=True)
 
 
+def _merge_config(saved: JudgeConfig, defaults: JudgeConfig) -> JudgeConfig:
+    """Fill gaps in a saved (Redis) config with anything new in DEFAULT_CONFIG,
+    without touching what's already saved (custom weights, panels, etc.)."""
+    saved_criteria_ids = {c.id for c in saved.criteria}
+    merged_criteria = saved.criteria + [
+        c for c in defaults.criteria if c.id not in saved_criteria_ids
+    ]
+
+    saved_profile_ids = {p.id for p in saved.profiles}
+    merged_profiles = saved.profiles + [
+        p for p in defaults.profiles if p.id not in saved_profile_ids
+    ]
+
+    saved_uc_ids = {u.id for u in saved.use_cases}
+    merged_use_cases = saved.use_cases + [
+        u for u in defaults.use_cases if u.id not in saved_uc_ids
+    ]
+
+    return saved.model_copy(
+        update={
+            "criteria": merged_criteria,
+            "profiles": merged_profiles,
+            "use_cases": merged_use_cases,
+        }
+    )
+
+
 async def get_judge_config() -> JudgeConfig:
     r = await get_redis()
     try:
         raw = await r.get(JUDGE_CONFIG_KEY)
         if raw:
-            return JudgeConfig.model_validate_json(raw)
+            return _merge_config(JudgeConfig.model_validate_json(raw), DEFAULT_CONFIG)
         return DEFAULT_CONFIG
     finally:
         await r.aclose()
