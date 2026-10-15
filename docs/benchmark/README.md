@@ -123,7 +123,7 @@ Completed. Results in `docs/benchmark/analysis/`:
 
 | # | Finding | Result |
 |---|---|---|
-| 1 | Domain-specific profiles vs quality-baseline profile | Hard prompts: +5.7 pp (95% CI [+0.4, +10.9], 12 prompts from different use cases — indicative); easy prompts: −0.6 pp |
+| 1 | Domain-specific profiles vs quality-baseline profile | Hard prompts: +5.7 pp (unadjusted 95% CI [+0.5, +11.0]; **not significant after correction across the 4 difficulty tiers**: Bonferroni CI [−0.9, +12.2], Holm p = 0.12; 12 prompts from different use cases); easy prompts: −0.6 pp. Source: `summary.json` → `analysis_1.by_difficulty_tests` |
 | 2 | Model size vs score correlation | Pearson r = −0.39 (n=4, indicative) — smallest model (qwen3:1.7b, 1.7B) ranks 2nd |
 | 3 | Inter-judge disagreement | Top discriminator: `ana_hard_01` (σ=0.256); hard/adversarial prompts concentrate disagreement |
 | 4 | Intra-judge variance by domain | phi4-mini: extreme variance on `analysis` (σ=0.29); `translation` most stable (σ≤0.023) |
@@ -160,4 +160,4 @@ Reliability classes depend on the generator set (more generators → more level-
 
 **Few-shot calibration** (supplementary — ground truth corpus, not benchmark pipeline):
 
-Injecting 5 annotated examples per criterion into the checklist judge prompt gives positive point estimates on 3 of 4 judges (gemma3:4b, phi4-mini, mistral:7b) and none on qwen3:1.7b, but **no gain is statistically significant** after Holm correction with 24 evaluable cases (largest: gemma3:4b +12.5 pp, 95% CI [+1.0, +25.0], paired). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.
+Injecting 5 annotated examples per criterion into the checklist judge prompt gives positive point estimates on 3 of 4 judges (gemma3:4b, phi4-mini, mistral:7b) and none on qwen3:1.7b, but **no gain is statistically significant** after correction for multiple comparisons with 24 evaluable cases (largest: gemma3:4b +12.5 pp, paired; unadjusted 95% CI [+1.0, +24.0], Bonferroni-adjusted over the 4 judges [−2.1, +28.1], Holm p = 0.16). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.

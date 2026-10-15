@@ -9,13 +9,20 @@ Ground truth statistics with uncertainty, from docs/ground_truth/results/.
 2. Paired differences vs the top judge (same cases, same orderings).
 3. Few-shot gains: few-shot vs original-order baseline on the same evaluable cases,
    paired bootstrap CI, two-sided p, Holm across judges.
-4. Forest plot of (1).
+4. Order effects: reversed/permuted minus original, paired by case, per judge.
+5. Forest plot of (1).
+
+Multiple comparisons: every family of tests (2, 3, 4) reports the unadjusted 95% CI,
+a Holm-adjusted p-value and a Bonferroni-adjusted CI (level 1 - 0.05/k, k = tests in
+the family). Each comparison has its own seed derived from its name, so adding a judge
+does not change the other judges' numbers.
 
 Usage:
     python scripts/groundtruth_stats.py                        # pooled (judges with all 3 orderings)
     python scripts/groundtruth_stats.py --condition original   # original order only (all judges)
+    python scripts/groundtruth_stats.py --models paper         # the 4 judges of arXiv v1 (README figures)
 
-Writes docs/ground_truth/analysis/groundtruth_stats.json and
+Writes docs/ground_truth/analysis/groundtruth_stats[_<models>].json and
 docs/ground_truth/figures/agreement_forest_<condition>.{png,pdf}. The figure needs matplotlib;
 the statistics are stdlib only.
 """
@@ -55,8 +62,9 @@ def load_fewshot(slug):
             if r.get("agreement") is not None}
 
 
-def cluster_bootstrap(by_case: dict, n_boot: int, rng: random.Random):
+def cluster_bootstrap(by_case: dict, n_boot: int, seed: str):
     """by_case: case -> list of values (one per ordering). Mean over all values."""
+    rng = random.Random(seed)
     cases = [c for c, vs in by_case.items() if vs]
     allv = [v for c in cases for v in by_case[c]]
     est = sum(allv) / len(allv)
@@ -76,15 +84,30 @@ def cluster_bootstrap(by_case: dict, n_boot: int, rng: random.Random):
         "p_two_sided_vs_0": round(min(1.0, max(2 * min(p_le, p_ge), 1 / n_boot)), 4),
         "n_cases": len(cases),
         "n_case_runs": len(allv),
+        "_means": means,
     }
 
 
+def strip(d: dict) -> dict:
+    d.pop("_means", None)
+    return d
+
+
 def holm(d: dict):
-    items = sorted((v["p_two_sided_vs_0"], k) for k, v in d.items())
+    """Holm-adjusted p and Bonferroni-adjusted CI over the family of tests in d."""
+    k = len(d)
+    items = sorted((v["p_two_sided_vs_0"], name) for name, v in d.items())
     running = 0.0
-    for i, (p, k) in enumerate(items):
-        running = max(running, min(1.0, (len(items) - i) * p))
-        d[k]["p_holm"] = round(running, 4)
+    for i, (p, name) in enumerate(items):
+        running = max(running, min(1.0, (k - i) * p))
+        d[name]["p_holm"] = round(running, 4)
+    for v in d.values():
+        means, a = v["_means"], 0.05 / k
+        v["ci_bonferroni"] = [round(means[int(a / 2 * len(means))], 6),
+                              round(means[int((1 - a / 2) * len(means)) - 1], 6)]
+        v["ci_bonferroni_level"] = round(1 - a, 4)
+        v["family_size"] = k
+        strip(v)
 
 
 def forest(stats, condition, path_stem):
@@ -119,6 +142,13 @@ def forest(stats, condition, path_stem):
     plt.close(fig)
 
 
+def _fmt(s):
+    ci, cb = s["ci95"], s["ci_bonferroni"]
+    return (f"{s['estimate'] * 100:+5.1f} pp  CI95 [{ci[0] * 100:+5.1f}, {ci[1] * 100:+5.1f}]  "
+            f"Bonferroni [{cb[0] * 100:+5.1f}, {cb[1] * 100:+5.1f}]  "
+            f"p={s['p_two_sided_vs_0']:.3f} p_holm={s['p_holm']:.3f}  n={s['n_cases']}  (k={s['family_size']})")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", default="all")
@@ -126,7 +156,6 @@ def main():
     parser.add_argument("--bootstrap", type=int, default=10000)
     parser.add_argument("--no-figure", action="store_true")
     args = parser.parse_args()
-    rng = random.Random(0)
 
     data = {j: {o: load(j, o) for o in ORDERS} for j in select(args.models)}
 
@@ -135,13 +164,14 @@ def main():
     for j, by_order in data.items():
         for o in ORDERS:
             if by_order[o]:
-                agreement[j][o] = cluster_bootstrap({c: [v] for c, v in by_order[o].items()}, args.bootstrap, rng)
+                agreement[j][o] = strip(cluster_bootstrap({c: [v] for c, v in by_order[o].items()},
+                                                          args.bootstrap, f"agreement:{j}:{o}"))
         if all(by_order[o] for o in ORDERS):
             pooled = defaultdict(list)
             for o in ORDERS:
                 for c, v in by_order[o].items():
                     pooled[c].append(v)
-            agreement[j]["pooled"] = cluster_bootstrap(pooled, args.bootstrap, rng)
+            agreement[j]["pooled"] = strip(cluster_bootstrap(pooled, args.bootstrap, f"agreement:{j}:pooled"))
 
     cond = args.condition
     in_cond = {j: a[cond] for j, a in agreement.items() if cond in a}
@@ -160,7 +190,7 @@ def main():
                 for c, v in data[top][o].items():
                     if c in data[j][o]:
                         diff[c].append(v - data[j][o][c])
-            paired[j] = cluster_bootstrap(diff, args.bootstrap, rng)
+            paired[j] = cluster_bootstrap(diff, args.bootstrap, f"paired:{cond}:{top}-{j}")
         holm(paired)
         paired = {"reference": top, "condition": cond, "differences": paired}
 
@@ -171,13 +201,25 @@ def main():
         if not fs or not base:
             continue
         common = [c for c in fs if c in base]
-        d = cluster_bootstrap({c: [fs[c] - base[c]] for c in common}, args.bootstrap, rng)
+        d = cluster_bootstrap({c: [fs[c] - base[c]] for c in common}, args.bootstrap, f"fewshot:{j}")
         d["baseline"] = round(sum(base[c] for c in common) / len(common), 4)
         d["fewshot"] = round(sum(fs[c] for c in common) / len(common), 4)
         d["unmatched_fewshot_cases"] = len(fs) - len(common)
         fewshot[j] = d
     if fewshot:
         holm(fewshot)
+
+    # 4. Order effects (alternative ordering minus original, paired by case)
+    order_effects = {}
+    for j, by_order in data.items():
+        base = by_order["original"]
+        for alt in ("reversed", "permuted"):
+            if base and by_order[alt]:
+                common = [c for c in by_order[alt] if c in base]
+                order_effects[f"{j}:{alt}"] = cluster_bootstrap(
+                    {c: [by_order[alt][c] - base[c]] for c in common}, args.bootstrap, f"order:{j}:{alt}")
+    if order_effects:
+        holm(order_effects)
 
     out = {
         "description": "Agreement with ground truth: mean of per-case agreement; 95% CI = case-level cluster "
@@ -188,10 +230,12 @@ def main():
         "agreement": agreement,
         "paired_vs_top": paired,
         "fewshot_gain": fewshot,
+        "order_effects": order_effects,
     }
-    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"Written: {OUT_JSON}")
+    out_json = OUT_JSON if args.models == "all" else OUT_JSON.with_name(f"groundtruth_stats_{args.models}.json")
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Written: {out_json}")
 
     print(f"\n=== Agreement ({cond}) ===")
     for j, s in sorted(in_cond.items(), key=lambda kv: -kv[1]["estimate"]):
@@ -202,13 +246,13 @@ def main():
     if paired:
         print(f"\n=== Paired difference: {paired['reference']} minus judge ({cond}) ===")
         for j, s in sorted(paired["differences"].items(), key=lambda kv: kv[1]["estimate"]):
-            print(f"  {j:<22} {s['estimate'] * 100:+5.1f} pp  [{s['ci95'][0] * 100:+5.1f}, {s['ci95'][1] * 100:+5.1f}]  "
-                  f"p_holm={s['p_holm']:.3f}")
+            print(f"  {j:<22} {_fmt(s)}")
     print("\n=== Few-shot gain (original order, same cases) ===")
     for j, s in sorted(fewshot.items(), key=lambda kv: -kv[1]["estimate"]):
-        print(f"  {j:<22} {s['baseline'] * 100:5.1f}% -> {s['fewshot'] * 100:5.1f}%  "
-              f"{s['estimate'] * 100:+5.1f} pp  [{s['ci95'][0] * 100:+5.1f}, {s['ci95'][1] * 100:+5.1f}]  "
-              f"n={s['n_cases']}  p_holm={s['p_holm']:.3f}")
+        print(f"  {j:<22} {s['baseline'] * 100:5.1f}% -> {s['fewshot'] * 100:5.1f}%  {_fmt(s)}")
+    print("\n=== Order effects (ordering minus original, paired by case) ===")
+    for name, s in order_effects.items():
+        print(f"  {name:<32} {_fmt(s)}")
 
     if not args.no_figure and in_cond:
         forest(in_cond, cond, f"agreement_forest_{cond}")

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T17:41:29.399477Z",
+  "generated_at": "2026-10-15T19:04:10.140631Z",
   "models": [
     "gemma3-4b",
     "gemma4-e4b",
@@ -13,7 +13,7 @@
   "n_result_files": 64,
   "n_entries_used": 3065,
   "analysis_1_delta_specialized_vs_baseline": {
-    "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case",
+    "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case. by_difficulty_tests: prompt-level unpaired bootstrap per tier, Holm p and Bonferroni CI across tiers (tiers with fewer than 2 prompts in a group are skipped).",
     "by_generator": {
       "gemma3-4b": {
         "quality_baseline_mean": 0.8512,
@@ -259,6 +259,72 @@
         "specialized_mean": 0.849,
         "specialized_n": 510,
         "delta": 0.0416
+      }
+    },
+    "by_difficulty_tests": {
+      "easy": {
+        "delta": 0.0147,
+        "ci95": [
+          -0.0161,
+          0.0465
+        ],
+        "p": 0.3804,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.6616,
+        "ci_bonferroni": [
+          -0.0248,
+          0.0546
+        ],
+        "family_size": 4
+      },
+      "medium": {
+        "delta": 0.0282,
+        "ci95": [
+          -0.0161,
+          0.0668
+        ],
+        "p": 0.1936,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 3,
+        "p_holm": 0.5808,
+        "ci_bonferroni": [
+          -0.0297,
+          0.0748
+        ],
+        "family_size": 4
+      },
+      "adversarial": {
+        "delta": 0.025,
+        "ci95": [
+          -0.0265,
+          0.0752
+        ],
+        "p": 0.3308,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.6616,
+        "ci_bonferroni": [
+          -0.0404,
+          0.0876
+        ],
+        "family_size": 4
+      },
+      "hard": {
+        "delta": 0.0415,
+        "ci95": [
+          0.0009,
+          0.0832
+        ],
+        "p": 0.0438,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.1752,
+        "ci_bonferroni": [
+          -0.007,
+          0.0933
+        ],
+        "family_size": 4
       }
     }
   },

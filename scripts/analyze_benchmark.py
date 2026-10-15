@@ -110,6 +110,53 @@ def r4(v) -> float | None:
     return round(v, 4) if v is not None else None
 
 
+def difficulty_tests(entries, prompt_meta, tiers, n_boot=10000):
+    """Specialised vs baseline profiles per difficulty tier, with uncertainty.
+
+    Unit = prompt (mean score over all generator x judge pairs for that prompt);
+    the two groups are different prompts (baseline use cases vs specialised ones),
+    so the bootstrap is unpaired, resampling prompts within each group. Seed per
+    tier. Holm-adjusted p and Bonferroni CI across the tiers tested.
+    """
+    import random
+
+    per_prompt = defaultdict(list)
+    for e in entries:
+        per_prompt[e["id"]].append(e["score"])
+    tests = {}
+    for tier in tiers:
+        ids = [pid for pid in per_prompt if prompt_meta.get(pid, {}).get("difficulty") == tier]
+        base = [_mean(per_prompt[p]) for p in ids if prompt_meta[p]["use_case"] in BASELINE_USE_CASES]
+        spec = [_mean(per_prompt[p]) for p in ids if prompt_meta[p]["use_case"] in SPECIALIZED_USE_CASES]
+        if len(base) < 2 or len(spec) < 2:
+            continue
+        rng = random.Random(f"difficulty:{tier}")
+        means = sorted(
+            _mean(rng.choices(spec, k=len(spec))) - _mean(rng.choices(base, k=len(base)))
+            for _ in range(n_boot)
+        )
+        p_le = sum(1 for m in means if m <= 0) / n_boot
+        p_ge = sum(1 for m in means if m >= 0) / n_boot
+        tests[tier] = {
+            "delta": r4(_mean(spec) - _mean(base)),
+            "ci95": [r4(means[int(0.025 * n_boot)]), r4(means[int(0.975 * n_boot) - 1])],
+            "p": round(min(1.0, max(2 * min(p_le, p_ge), 1 / n_boot)), 4),
+            "n_prompts_specialized": len(spec),
+            "n_prompts_baseline": len(base),
+            "_means": means,
+        }
+    k = len(tests)
+    running = 0.0
+    for i, (pv, tier) in enumerate(sorted((v["p"], t) for t, v in tests.items())):
+        running = max(running, min(1.0, (k - i) * pv))
+        tests[tier]["p_holm"] = round(running, 4)
+    for v in tests.values():
+        means, a = v.pop("_means"), 0.05 / k
+        v["ci_bonferroni"] = [r4(means[int(a / 2 * n_boot)]), r4(means[int((1 - a / 2) * n_boot) - 1])]
+        v["family_size"] = k
+    return tests
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", default="all",
@@ -166,9 +213,12 @@ def main():
         }
 
     analysis_1 = {
-        "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case",
+        "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case. "
+                       "by_difficulty_tests: prompt-level unpaired bootstrap per tier, Holm p and Bonferroni CI across tiers "
+                       "(tiers with fewer than 2 prompts in a group are skipped).",
         "by_generator": delta_by_gen,
         "by_difficulty": delta_by_diff,
+        "by_difficulty_tests": difficulty_tests(entries, prompt_meta, difficulties, n_boot=args.bootstrap),
     }
 
     # ── 2. Correlation model size / score ─────────────────────────────────────
@@ -339,6 +389,9 @@ def main():
     print("\n=== 1. Specialized vs baseline (by difficulty) ===")
     for diff, v in analysis_1["by_difficulty"].items():
         print(f"  {diff:<14} baseline={str(v['quality_baseline_mean']):<6}  specialized={str(v['specialized_mean']):<6}  delta={v['delta']}")
+    for diff, v in analysis_1["by_difficulty_tests"].items():
+        print(f"  test {diff:<12} delta={v['delta']:+.4f} CI95 {v['ci95']} Bonferroni {v['ci_bonferroni']} "
+              f"p={v['p']:.3f} p_holm={v['p_holm']:.3f} (n={v['n_prompts_specialized']}+{v['n_prompts_baseline']}, k={v['family_size']})")
 
     print("\n=== 2. Model size vs score ===")
     for g in all_gens:
