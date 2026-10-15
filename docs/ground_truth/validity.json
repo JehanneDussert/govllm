@@ -1,20 +1,20 @@
 {
-  "description": "Aggregated agreement rates (original + reversed + permuted) per judge x criterion. Weighted mean across all available orders. Corpus is intentionally bilingual (FR=4, EN=45).",
+  "description": "Agreement per judge x criterion (mean of per-case agreement). by_order: one ordering; validity: pooled over all orderings available for that judge (see 'orders'). Built by scripts/export_groundtruth_results.py from docs/ground_truth/results/.",
   "orders_included": [
     "original",
     "reversed",
     "permuted"
   ],
   "corpus_size": 49,
-  "languages": {
-    "fr": 4,
-    "en": 45
-  },
   "judges": [
     "phi4-mini",
     "qwen3-1.7b",
     "gemma3-4b",
-    "mistral-7b"
+    "mistral-7b",
+    "ministral-3-8b",
+    "granite4",
+    "gemma4-e4b",
+    "lfm2.5-1.2b-thinking"
   ],
   "criteria": [
     "data_privacy",
@@ -23,54 +23,42 @@
     "prompt_injection",
     "transparency"
   ],
+  "orders": {
+    "phi4-mini": [
+      "original",
+      "reversed",
+      "permuted"
+    ],
+    "qwen3-1.7b": [
+      "original",
+      "reversed",
+      "permuted"
+    ],
+    "gemma3-4b": [
+      "original",
+      "reversed",
+      "permuted"
+    ],
+    "mistral-7b": [
+      "original",
+      "reversed",
+      "permuted"
+    ],
+    "ministral-3-8b": [
+      "original"
+    ],
+    "granite4": [
+      "original"
+    ],
+    "gemma4-e4b": [
+      "original"
+    ],
+    "lfm2.5-1.2b-thinking": [
+      "original"
+    ]
+  },
   "by_order": {
     "original": {
-      "gemma3-4b": {
-        "data_privacy": {
-          "agreement": 0.475,
-          "n_cases": 10
-        },
-        "human_oversight": {
-          "agreement": 0.575,
-          "n_cases": 10
-        },
-        "non_manipulation": {
-          "agreement": 0.7,
-          "n_cases": 10
-        },
-        "prompt_injection": {
-          "agreement": 0.75,
-          "n_cases": 9
-        },
-        "transparency": {
-          "agreement": 0.8,
-          "n_cases": 10
-        },
-        "global": 0.658
-      },
-      "mistral-7b": {
-        "data_privacy": {
-          "agreement": 0.525,
-          "n_cases": 10
-        },
-        "human_oversight": {
-          "agreement": 0.4,
-          "n_cases": 10
-        },
-        "non_manipulation": {
-          "agreement": 0.525,
-          "n_cases": 10
-        },
-        "prompt_injection": {
-          "agreement": 0.722,
-          "n_cases": 9
-        },
-        "transparency": {
-          "agreement": 0.425,
-          "n_cases": 10
-        },
-        "global": 0.515
-      },
       "phi4-mini": {
         "data_privacy": {
           "agreement": 0.775,
@@ -92,7 +80,7 @@
           "agreement": 0.525,
           "n_cases": 10
         },
-        "global": 0.719
+        "global": 0.7194
       },
       "qwen3-1.7b": {
         "data_privacy": {
@@ -115,32 +103,30 @@
           "agreement": 0.75,
           "n_cases": 10
         },
-        "global": 0.653
-      }
-    },
-    "reversed": {
+        "global": 0.6531
+      },
       "gemma3-4b": {
         "data_privacy": {
-          "agreement": 0.575,
+          "agreement": 0.475,
           "n_cases": 10
         },
         "human_oversight": {
-          "agreement": 0.65,
+          "agreement": 0.575,
           "n_cases": 10
         },
         "non_manipulation": {
-          "agreement": 0.8,
+          "agreement": 0.7,
           "n_cases": 10
         },
         "prompt_injection": {
-          "agreement": 0.611,
+          "agreement": 0.75,
           "n_cases": 9
         },
         "transparency": {
-          "agreement": 0.556,
-          "n_cases": 9
+          "agreement": 0.8,
+          "n_cases": 10
         },
-        "global": 0.641
+        "global": 0.6582
       },
       "mistral-7b": {
         "data_privacy": {
@@ -163,8 +149,102 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.515
+        "global": 0.5153
       },
+      "ministral-3-8b": {
+        "data_privacy": {
+          "agreement": 0.625,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.85,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.806,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.9,
+          "n_cases": 10
+        },
+        "global": 0.7959
+      },
+      "granite4": {
+        "data_privacy": {
+          "agreement": 0.75,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.625,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.583,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.825,
+          "n_cases": 10
+        },
+        "global": 0.7194
+      },
+      "gemma4-e4b": {
+        "data_privacy": {
+          "agreement": 0.825,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.775,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.85,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.833,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.9,
+          "n_cases": 10
+        },
+        "global": 0.8367
+      },
+      "lfm2.5-1.2b-thinking": {
+        "data_privacy": {
+          "agreement": 0.472,
+          "n_cases": 9
+        },
+        "human_oversight": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.625,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.833,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.375,
+          "n_cases": 10
+        },
+        "global": 0.5365
+      }
+    },
+    "reversed": {
       "phi4-mini": {
         "data_privacy": {
           "agreement": 0.825,
@@ -186,7 +266,7 @@
           "agreement": 0.55,
           "n_cases": 10
         },
-        "global": 0.745
+        "global": 0.7449
       },
       "qwen3-1.7b": {
         "data_privacy": {
@@ -209,32 +289,30 @@
           "agreement": 0.6,
           "n_cases": 10
         },
-        "global": 0.582
-      }
-    },
-    "permuted": {
+        "global": 0.5816
+      },
       "gemma3-4b": {
         "data_privacy": {
-          "agreement": 0.611,
-          "n_cases": 9
+          "agreement": 0.575,
+          "n_cases": 10
         },
         "human_oversight": {
-          "agreement": 0.694,
-          "n_cases": 9
+          "agreement": 0.65,
+          "n_cases": 10
         },
         "non_manipulation": {
           "agreement": 0.8,
           "n_cases": 10
         },
         "prompt_injection": {
-          "agreement": 0.806,
+          "agreement": 0.611,
           "n_cases": 9
         },
         "transparency": {
-          "agreement": 0.55,
-          "n_cases": 10
+          "agreement": 0.556,
+          "n_cases": 9
         },
-        "global": 0.691
+        "global": 0.6406
       },
       "mistral-7b": {
         "data_privacy": {
@@ -257,8 +335,10 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.515
-      },
+        "global": 0.5153
+      }
+    },
+    "permuted": {
       "phi4-mini": {
         "data_privacy": {
           "agreement": 0.525,
@@ -280,7 +360,7 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.607
+        "global": 0.6071
       },
       "qwen3-1.7b": {
         "data_privacy": {
@@ -303,7 +383,53 @@
           "agreement": 0.65,
           "n_cases": 10
         },
-        "global": 0.571
+        "global": 0.5714
+      },
+      "gemma3-4b": {
+        "data_privacy": {
+          "agreement": 0.611,
+          "n_cases": 9
+        },
+        "human_oversight": {
+          "agreement": 0.694,
+          "n_cases": 9
+        },
+        "non_manipulation": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.806,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.55,
+          "n_cases": 10
+        },
+        "global": 0.6915
+      },
+      "mistral-7b": {
+        "data_privacy": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.525,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.722,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.5153
       }
     }
   },
@@ -329,7 +455,7 @@
         "agreement": 0.5,
         "n": 30
       },
-      "global": 0.69
+      "global": 0.6905
     },
     "qwen3-1.7b": {
       "data_privacy": {
@@ -345,7 +471,7 @@
         "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.371,
+        "agreement": 0.37,
         "n": 27
       },
       "transparency": {
@@ -375,7 +501,7 @@
         "agreement": 0.638,
         "n": 29
       },
-      "global": 0.663
+      "global": 0.6632
     },
     "mistral-7b": {
       "data_privacy": {
@@ -398,7 +524,99 @@
         "agreement": 0.425,
         "n": 30
       },
-      "global": 0.515
+      "global": 0.5153
+    },
+    "ministral-3-8b": {
+      "data_privacy": {
+        "agreement": 0.625,
+        "n": 10
+      },
+      "human_oversight": {
+        "agreement": 0.8,
+        "n": 10
+      },
+      "non_manipulation": {
+        "agreement": 0.85,
+        "n": 10
+      },
+      "prompt_injection": {
+        "agreement": 0.806,
+        "n": 9
+      },
+      "transparency": {
+        "agreement": 0.9,
+        "n": 10
+      },
+      "global": 0.7959
+    },
+    "granite4": {
+      "data_privacy": {
+        "agreement": 0.75,
+        "n": 10
+      },
+      "human_oversight": {
+        "agreement": 0.625,
+        "n": 10
+      },
+      "non_manipulation": {
+        "agreement": 0.8,
+        "n": 10
+      },
+      "prompt_injection": {
+        "agreement": 0.583,
+        "n": 9
+      },
+      "transparency": {
+        "agreement": 0.825,
+        "n": 10
+      },
+      "global": 0.7194
+    },
+    "gemma4-e4b": {
+      "data_privacy": {
+        "agreement": 0.825,
+        "n": 10
+      },
+      "human_oversight": {
+        "agreement": 0.775,
+        "n": 10
+      },
+      "non_manipulation": {
+        "agreement": 0.85,
+        "n": 10
+      },
+      "prompt_injection": {
+        "agreement": 0.833,
+        "n": 9
+      },
+      "transparency": {
+        "agreement": 0.9,
+        "n": 10
+      },
+      "global": 0.8367
+    },
+    "lfm2.5-1.2b-thinking": {
+      "data_privacy": {
+        "agreement": 0.472,
+        "n": 9
+      },
+      "human_oversight": {
+        "agreement": 0.4,
+        "n": 10
+      },
+      "non_manipulation": {
+        "agreement": 0.625,
+        "n": 10
+      },
+      "prompt_injection": {
+        "agreement": 0.833,
+        "n": 9
+      },
+      "transparency": {
+        "agreement": 0.375,
+        "n": 10
+      },
+      "global": 0.5365
     }
   }
 }

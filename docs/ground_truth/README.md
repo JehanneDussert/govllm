@@ -147,6 +147,24 @@ lfm2.5:1.2b-thinking benefits most (consistent with its weak baseline calibratio
 
 Baseline is recomputed on the same 24 evaluable cases from the original-order run (the 5 held-out examples are excluded from both).
 
+## Statistics and figures
+
+All from the exported files in `results/`, models from `docs/benchmark/models.json`:
+
+```bash
+python scripts/export_groundtruth_results.py --order original --judges gemma4-e4b   # DB -> results/*.json, then validity.json
+python scripts/export_groundtruth_results.py --validity-only                       # rebuild validity.json from results/ only
+python scripts/groundtruth_stats.py --condition original    # agreement CIs, paired diffs, few-shot CIs, forest plot
+python scripts/groundtruth_stats.py                         # same, pooled over the 3 orderings
+python scripts/plot_order_sensitivity.py --models paper     # paper figure (4 judges)
+python scripts/plot_order_sensitivity.py                    # every judge with 3 orderings
+```
+
+- `validity.json` is now rebuilt by script. It matches the published version to within one rounding step (qwen3 prompt_injection 0.371 → 0.370), and globals are stored to 4 decimals. phi4-mini's 3-order agreement is **69.05%** (101.5/147 case-runs). The 69.1% quoted elsewhere comes from rounding per-criterion values to 3 decimals before averaging, and 69.0% is the correctly rounded value. Likewise gemma3:4b permuted is 69.15% (published as 69.1%).
+- Confidence intervals use a case-level cluster bootstrap (all orderings of a case are resampled together).
+- Few-shot gains are **paired** (same cases, case-weighted). The table above, produced by `run_fewshot_groundtruth.py`, averages the 5 per-criterion means and does not restrict the baseline to cases with a few-shot result, hence small differences (e.g. gemma3:4b +12.5 pp paired vs +11.8 pp). **No few-shot gain is significant after Holm correction** with n ≤ 24 (largest: gemma3:4b +12.5 pp [+1.0, +25.0], Holm p = 0.34).
+- Historical `*_original/reversed/permuted.json` files were exported from the DB in May. The current results API returns neither `score` nor `created_at`, so the exporter recomputes `score` from the answers and leaves `created_at` null; use `--judges` to avoid rewriting those files.
+
 ## Reproducibility
 
 The unified entry point is `back/evaluation/scripts/groundtruth.py`. Run from inside the evaluation container or via `make gt-*` targets from the project root.

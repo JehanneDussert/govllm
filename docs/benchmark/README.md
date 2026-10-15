@@ -141,6 +141,23 @@ Completed. Results in `docs/benchmark/analysis/`:
 
 Scripts: `scripts/analyze_benchmark.py` → `summary.json`; `scripts/judge_reliability.py` → `judge_reliability.json`.
 
+### 8-model extension (provisional)
+
+The analysis scripts read their model list from [`models.json`](models.json) (slug, Ollama id, family, nominal and reported size, color) through `scripts/model_registry.py`. Nothing is hardcoded any more. `--models paper` reproduces the arXiv v1 outputs above unchanged; the default `--models all` writes `*_all.json` / `*_all.png` alongside them:
+
+```bash
+python scripts/analyze_benchmark.py                                # -> analysis/summary_all.json
+python scripts/analyze_benchmark.py --models paper                 # -> analysis/summary.json (paper, unchanged)
+python scripts/generate_figures.py --summary docs/benchmark/analysis/summary_all.json   # -> figures/*_all.png
+python scripts/judge_reliability.py --models all                   # -> analysis/judge_reliability_all.json
+```
+
+**Formal self-preference** (`analysis_7_self_preference_formal`, `scripts/self_preference.py`). The SPR of §5.2 is computed per prompt (the judge ranks its own output first; ties share the credit) and compared with how often judges from *other families* rank that same output first. A score-level difference-in-differences controls for both output quality and judge severity. 95% bootstrap CIs are taken over the 48 prompts, with Holm correction across judges. The legacy `self_preference_rate.spr` (model-level, no test) is kept only for reproducibility.
+
+On the 4 paper models, no judge shows significant self-preference (all estimates ≤ 0; consistent with Finding D). On 8 models, **`gemma4:e4b` and `ministral-3:8b` do**: score bias +0.043 [+0.019, +0.065] and +0.053 [+0.028, +0.079], Holm p ≈ 0.001; SPR excess +0.11 and +0.17, Holm p = 0.034. Finding D therefore holds for the 4 historical models, not as a general property. These are also the two best ground truth judges, so they should not judge their own outputs. `lfm2.5`'s judge scores go through a parsing fallback (see the ground truth README) and its level-2 consistency (24.9%) is not meaningful.
+
+Reliability classes depend on the generator set (more generators → more level-2 rows): on 8 generators, `gemma3:4b` moves from UNRELIABLE to CALIBRATED_BUT_STRICT (consistency 69.1% → 70.2%). Treat the classes near thresholds as indicative.
+
 **Few-shot calibration** (supplementary — ground truth corpus, not benchmark pipeline):
 
 Injecting 5 annotated examples per criterion into the checklist judge prompt improves agreement on 3 of 4 judges: +11.8 pp (gemma3:4b), +8.3 pp (phi4-mini), +5.1 pp (mistral:7b). qwen3:1.7b shows no net gain (−0.2 pp). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.

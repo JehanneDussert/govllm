@@ -21,8 +21,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+from model_registry import label, color, MODELS
+
 SUMMARY = Path("docs/benchmark/analysis/summary.json")
 OUTPUT = Path("docs/benchmark/figures")
+SUFFIX = ""  # set from --summary: "" for the paper summary, "_all" for summary_all.json
 
 # Okabe-Ito colorblind-safe palette
 CB = {
@@ -38,18 +41,9 @@ CB = {
 
 DIFF_ORDER   = ["easy", "medium", "adversarial", "hard"]
 DIFF_LABELS  = {"easy": "Easy", "medium": "Medium", "adversarial": "Adversarial", "hard": "Hard"}
-MODEL_LABELS = {
-    "gemma3-4b":  "gemma3:4b (4B)",
-    "mistral-7b": "mistral:7b (7B)",
-    "phi4-mini":  "phi4-mini (3.8B)",
-    "qwen3-1.7b": "qwen3:1.7b (1.7B)",
-}
-MODEL_COLORS = {
-    "gemma3-4b":  CB["blue"],
-    "mistral-7b": CB["vermil"],
-    "phi4-mini":  CB["green"],
-    "qwen3-1.7b": CB["orange"],
-}
+# Labels and colors come from docs/benchmark/models.json (scripts/model_registry.py).
+def model_label(slug: str) -> str:
+    return f"{label(slug)} ({MODELS[slug]['size_b_nominal']:g}B)"
 
 DPI = 300
 FIGSIZE_SINGLE = (6, 4)
@@ -78,7 +72,8 @@ def base_style():
 
 def savefig(fig, name: str):
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    path = OUTPUT / name
+    stem, ext = name.rsplit(".", 1)
+    path = OUTPUT / f"{stem}{SUFFIX}.{ext}"
     fig.savefig(path, dpi=DPI, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  Saved: {path}")
@@ -143,12 +138,12 @@ def fig2_size_vs_score(data: dict):
     # Error bars (±1 std dev)
     for m, x, y, sd in zip(models, sizes, scores, stdevs):
         ax.errorbar(x, y, yerr=sd, fmt="none",
-                    ecolor=MODEL_COLORS[m], elinewidth=1.2, capsize=4, alpha=0.5)
+                    ecolor=color(m), elinewidth=1.2, capsize=4, alpha=0.5)
 
     # Scatter
     for m, x, y in zip(models, sizes, scores):
-        ax.scatter(x, y, color=MODEL_COLORS[m], s=80, zorder=4,
-                   label=MODEL_LABELS[m], edgecolors="white", linewidths=0.8)
+        ax.scatter(x, y, color=color(m), s=80, zorder=4,
+                   label=model_label(m), edgecolors="#444444", linewidths=0.6)
 
     # Regression line
     n = len(sizes)
@@ -231,7 +226,8 @@ def fig4_judge_generator_matrix(data: dict):
 
     grid = [[matrix[j][g]["mean_score"] for g in gens] for j in judges]
 
-    fig, ax = plt.subplots(figsize=FIGSIZE_MATRIX)
+    size = FIGSIZE_MATRIX if len(gens) <= 4 else (1.1 * len(gens) + 2, 0.8 * len(judges) + 2)
+    fig, ax = plt.subplots(figsize=size)
 
     # Neutral blue: low score → light steel, high score → deep navy
     from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -249,10 +245,9 @@ def fig4_judge_generator_matrix(data: dict):
 
     # Labels
     ax.set_xticks(range(len(gens)))
-    ax.set_xticklabels([MODEL_LABELS[g].split("(")[0].strip() for g in gens],
-                       rotation=30, ha="right")
+    ax.set_xticklabels([label(g) for g in gens], rotation=30, ha="right")
     ax.set_yticks(range(len(judges)))
-    ax.set_yticklabels([MODEL_LABELS[j].split("(")[0].strip() for j in judges])
+    ax.set_yticklabels([label(j) for j in judges])
 
     ax.set_xlabel("Generator model")
     ax.set_ylabel("Judge model")
@@ -294,8 +289,17 @@ def fig4_judge_generator_matrix(data: dict):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    import argparse
+    global SUFFIX
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--summary", default=str(SUMMARY),
+                        help="summary.json (paper, 4 models) or summary_all.json (all registered models)")
+    args = parser.parse_args()
+    summary_path = Path(args.summary)
+    SUFFIX = summary_path.stem.removeprefix("summary")
+
     base_style()
-    with open(SUMMARY, encoding="utf-8") as f:
+    with open(summary_path, encoding="utf-8") as f:
         data = json.load(f)
 
     print("Generating figures …")

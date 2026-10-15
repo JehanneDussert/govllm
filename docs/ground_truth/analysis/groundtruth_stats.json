@@ -1,0 +1,419 @@
+{
+  "description": "Agreement with ground truth: mean of per-case agreement; 95% CI = case-level cluster bootstrap (all orderings of a case resampled together). 'pooled' only for judges with all three orderings. Few-shot: same evaluable cases, original order; paired bootstrap; Holm across judges.",
+  "n_bootstrap": 10000,
+  "agreement": {
+    "phi4-mini": {
+      "original": {
+        "estimate": 0.7194,
+        "ci95": [
+          0.6276,
+          0.8061
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.7449,
+        "ci95": [
+          0.6582,
+          0.8265
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.6071,
+        "ci95": [
+          0.5051,
+          0.7092
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.6905,
+        "ci95": [
+          0.6054,
+          0.7704
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "qwen3-1.7b": {
+      "original": {
+        "estimate": 0.6531,
+        "ci95": [
+          0.5663,
+          0.7398
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.5816,
+        "ci95": [
+          0.4898,
+          0.6735
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.5714,
+        "ci95": [
+          0.4745,
+          0.6633
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.602,
+        "ci95": [
+          0.5289,
+          0.6769
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "gemma3-4b": {
+      "original": {
+        "estimate": 0.6582,
+        "ci95": [
+          0.5663,
+          0.7449
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.6406,
+        "ci95": [
+          0.5677,
+          0.7135
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 48,
+        "n_case_runs": 48
+      },
+      "permuted": {
+        "estimate": 0.6915,
+        "ci95": [
+          0.6117,
+          0.7713
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 47,
+        "n_case_runs": 47
+      },
+      "pooled": {
+        "estimate": 0.6632,
+        "ci95": [
+          0.5948,
+          0.7308
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 144
+      }
+    },
+    "mistral-7b": {
+      "original": {
+        "estimate": 0.5153,
+        "ci95": [
+          0.4031,
+          0.6276
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.5153,
+        "ci95": [
+          0.4031,
+          0.6276
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.5153,
+        "ci95": [
+          0.4031,
+          0.6276
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.5153,
+        "ci95": [
+          0.398,
+          0.6276
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "ministral-3-8b": {
+      "original": {
+        "estimate": 0.7959,
+        "ci95": [
+          0.7194,
+          0.8673
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      }
+    },
+    "granite4": {
+      "original": {
+        "estimate": 0.7194,
+        "ci95": [
+          0.6429,
+          0.7959
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      }
+    },
+    "gemma4-e4b": {
+      "original": {
+        "estimate": 0.8367,
+        "ci95": [
+          0.7653,
+          0.9031
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      }
+    },
+    "lfm2.5-1.2b-thinking": {
+      "original": {
+        "estimate": 0.5365,
+        "ci95": [
+          0.4271,
+          0.6406
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 48,
+        "n_case_runs": 48
+      }
+    }
+  },
+  "paired_vs_top": {
+    "reference": "gemma4-e4b",
+    "condition": "original",
+    "differences": {
+      "phi4-mini": {
+        "estimate": 0.1173,
+        "ci95": [
+          0.0306,
+          0.2092
+        ],
+        "p_two_sided_vs_0": 0.0062,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0124
+      },
+      "qwen3-1.7b": {
+        "estimate": 0.1837,
+        "ci95": [
+          0.1071,
+          0.2653
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0007
+      },
+      "gemma3-4b": {
+        "estimate": 0.1786,
+        "ci95": [
+          0.102,
+          0.2602
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0007
+      },
+      "mistral-7b": {
+        "estimate": 0.3214,
+        "ci95": [
+          0.2041,
+          0.4439
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0007
+      },
+      "ministral-3-8b": {
+        "estimate": 0.0408,
+        "ci95": [
+          -0.0255,
+          0.1071
+        ],
+        "p_two_sided_vs_0": 0.2516,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.2516
+      },
+      "granite4": {
+        "estimate": 0.1173,
+        "ci95": [
+          0.0408,
+          0.199
+        ],
+        "p_two_sided_vs_0": 0.0028,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0084
+      },
+      "lfm2.5-1.2b-thinking": {
+        "estimate": 0.2969,
+        "ci95": [
+          0.1823,
+          0.4167
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 48,
+        "n_case_runs": 48,
+        "p_holm": 0.0007
+      }
+    }
+  },
+  "fewshot_gain": {
+    "phi4-mini": {
+      "estimate": 0.0833,
+      "ci95": [
+        -0.0417,
+        0.2188
+      ],
+      "p_two_sided_vs_0": 0.2442,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.6458,
+      "fewshot": 0.7292,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0
+    },
+    "qwen3-1.7b": {
+      "estimate": -0.0208,
+      "ci95": [
+        -0.1875,
+        0.1354
+      ],
+      "p_two_sided_vs_0": 0.8664,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.6146,
+      "fewshot": 0.5938,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0
+    },
+    "gemma3-4b": {
+      "estimate": 0.125,
+      "ci95": [
+        0.0104,
+        0.25
+      ],
+      "p_two_sided_vs_0": 0.042,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.6354,
+      "fewshot": 0.7604,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 0.336
+    },
+    "mistral-7b": {
+      "estimate": 0.0761,
+      "ci95": [
+        -0.0217,
+        0.1848
+      ],
+      "p_two_sided_vs_0": 0.1504,
+      "n_cases": 23,
+      "n_case_runs": 23,
+      "baseline": 0.5326,
+      "fewshot": 0.6087,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 0.9646
+    },
+    "ministral-3-8b": {
+      "estimate": 0.0312,
+      "ci95": [
+        -0.0104,
+        0.0833
+      ],
+      "p_two_sided_vs_0": 0.3364,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.75,
+      "fewshot": 0.7812,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0
+    },
+    "granite4": {
+      "estimate": 0.0,
+      "ci95": [
+        -0.1042,
+        0.1042
+      ],
+      "p_two_sided_vs_0": 1.0,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.7188,
+      "fewshot": 0.7188,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0
+    },
+    "gemma4-e4b": {
+      "estimate": 0.0104,
+      "ci95": [
+        -0.0417,
+        0.0625
+      ],
+      "p_two_sided_vs_0": 0.9014,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.8229,
+      "fewshot": 0.8333,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0
+    },
+    "lfm2.5-1.2b-thinking": {
+      "estimate": 0.131,
+      "ci95": [
+        -0.0357,
+        0.2976
+      ],
+      "p_two_sided_vs_0": 0.1378,
+      "n_cases": 21,
+      "n_case_runs": 21,
+      "baseline": 0.5357,
+      "fewshot": 0.6667,
+      "unmatched_fewshot_cases": 1,
+      "p_holm": 0.9646
+    }
+  }
+}
