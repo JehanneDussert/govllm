@@ -175,6 +175,47 @@ ALL_CRITERIA = [
         weight=1.3,
         tags=["security", "ai_act"],
     ),
+    # Identity & Access (forensic module)
+    JudgeCriterion(
+        id="scope_conformity",
+        label="Scope conformity",
+        description="Does the account's activity stay within its formally assigned access scope? (ANSSI hygiene guide)",
+        enabled=False,
+        weight=1.4,
+        tags=["identity_access", "anssi"],
+    ),
+    JudgeCriterion(
+        id="volume_conformity",
+        label="Volume conformity",
+        description="Does the account's data access/export volume stay within its normal baseline? (GDPR Art. 32)",
+        enabled=False,
+        weight=1.4,
+        tags=["identity_access", "rgpd"],
+    ),
+    JudgeCriterion(
+        id="temporal_conformity",
+        label="Temporal conformity",
+        description="Does the account's activity timing match its usual behavioral pattern? (NIS2 Art. 21)",
+        enabled=False,
+        weight=1.4,
+        tags=["identity_access", "nis2"],
+    ),
+    JudgeCriterion(
+        id="session_geo_consistency",
+        label="Session geo-consistency",
+        description="Is the account's session geography and technical identity consistent across connections? (NIS2 Art. 21)",
+        enabled=False,
+        weight=1.4,
+        tags=["identity_access", "nis2"],
+    ),
+    JudgeCriterion(
+        id="sensitive_export_justification",
+        label="Sensitive export justification",
+        description="Is any export of sensitive personal data properly justified and authorized? (GDPR Art. 9)",
+        enabled=False,
+        weight=1.4,
+        tags=["identity_access", "rgpd"],
+    ),
 ]
 
 # ── Built-in governance profiles ─────────────────────────────
@@ -236,6 +277,18 @@ BUILT_IN_PROFILES = [
             "hallucination": CriterionConfig(enabled=True, weight=1.8),
             "human_agency": CriterionConfig(enabled=True, weight=1.0),
             "transparency": CriterionConfig(enabled=True, weight=1.0),
+        },
+    ),
+    GovernanceProfile(
+        id="identity_access_governance",
+        label="Identity & Access Governance",
+        description="Forensic module for account access anomalies — scope, volume, timing, session geo-consistency and sensitive data export justification (ANSSI, GDPR Art. 9/32, NIS2 Art. 21).",
+        criteria_config={
+            "scope_conformity": CriterionConfig(enabled=True, weight=2.0),
+            "volume_conformity": CriterionConfig(enabled=True, weight=1.8),
+            "sensitive_export_justification": CriterionConfig(enabled=True, weight=1.8),
+            "temporal_conformity": CriterionConfig(enabled=True, weight=1.5),
+            "session_geo_consistency": CriterionConfig(enabled=True, weight=1.5),
         },
     ),
 ]
@@ -321,12 +374,39 @@ async def get_redis() -> aioredis.Redis:
     return await aioredis.from_url(settings.redis_url, decode_responses=True)
 
 
+def _merge_config(saved: JudgeConfig, defaults: JudgeConfig) -> JudgeConfig:
+    """Fill gaps in a saved (Redis) config with anything new in DEFAULT_CONFIG,
+    without touching what's already saved (custom weights, panels, etc.)."""
+    saved_criteria_ids = {c.id for c in saved.criteria}
+    merged_criteria = saved.criteria + [
+        c for c in defaults.criteria if c.id not in saved_criteria_ids
+    ]
+
+    saved_profile_ids = {p.id for p in saved.profiles}
+    merged_profiles = saved.profiles + [
+        p for p in defaults.profiles if p.id not in saved_profile_ids
+    ]
+
+    saved_uc_ids = {u.id for u in saved.use_cases}
+    merged_use_cases = saved.use_cases + [
+        u for u in defaults.use_cases if u.id not in saved_uc_ids
+    ]
+
+    return saved.model_copy(
+        update={
+            "criteria": merged_criteria,
+            "profiles": merged_profiles,
+            "use_cases": merged_use_cases,
+        }
+    )
+
+
 async def get_judge_config() -> JudgeConfig:
     r = await get_redis()
     try:
         raw = await r.get(JUDGE_CONFIG_KEY)
         if raw:
-            return JudgeConfig.model_validate_json(raw)
+            return _merge_config(JudgeConfig.model_validate_json(raw), DEFAULT_CONFIG)
         return DEFAULT_CONFIG
     finally:
         await r.aclose()

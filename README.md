@@ -263,6 +263,12 @@ Where charters articulate what should be done, govllm provides a technical layer
 
 ---
 
+## Contributing
+
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, monorepo structure, development conventions, running the ground truth tests, and how to propose a new governance profile or criterion. A few self-contained starting points are listed in [docs/GOOD_FIRST_ISSUES.md](docs/GOOD_FIRST_ISSUES.md).
+
+---
+
 ## Development notes
 
 Some documentation and automation scripts were generated with [Claude Code](https://claude.ai/code) — specifically the benchmark pipeline (`scripts/run_full_benchmark.py`) and the ground truth corpus scripts (`back/evaluation/scripts/`). The core architecture, governance framework, and evaluation design are original work.

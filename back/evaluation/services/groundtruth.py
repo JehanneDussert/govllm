@@ -7,6 +7,7 @@ import json
 import logging
 import re
 import time
+from pathlib import Path
 from uuid import UUID
 
 import httpx
@@ -28,7 +29,12 @@ from shared.schemas.groundtruth import (
 logger = logging.getLogger(__name__)
 settings = get_evaluation_settings()
 
-_NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
+# Judge-model-specific call quirks — single source of truth, see model_quirks.json
+_QUIRKS = json.loads((Path(__file__).parent.parent / "model_quirks.json").read_text())
+_NO_THINK_MODELS = set(_QUIRKS["no_think_models"])
+_EXTENDED_TOKEN_MODELS = set(_QUIRKS["extended_token_models"])
+_EXTENDED_MAX_TOKENS = _QUIRKS["extended_max_tokens"]
+_EXTENDED_NUM_CTX = _QUIRKS["extended_num_ctx"]
 # Models empirically validated to benefit from thinking mode (Jayarao et al. 2025).
 # Populated after test_thinking_mode.py confirms improvement — overrides _NO_THINK_MODELS.
 _THINK_MODELS: set[str] = set()
@@ -346,6 +352,9 @@ async def _call_judge_checklist(
     extra_params: dict = {}
     if judge_model in _NO_THINK_MODELS:
         extra_params["think"] = False
+    elif judge_model in _EXTENDED_TOKEN_MODELS:
+        extra_params["max_tokens"] = _EXTENDED_MAX_TOKENS
+        extra_params["options"] = {"num_ctx": _EXTENDED_NUM_CTX}
     else:
         extra_params["max_tokens"] = 400
 
@@ -397,6 +406,11 @@ async def _call_judge_checklist(
         break
 
     raw_answers = parsed.get("answers", {})
+    if isinstance(raw_answers, list):
+        # Some models answer positionally (e.g. LFM2.5-1.2B-Thinking:
+        # "answers": [true, true, true, true]) instead of {"q1": true, ...}.
+        # All checklist criteria use q1..qN in fixed declared order.
+        raw_answers = {f"q{i + 1}": v for i, v in enumerate(raw_answers)}
     logger.info(f"Raw answers: {raw_answers}")
 
     def normalize_bool(v):

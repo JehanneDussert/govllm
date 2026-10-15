@@ -11,7 +11,7 @@ import { api } from '@/api/client'
 import { shortModel } from '@/utils/model'
 
 // Types
-type SettingsTabTypes = 'profiles' | 'use_cases' | 'judge' | 'routing'
+type SettingsTabTypes = 'profiles' | 'use_cases' | 'judge' | 'routing' | 'identity_access'
 
 // Store
 const store = useJudgeStore()
@@ -35,6 +35,7 @@ const tabs = [
   { id: 'use_cases' as SettingsTabTypes, label: 'Use cases' },
   { id: 'judge' as SettingsTabTypes, label: 'Judge' },
   { id: 'routing' as SettingsTabTypes, label: 'Routing' },
+  { id: 'identity_access' as SettingsTabTypes, label: 'Identity & Access' },
 ]
 
 const ROUTING_STRATEGIES = [
@@ -852,6 +853,25 @@ onMounted(async () => {
               />
             </div>
           </div>
+        </section>
+      </template>
+
+      <template v-if="activeTab === 'identity_access'">
+        <section class="settings-section">
+          <div class="section-header">
+            <div class="section-title">IDENTITY & ACCESS GOVERNANCE</div>
+            <div class="section-desc">
+              Forensic module for account access anomalies — under development.
+            </div>
+          </div>
+          <p class="field-hint">
+            The <code>identity_access_governance</code> profile (scope, volume, temporal
+            conformity, session geo-consistency, sensitive export justification) is configurable
+            like any other profile in the Governance profiles tab once available. This dedicated
+            panel — for reviewing flagged access windows and forensic run history — is not yet
+            connected to a backend API and will be built once the ingestion and orchestration
+            layers are stabilized.
+          </p>
         </section>
       </template>
     </div>

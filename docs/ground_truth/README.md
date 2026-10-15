@@ -104,11 +104,26 @@ Three question orderings were tested to measure **position bias** (see §5.4 of 
 | gemma3:4b | non_manipulation | 70.0% | 80.0% | **80.0%** | +10.0 pp |
 | gemma3:4b | transparency | **80.0%** | 55.6% | 55.0% | −25.0 pp |
 
+## Candidate judge models (2026-08)
+
+Four additional candidate judges evaluated on the full 49-case corpus, original order — `ministral-3:8b` and `granite4` as replacements for underperforming `mistral:7b`/`gemma3:4b`; `gemma4:e4b` and `lfm2.5:1.2b-thinking` as smaller/newer alternatives. Both `gemma4:e4b` and `lfm2.5:1.2b-thinking` initially failed on every case (empty response / unclosed `<think>` block respectively) due to a hardcoded 400-token budget in the checklist call path — see `CONTRIBUTING.md` ("Adding a new judge model") for the fix and the `model_quirks.json` mechanism it introduced.
+
+| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | Global |
+|---|---|---|---|---|---|---|
+| gemma4:e4b | 82.5% | 77.5% | 85.0% | 83.3% | 90.0% | **83.7%** |
+| ministral-3:8b | 62.5% | 80.0% | 85.0% | 80.6% | 90.0% | **79.6%** |
+| granite4 | 75.0% | 62.5% | 80.0% | 58.3% | 82.5% | **71.9%** |
+| lfm2.5:1.2b-thinking | 47.2%* | 40.0% | 62.5% | 83.3% | 37.5% | **53.6%*** |
+
+*lfm2.5:1.2b-thinking: 48/49 cases (1 case failed all 3 retries even with the extended token budget — a sensitive-content prompt, see `CLAUDE.md` backlog item 13).
+
+`gemma4:e4b` is the best-performing judge on this corpus to date, ahead of `phi4-mini` (the previous best at 79.4% on the earlier 34-case corpus). `lfm2.5:1.2b-thinking` is the weakest, comparable to `mistral:7b` (51.5%) — see the few-shot results below for calibration.
+
 ## Few-shot calibration (Finding 10)
 
-A supplementary experiment injects 5 annotated examples per criterion into the checklist prompt (one per score tier: 0.0 · 0.25 · 0.5 · 0.75 · 1.0). 44 cases are evaluable (49 − 5 held-out examples per criterion). Original order only.
+A supplementary experiment injects 5 annotated examples per criterion into the checklist prompt (one per score tier: 0.0 · 0.25 · 0.5 · 0.75 · 1.0). 24 cases are evaluable (49 − 5 held-out examples per criterion × 5 criteria = 25 held out). Original order only.
 
-| Judge | Baseline (44 cases) | Few-shot | Δ |
+| Judge | Baseline (24 cases) | Few-shot | Δ |
 |---|---|---|---|
 | gemma3:4b | 64.2% | 76.0% | **+11.8 pp** |
 | phi4-mini | 65.0% | 73.2% | **+8.3 pp** |
@@ -116,6 +131,17 @@ A supplementary experiment injects 5 annotated examples per criterion into the c
 | qwen3:1.7b | 60.5% | 60.2% | −0.2 pp |
 
 Few-shot improves structurally inconsistent judges (gemma3:4b) and those miscalibrated on specific criteria, but shows no net gain for context-sensitive judges (qwen3:1.7b) — consistent with Finding 3 (position bias). Results in `results/{judge}_fewshot.json`.
+
+Candidate judges added 2026-08 (see "Candidate judge models" above) — same protocol, same 24 cases:
+
+| Judge | Baseline (24 cases) | Few-shot | Δ |
+|---|---|---|---|
+| lfm2.5:1.2b-thinking | 53.3% | 63.6% | **+10.4 pp** |
+| ministral-3:8b | 75.0% | 78.1% | +3.1 pp |
+| gemma4:e4b | 82.3% | 83.3% | +1.0 pp |
+| granite4 | 71.9% | 71.9% | +0.0 pp |
+
+lfm2.5:1.2b-thinking benefits most (consistent with its weak baseline calibration); granite4 shows no gain (already well-calibrated).
 
 Baseline is recomputed on the same 44 evaluable cases from the original-order run (the 5 held-out examples are excluded from both).
 
@@ -149,6 +175,15 @@ python groundtruth.py run --criterion transparency    # filter by criterion
 python groundtruth.py run --judges ollama/qwen3:1.7b  # filter by judge
 python groundtruth.py extend new_cases.json           # add cases from JSON + evaluate
 ```
+
+Few-shot calibration (from project root, services running — see "Few-shot calibration" above):
+```bash
+python scripts/run_fewshot_groundtruth.py                                   # all 4 default judges
+python scripts/run_fewshot_groundtruth.py --judges ollama/phi4-mini         # single judge
+python scripts/run_fewshot_groundtruth.py --criterion transparency          # single criterion
+python scripts/run_fewshot_groundtruth.py --dry-run                         # print prompts only
+```
+`--judges` accepts any model registered in `infra/litellm_config.yaml`, not just the 4 defaults in `ALL_JUDGES`. Before running a new model here, check whether it needs a call-quirk override — see "Adding a new judge model" in `CONTRIBUTING.md`.
 
 Results are stored in the PostgreSQL `govllm` schema (`groundtruth_cases`, `groundtruth_results` tables) and exposed via:
 - `GET /groundtruth/validity` — agreement rates per judge × criterion × sub-question

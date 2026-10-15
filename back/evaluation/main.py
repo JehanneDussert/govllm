@@ -13,6 +13,7 @@ from routers.matrix import router as matrix_router
 from routers.arena import router as arena_router
 from routers.lifecycle import router as lifecycle_router
 from routers.groundtruth import router as groundtruth_router
+from routers.identity_access import router as identity_access_router
 from shared.config import get_evaluation_settings
 from db.database import run_migrations, close_pool
 
@@ -75,6 +76,7 @@ app.include_router(matrix_router)
 app.include_router(arena_router)
 app.include_router(lifecycle_router)
 app.include_router(groundtruth_router)
+app.include_router(identity_access_router)
 
 
 @app.get("/health")

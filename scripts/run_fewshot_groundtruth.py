@@ -9,7 +9,8 @@ Pattern B for mistral and gemma without degrading phi4-mini and qwen.
 
 This script:
   1. Fetches the 49-case corpus from the evaluation service.
-  2. Excludes the 5 few-shot examples per criterion from evaluation (contamination guard).
+  2. Excludes the 5 few-shot examples per criterion from evaluation (contamination guard)
+     -- 5 criteria x 5 examples = 25 held out, leaving 24 evaluable cases.
   3. For each remaining case × 4 judges, builds a few-shot checklist prompt and calls LiteLLM.
   4. Saves per-judge results to docs/ground_truth/results/{judge}_fewshot.json.
   5. Loads the baseline (original order) results and prints the comparison table.
@@ -52,7 +53,13 @@ ALL_JUDGES = [
     "ollama/mistral:7b",
 ]
 
-_NO_THINK_MODELS = {"ollama/qwen3:1.7b", "ollama/qwen3:4b", "ollama/qwen3:8b"}
+# Judge-model-specific call quirks — single source of truth, see
+# back/evaluation/model_quirks.json (also read by judge.py / groundtruth.py).
+_QUIRKS = json.loads((ROOT / "back" / "evaluation" / "model_quirks.json").read_text())
+_NO_THINK_MODELS = set(_QUIRKS["no_think_models"])
+_EXTENDED_TOKEN_MODELS = set(_QUIRKS["extended_token_models"])
+_EXTENDED_MAX_TOKENS = _QUIRKS["extended_max_tokens"]
+_EXTENDED_NUM_CTX = _QUIRKS["extended_num_ctx"]
 
 # Cases excluded from evaluation per criterion (they are the few-shot examples).
 # Identified by 8-char UUID prefix — must match exactly one case per criterion.
@@ -307,6 +314,9 @@ def call_judge(prompt_text: str, judge_model: str, dry_run: bool = False) -> tup
     extra_params: dict = {}
     if judge_model in _NO_THINK_MODELS:
         extra_params["think"] = False
+    elif judge_model in _EXTENDED_TOKEN_MODELS:
+        extra_params["max_tokens"] = _EXTENDED_MAX_TOKENS
+        extra_params["options"] = {"num_ctx": _EXTENDED_NUM_CTX}
     else:
         extra_params["max_tokens"] = 500
 
@@ -354,6 +364,11 @@ def call_judge(prompt_text: str, judge_model: str, dry_run: bool = False) -> tup
             return None, None, latency_ms
 
         raw_answers = parsed.get("answers", {})
+        if isinstance(raw_answers, list):
+            # Some models answer positionally (e.g. LFM2.5-1.2B-Thinking:
+            # "answers": [true, true, true, true]) instead of {"q1": true, ...}.
+            # All checklist criteria use q1..qN in fixed declared order.
+            raw_answers = {f"q{i + 1}": v for i, v in enumerate(raw_answers)}
         answers: dict[str, bool] = {
             k: _normalize_bool(v)
             for k, v in raw_answers.items()
@@ -368,7 +383,7 @@ def call_judge(prompt_text: str, judge_model: str, dry_run: bool = False) -> tup
 # ── Results I/O ───────────────────────────────────────────────────────────────
 
 def _slug(model: str) -> str:
-    return model.removeprefix("ollama/").replace(":", "-")
+    return model.removeprefix("ollama/").replace(":", "-").replace("/", "-")
 
 
 def _load_baseline(judge: str) -> list[dict]:
@@ -468,7 +483,7 @@ def print_comparison(
         print()
 
     print("=" * 100)
-    print("BL = baseline (original order, same 44 cases). FS = few-shot. Δ = FS − BL.")
+    print("BL = baseline (original order, same 24 cases). FS = few-shot. Δ = FS − BL.")
     print("Threshold for Finding 10: Δ ≥ +3 pp on at least one judge.")
 
 
