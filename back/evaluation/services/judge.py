@@ -299,6 +299,21 @@ async def call_judge_for_criteria(
             for s in scores_raw
             if isinstance(s, dict)
         }
+    if not scores_raw:
+        # Some models flatten the structure instead of nesting under "scores":
+        # {"relevance": 0.9, "hallucination": 0.0, "flag": false, "reason": "..."}
+        # with one shared flag/reason for all criteria, rather than per-criterion.
+        criterion_ids = {c.id for c in criteria}
+        flat_hits = {k: v for k, v in parsed.items() if k in criterion_ids}
+        if flat_hits:
+            shared_flag = parsed.get("flag", False)
+            shared_reason = parsed.get("reason", "")
+            scores_raw = {
+                cid: v
+                if isinstance(v, dict)
+                else {"score": v, "flag": shared_flag, "reason": shared_reason}
+                for cid, v in flat_hits.items()
+            }
 
     scores = []
     for c in criteria:

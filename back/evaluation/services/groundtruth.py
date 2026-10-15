@@ -406,6 +406,11 @@ async def _call_judge_checklist(
         break
 
     raw_answers = parsed.get("answers", {})
+    if isinstance(raw_answers, list):
+        # Some models answer positionally (e.g. LFM2.5-1.2B-Thinking:
+        # "answers": [true, true, true, true]) instead of {"q1": true, ...}.
+        # All checklist criteria use q1..qN in fixed declared order.
+        raw_answers = {f"q{i + 1}": v for i, v in enumerate(raw_answers)}
     logger.info(f"Raw answers: {raw_answers}")
 
     def normalize_bool(v):
