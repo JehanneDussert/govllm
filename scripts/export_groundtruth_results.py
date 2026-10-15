@@ -10,7 +10,8 @@ Usage:
 validity.json: per order, per judge x criterion agreement (mean of per-case agreement)
 and n_cases; "validity" = the same pooled over every order available for that judge
 (weighted by case-runs, i.e. the exact mean over all case-runs). "orders" lists the
-orderings each judge has. Rounding is applied once, at write time.
+orderings each judge has. Rounding is applied once, at write time; globals keep 6 decimals
+so that displaying them to 0.1 pp never double-rounds (e.g. 32.5/47 = 69.149%, not 69.15% -> 69.2%).
 """
 
 import argparse
@@ -176,7 +177,7 @@ def build_validity() -> None:
                 continue
             per = sums[slug][order]
             block[slug] = {c: {"agreement": round(agg([per[c]]), 3), "n_cases": per[c][1]} for c in sorted(per)}
-            block[slug]["global"] = round(agg(list(per.values())), 4)
+            block[slug]["global"] = round(agg(list(per.values())), 6)
         out["by_order"][order] = block
     for slug in out["judges"]:
         cells_by_crit = defaultdict(list)
@@ -184,7 +185,7 @@ def build_validity() -> None:
             for c, cell in sums[slug][order].items():
                 cells_by_crit[c].append(cell)
         v = {c: {"agreement": round(agg(cells), 3), "n": sum(x[1] for x in cells)} for c, cells in sorted(cells_by_crit.items())}
-        v["global"] = round(agg([x for cells in cells_by_crit.values() for x in cells]), 4)
+        v["global"] = round(agg([x for cells in cells_by_crit.values() for x in cells]), 6)
         out["validity"][slug] = v
     VALIDITY_FILE.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"  wrote {VALIDITY_FILE}  judges={out['judges']}")

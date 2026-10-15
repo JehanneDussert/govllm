@@ -71,8 +71,8 @@ def cluster_bootstrap(by_case: dict, n_boot: int, rng: random.Random):
     p_le = sum(1 for m in means if m <= 0) / n_boot
     p_ge = sum(1 for m in means if m >= 0) / n_boot
     return {
-        "estimate": round(est, 4),
-        "ci95": [round(means[int(0.025 * n_boot)], 4), round(means[int(0.975 * n_boot) - 1], 4)],
+        "estimate": round(est, 6),
+        "ci95": [round(means[int(0.025 * n_boot)], 6), round(means[int(0.975 * n_boot) - 1], 6)],
         "p_two_sided_vs_0": round(min(1.0, max(2 * min(p_le, p_ge), 1 / n_boot)), 4),
         "n_cases": len(cases),
         "n_case_runs": len(allv),

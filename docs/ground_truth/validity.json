@@ -80,7 +80,7 @@
           "agreement": 0.525,
           "n_cases": 10
         },
-        "global": 0.7194
+        "global": 0.719388
       },
       "qwen3-1.7b": {
         "data_privacy": {
@@ -103,7 +103,7 @@
           "agreement": 0.75,
           "n_cases": 10
         },
-        "global": 0.6531
+        "global": 0.653061
       },
       "gemma3-4b": {
         "data_privacy": {
@@ -126,7 +126,7 @@
           "agreement": 0.8,
           "n_cases": 10
         },
-        "global": 0.6582
+        "global": 0.658163
       },
       "mistral-7b": {
         "data_privacy": {
@@ -149,7 +149,7 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.5153
+        "global": 0.515306
       },
       "ministral-3-8b": {
         "data_privacy": {
@@ -172,7 +172,7 @@
           "agreement": 0.9,
           "n_cases": 10
         },
-        "global": 0.7959
+        "global": 0.795918
       },
       "granite4": {
         "data_privacy": {
@@ -195,7 +195,7 @@
           "agreement": 0.825,
           "n_cases": 10
         },
-        "global": 0.7194
+        "global": 0.719388
       },
       "gemma4-e4b": {
         "data_privacy": {
@@ -218,7 +218,7 @@
           "agreement": 0.9,
           "n_cases": 10
         },
-        "global": 0.8367
+        "global": 0.836735
       },
       "lfm2.5-1.2b-thinking": {
         "data_privacy": {
@@ -241,7 +241,7 @@
           "agreement": 0.375,
           "n_cases": 10
         },
-        "global": 0.5365
+        "global": 0.536458
       }
     },
     "reversed": {
@@ -266,7 +266,7 @@
           "agreement": 0.55,
           "n_cases": 10
         },
-        "global": 0.7449
+        "global": 0.744898
       },
       "qwen3-1.7b": {
         "data_privacy": {
@@ -289,7 +289,7 @@
           "agreement": 0.6,
           "n_cases": 10
         },
-        "global": 0.5816
+        "global": 0.581633
       },
       "gemma3-4b": {
         "data_privacy": {
@@ -312,7 +312,7 @@
           "agreement": 0.556,
           "n_cases": 9
         },
-        "global": 0.6406
+        "global": 0.640625
       },
       "mistral-7b": {
         "data_privacy": {
@@ -335,7 +335,7 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.5153
+        "global": 0.515306
       }
     },
     "permuted": {
@@ -360,7 +360,7 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.6071
+        "global": 0.607143
       },
       "qwen3-1.7b": {
         "data_privacy": {
@@ -383,7 +383,7 @@
           "agreement": 0.65,
           "n_cases": 10
         },
-        "global": 0.5714
+        "global": 0.571429
       },
       "gemma3-4b": {
         "data_privacy": {
@@ -406,7 +406,7 @@
           "agreement": 0.55,
           "n_cases": 10
         },
-        "global": 0.6915
+        "global": 0.691489
       },
       "mistral-7b": {
         "data_privacy": {
@@ -429,7 +429,7 @@
           "agreement": 0.425,
           "n_cases": 10
         },
-        "global": 0.5153
+        "global": 0.515306
       }
     }
   },
@@ -455,7 +455,7 @@
         "agreement": 0.5,
         "n": 30
       },
-      "global": 0.6905
+      "global": 0.690476
     },
     "qwen3-1.7b": {
       "data_privacy": {
@@ -478,7 +478,7 @@
         "agreement": 0.667,
         "n": 30
       },
-      "global": 0.602
+      "global": 0.602041
     },
     "gemma3-4b": {
       "data_privacy": {
@@ -501,7 +501,7 @@
         "agreement": 0.638,
         "n": 29
       },
-      "global": 0.6632
+      "global": 0.663194
     },
     "mistral-7b": {
       "data_privacy": {
@@ -524,7 +524,7 @@
         "agreement": 0.425,
         "n": 30
       },
-      "global": 0.5153
+      "global": 0.515306
     },
     "ministral-3-8b": {
       "data_privacy": {
@@ -547,7 +547,7 @@
         "agreement": 0.9,
         "n": 10
       },
-      "global": 0.7959
+      "global": 0.795918
     },
     "granite4": {
       "data_privacy": {
@@ -570,7 +570,7 @@
         "agreement": 0.825,
         "n": 10
       },
-      "global": 0.7194
+      "global": 0.719388
     },
     "gemma4-e4b": {
       "data_privacy": {
@@ -593,7 +593,7 @@
         "agreement": 0.9,
         "n": 10
       },
-      "global": 0.8367
+      "global": 0.836735
     },
     "lfm2.5-1.2b-thinking": {
       "data_privacy": {
@@ -616,7 +616,7 @@
         "agreement": 0.375,
         "n": 10
       },
-      "global": 0.5365
+      "global": 0.536458
     }
   }
 }
