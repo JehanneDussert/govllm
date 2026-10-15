@@ -132,7 +132,7 @@ A supplementary experiment injects 5 annotated examples per criterion into the c
 | mistral:7b | 56.2% | 61.3% | **+5.1 pp** |
 | qwen3:1.7b | 60.5% | 60.2% | −0.2 pp |
 
-Few-shot improves structurally inconsistent judges (gemma3:4b) and those miscalibrated on specific criteria, but shows no net gain for context-sensitive judges (qwen3:1.7b) — consistent with Finding 3 (position bias). Results in `results/{judge}_fewshot.json`.
+Point estimates are largest for structurally inconsistent judges (gemma3:4b) and absent for context-sensitive ones (qwen3:1.7b), but **none of the gains is statistically significant** with 24 cases (paired CIs and Holm correction in *Statistics and figures* below). Results in `results/{judge}_fewshot.json`.
 
 Candidate judges added 2026-08 (see "Candidate judge models" above) — same protocol, same 24 cases:
 

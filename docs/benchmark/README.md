@@ -123,11 +123,11 @@ Completed. Results in `docs/benchmark/analysis/`:
 
 | # | Finding | Result |
 |---|---|---|
-| 1 | Specialised panel vs single judge | Hard prompts: +5.7 pp; easy prompts: −0.6 pp |
+| 1 | Domain-specific profiles vs quality-baseline profile | Hard prompts: +5.7 pp (95% CI [+0.4, +10.9], 12 prompts from different use cases — indicative); easy prompts: −0.6 pp |
 | 2 | Model size vs score correlation | Pearson r = −0.39 (n=4, indicative) — smallest model (qwen3:1.7b, 1.7B) ranks 2nd |
 | 3 | Inter-judge disagreement | Top discriminator: `ana_hard_01` (σ=0.256); hard/adversarial prompts concentrate disagreement |
 | 4 | Intra-judge variance by domain | phi4-mini: extreme variance on `analysis` (σ=0.29); `translation` most stable (σ≤0.023) |
-| 5 | Family bias matrix | No auto-preference detected — all judges score own model family equal or below cross-family mean |
+| 5 | Family bias matrix | No significant self-preference among these 4 models (formal test, see *8-model extension* below — not true of every model) |
 | 6 | Self vs cross evaluation | gemma3:4b self=0.849 vs cross=0.955 (bias=−0.106); phi4-mini bias=−0.024 |
 
 **Judge reliability classification** (from `judge_reliability.json`):
@@ -160,4 +160,4 @@ Reliability classes depend on the generator set (more generators → more level-
 
 **Few-shot calibration** (supplementary — ground truth corpus, not benchmark pipeline):
 
-Injecting 5 annotated examples per criterion into the checklist judge prompt improves agreement on 3 of 4 judges: +11.8 pp (gemma3:4b), +8.3 pp (phi4-mini), +5.1 pp (mistral:7b). qwen3:1.7b shows no net gain (−0.2 pp). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.
+Injecting 5 annotated examples per criterion into the checklist judge prompt gives positive point estimates on 3 of 4 judges (gemma3:4b, phi4-mini, mistral:7b) and none on qwen3:1.7b, but **no gain is statistically significant** after Holm correction with 24 evaluable cases (largest: gemma3:4b +12.5 pp, 95% CI [+1.0, +25.0], paired). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.
