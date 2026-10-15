@@ -26,6 +26,11 @@ class AccountBaseline(BaseModel):
     sample_count: int
     known_scopes: set[str]  # resource_scopes historically accessed
     known_source_ips: set[str]
+    # Volume distribution of per-window totals: history is cut into consecutive
+    # windows of volume_window_hours; mean/stddev are over the active ones
+    # (>= 1 event). A candidate window's total is compared to this distribution.
+    volume_window_hours: float
+    volume_window_count: int
     volume_mean: float
     volume_stddev: float
     active_hours: set[int]  # hours-of-day (0-23) with observed activity

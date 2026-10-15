@@ -146,7 +146,9 @@ def _describe_window(window: CandidateWindow) -> str:
         f"Baseline (last {window.baseline.window_days} days, {window.baseline.sample_count} events): "
         f"known scopes={sorted(window.baseline.known_scopes)}, "
         f"known source IPs={sorted(window.baseline.known_source_ips)}, "
-        f"typical volume={window.baseline.volume_mean:.1f} (stddev={window.baseline.volume_stddev:.1f}), "
+        f"typical total volume per {window.baseline.volume_window_hours:g}h window="
+        f"{window.baseline.volume_mean:.1f} (stddev={window.baseline.volume_stddev:.1f}, "
+        f"over {window.baseline.volume_window_count} active windows), "
         f"active hours={sorted(window.baseline.active_hours)}",
         f"Deviation flags: scope={window.flags.scope_deviation}, "
         f"volume={window.flags.volume_deviation}, "

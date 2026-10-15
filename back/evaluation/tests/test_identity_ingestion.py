@@ -16,8 +16,8 @@ from shared.schemas.identity_access import AccessLogEvent
 NOW = datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
 
 
-def _event(days_ago=1, hour=10, volume=5, scope="hr/records", ip="10.0.0.1", account="acc-1"):
-    ts = (NOW - timedelta(days=days_ago)).replace(hour=hour, minute=0)
+def _event(days_ago=1, hour=10, volume=5, scope="hr/records", ip="10.0.0.1", account="acc-1", minute=0):
+    ts = (NOW - timedelta(days=days_ago)).replace(hour=hour, minute=minute)
     return AccessLogEvent(
         timestamp=ts,
         account_id=account,
@@ -91,12 +91,39 @@ def test_single_flag_reaches_threshold():
     assert cand.flags.session_geo_deviation and not cand.flags.volume_deviation
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known issue: window volume is summed over all events but compared to the "
-    "per-event baseline mean, so a window of several normal events is flagged.",
-)
+def _busy_history(per_hour_totals=(50, 45, 55, 50, 48, 52, 50, 50)):
+    """Each day, 10 events in the 10:00 hour whose volumes add up to the given total."""
+    events = []
+    for day, total in enumerate(per_hour_totals, start=1):
+        events += [_event(days_ago=day, minute=5 * i, volume=total // 10) for i in range(9)]
+        events.append(_event(days_ago=day, minute=50, volume=total - 9 * (total // 10)))
+    return events
+
+
+def test_baseline_volume_is_per_window_total():
+    b = compute_baseline("acc-1", _busy_history(), now=NOW)
+    assert b.volume_window_hours == 1.0
+    assert b.volume_window_count == 8
+    assert b.volume_mean == pytest.approx(50.0)
+
+
 def test_multi_event_normal_window_is_not_flagged():
-    b = compute_baseline("acc-1", _history(), now=NOW)
-    window = [_event(days_ago=0, volume=5) for _ in range(10)]
+    # Regression (units bug): the window total used to be compared to the per-event
+    # mean, so 10 ordinary events (total 50) were flagged against a mean of 5.
+    b = compute_baseline("acc-1", _busy_history(), now=NOW)
+    window = [_event(days_ago=0, minute=5 * i, volume=5) for i in range(10)]
     assert detect_deviation(window, b) is None
+
+
+def test_multi_event_window_with_abnormal_total_is_flagged():
+    b = compute_baseline("acc-1", _busy_history(), now=NOW)
+    window = [_event(days_ago=0, minute=5 * i, volume=50) for i in range(10)]  # total 500
+    cand = detect_deviation(window, b)
+    assert cand is not None and cand.flags.volume_deviation
+
+
+def test_window_longer_than_baseline_window_is_rejected():
+    b = compute_baseline("acc-1", _busy_history(), now=NOW)
+    window = [_event(days_ago=0, hour=10), _event(days_ago=0, hour=13)]
+    with pytest.raises(ValueError):
+        detect_deviation(window, b)
