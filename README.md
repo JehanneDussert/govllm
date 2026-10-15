@@ -38,7 +38,7 @@ This project is accompanied by a preprint:
 **Who Judges the Judges? Governance from Metrics: A Runtime Framework for Continuous LLM Compliance Monitoring**
 Jehanne Dussert · arXiv:2605.24737 · May 2026
 
-Key findings: small-judge validity varies widely (51.5%–69.0% agreement with a 49-case ground truth, averaged over three question orderings) · question order matters (phi4-mini loses 11 pp, 95% CI [3, 20], when sub-questions are permuted) · parameter count is a poor proxy for governance quality. A specialised per-criterion judge panel and few-shot calibration gave positive but not statistically significant gains (details below).
+Key findings: small-judge validity varies widely (51.5%–69.0% agreement with a 49-case ground truth, averaged over three question orderings) · question order matters (phi4-mini: −11 pp, 95% CI [−20, −3], when sub-questions are permuted) · parameter count is a poor proxy for governance quality. A specialised per-criterion judge panel and few-shot calibration gave positive but not statistically significant gains (details below).
 
 [Read the paper →](https://arxiv.org/abs/2605.24737) · [Annotated corpus (49 cases)](https://github.com/JehanneDussert/govllm/blob/main/docs/ground_truth/corpus.json)
 
@@ -152,7 +152,7 @@ The judge model runs locally (`ollama/gemma3:4b` by default). Evaluation calls a
 
 Arena metrics (variance, incoherence rate, bias matrix) measure judge **reliability**. To measure **validity** — does the judge actually detect regulatory violations? — govllm uses a curated binary-checklist corpus of **49 annotated cases** (English and French) anchored to CNIL decisions, ANSSI guidelines, and EU AI Act provisions.
 
-Each case is evaluated across three question orderings (original, reversed, permuted) to quantify position bias in small LLM judges. Agreement ranges from 51.5% (mistral:7b) to 69.0% (phi4-mini), averaged across all three orderings. The permuted ordering lowers phi4-mini's agreement by 11.2 pp (95% CI [−19.9, −3.1], 49 cases): even the strongest of these judges is sensitive to question presentation order. Per-criterion drops look larger (−25 pp on `data_privacy`) but rest on 10 cases and are not statistically significant. mistral:7b is flat at 51.5% across all three orderings, confirming structural miscalibration rather than positional sensitivity.
+Each case is evaluated across three question orderings (original, reversed, permuted) to quantify position bias in small LLM judges. Agreement ranges from 51.5% (mistral:7b) to 69.0% (phi4-mini), averaged across all three orderings. The permuted ordering changes phi4-mini's agreement by −11.2 pp (95% CI [−19.9, −3.1], 49 cases): even the strongest of these judges is sensitive to question presentation order. Per-criterion drops look larger (−25 pp on `data_privacy`) but rest on 10 cases and are not statistically significant. mistral:7b is flat at 51.5% across all three orderings, confirming structural miscalibration rather than positional sensitivity.
 
 → See [docs/ground_truth/README.md](docs/ground_truth/README.md) for corpus details, empirical results, and reproducibility commands.
 
