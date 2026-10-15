@@ -173,55 +173,55 @@
   },
   "paired_vs_top": {
     "reference": "phi4-mini",
-    "condition": "original",
+    "condition": "pooled",
     "differences": {
       "qwen3-1.7b": {
-        "estimate": 0.066327,
+        "estimate": 0.088435,
         "ci95": [
-          -0.040816,
-          0.173469
+          -0.001701,
+          0.180272
         ],
-        "p_two_sided_vs_0": 0.237,
+        "p_two_sided_vs_0": 0.0566,
         "n_cases": 49,
-        "n_case_runs": 49,
-        "p_holm": 0.474,
+        "n_case_runs": 147,
+        "p_holm": 0.1132,
         "ci_bonferroni": [
-          -0.066327,
-          0.19898
+          -0.022109,
+          0.202381
         ],
         "ci_bonferroni_level": 0.9833,
         "family_size": 3
       },
       "gemma3-4b": {
-        "estimate": 0.061224,
+        "estimate": 0.029514,
         "ci95": [
-          -0.045918,
-          0.168367
+          -0.031034,
+          0.089928
         ],
-        "p_two_sided_vs_0": 0.2838,
+        "p_two_sided_vs_0": 0.3512,
         "n_cases": 49,
-        "n_case_runs": 49,
-        "p_holm": 0.474,
+        "n_case_runs": 144,
+        "p_holm": 0.3512,
         "ci_bonferroni": [
-          -0.066327,
-          0.193878
+          -0.044014,
+          0.103147
         ],
         "ci_bonferroni_level": 0.9833,
         "family_size": 3
       },
       "mistral-7b": {
-        "estimate": 0.204082,
+        "estimate": 0.17517,
         "ci95": [
-          0.091837,
-          0.326531
+          0.083333,
+          0.277211
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
-        "n_case_runs": 49,
+        "n_case_runs": 147,
         "p_holm": 0.0003,
         "ci_bonferroni": [
-          0.071429,
-          0.352041
+          0.064626,
+          0.302721
         ],
         "ci_bonferroni_level": 0.9833,
         "family_size": 3
@@ -447,5 +447,36 @@
       "ci_bonferroni_level": 0.9938,
       "family_size": 8
     }
+  },
+  "specialised_panel": {
+    "assignment": {
+      "data_privacy": "phi4-mini",
+      "human_oversight": "qwen3-1.7b",
+      "non_manipulation": "phi4-mini",
+      "prompt_injection": "phi4-mini",
+      "transparency": "qwen3-1.7b"
+    },
+    "best_single_judge": "phi4-mini",
+    "panel_agreement": {
+      "estimate": 0.72619,
+      "ci95": [
+        0.659864,
+        0.789116
+      ],
+      "p_two_sided_vs_0": 0.0001,
+      "n_cases": 49,
+      "n_case_runs": 147
+    },
+    "panel_minus_best": {
+      "estimate": 0.035714,
+      "ci95": [
+        -0.008503,
+        0.090136
+      ],
+      "p_two_sided_vs_0": 0.1458,
+      "n_cases": 49,
+      "n_case_runs": 147
+    },
+    "note": "in-sample selection: the assignment is chosen on the same cases; single comparison"
   }
 }

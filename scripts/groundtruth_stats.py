@@ -10,7 +10,11 @@ Ground truth statistics with uncertainty, from docs/ground_truth/results/.
 3. Few-shot gains: few-shot vs original-order baseline on the same evaluable cases,
    paired bootstrap CI, two-sided p, Holm across judges.
 4. Order effects: reversed/permuted minus original, paired by case, per judge.
-5. Forest plot of (1).
+5. Specialised panel (paper Finding 9): each criterion assigned to the judge with
+   the highest pooled agreement on that criterion, compared with the best single
+   judge. The assignment is selected on the same cases it is evaluated on
+   (in-sample), which favours the panel; reported as a single comparison.
+6. Forest plot of (1).
 
 Multiple comparisons: every family of tests (2, 3, 4) reports the unadjusted 95% CI,
 a Holm-adjusted p-value and a Bonferroni-adjusted CI (level 1 - 0.05/k, k = tests in
@@ -209,6 +213,40 @@ def main():
     if fewshot:
         holm(fewshot)
 
+    # 5. Specialised panel vs best single judge (pooled, judges with 3 orderings)
+    panel = {}
+    full = {j: data[j] for j in data if all(data[j][o] for o in ORDERS)}
+    if len(full) >= 2:
+        crit_agr = defaultdict(dict)
+        for j, by_order in full.items():
+            per = defaultdict(list)
+            for o in ORDERS:
+                for c, v in by_order[o].items():
+                    per[c[0]].append(v)
+            for crit, vals in per.items():
+                crit_agr[crit][j] = sum(vals) / len(vals)
+        assignment = {crit: max(js, key=js.get) for crit, js in crit_agr.items()}
+        best = max(full, key=lambda j: agreement[j]["pooled"]["estimate"])
+        diff = defaultdict(list)
+        for o in ORDERS:
+            for c, v in full[best][o].items():
+                pj = assignment[c[0]]
+                if c in full[pj][o]:
+                    diff[c].append(full[pj][o][c] - v)
+        panel_vals = defaultdict(list)
+        for o in ORDERS:
+            for c in full[best][o]:
+                pj = assignment[c[0]]
+                if c in full[pj][o]:
+                    panel_vals[c].append(full[pj][o][c])
+        panel = {
+            "assignment": assignment,
+            "best_single_judge": best,
+            "panel_agreement": strip(cluster_bootstrap(panel_vals, args.bootstrap, "panel:agreement")),
+            "panel_minus_best": strip(cluster_bootstrap(diff, args.bootstrap, f"panel:minus:{best}")),
+            "note": "in-sample selection: the assignment is chosen on the same cases; single comparison",
+        }
+
     # 4. Order effects (alternative ordering minus original, paired by case)
     order_effects = {}
     for j, by_order in data.items():
@@ -231,6 +269,7 @@ def main():
         "paired_vs_top": paired,
         "fewshot_gain": fewshot,
         "order_effects": order_effects,
+        "specialised_panel": panel,
     }
     out_json = OUT_JSON if args.models == "all" else OUT_JSON.with_name(f"groundtruth_stats_{args.models}.json")
     out_json.parent.mkdir(parents=True, exist_ok=True)
@@ -250,6 +289,12 @@ def main():
     print("\n=== Few-shot gain (original order, same cases) ===")
     for j, s in sorted(fewshot.items(), key=lambda kv: -kv[1]["estimate"]):
         print(f"  {j:<22} {s['baseline'] * 100:5.1f}% -> {s['fewshot'] * 100:5.1f}%  {_fmt(s)}")
+    if panel:
+        pa, pm = panel["panel_agreement"], panel["panel_minus_best"]
+        print(f"\n=== Specialised panel (in-sample) vs best single judge ({panel['best_single_judge']}) ===")
+        print(f"  assignment: {panel['assignment']}")
+        print(f"  panel {pa['estimate'] * 100:.2f}%  panel - best {pm['estimate'] * 100:+.2f} pp  "
+              f"CI95 [{pm['ci95'][0] * 100:+.2f}, {pm['ci95'][1] * 100:+.2f}]  p={pm['p_two_sided_vs_0']:.3f}")
     print("\n=== Order effects (ordering minus original, paired by case) ===")
     for name, s in order_effects.items():
         print(f"  {name:<32} {_fmt(s)}")

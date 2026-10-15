@@ -643,5 +643,36 @@
       "ci_bonferroni_level": 0.9938,
       "family_size": 8
     }
+  },
+  "specialised_panel": {
+    "assignment": {
+      "data_privacy": "phi4-mini",
+      "human_oversight": "qwen3-1.7b",
+      "non_manipulation": "phi4-mini",
+      "prompt_injection": "phi4-mini",
+      "transparency": "qwen3-1.7b"
+    },
+    "best_single_judge": "phi4-mini",
+    "panel_agreement": {
+      "estimate": 0.72619,
+      "ci95": [
+        0.659864,
+        0.789116
+      ],
+      "p_two_sided_vs_0": 0.0001,
+      "n_cases": 49,
+      "n_case_runs": 147
+    },
+    "panel_minus_best": {
+      "estimate": 0.035714,
+      "ci95": [
+        -0.008503,
+        0.090136
+      ],
+      "p_two_sided_vs_0": 0.1458,
+      "n_cases": 49,
+      "n_case_runs": 147
+    },
+    "note": "in-sample selection: the assignment is chosen on the same cases; single comparison"
   }
 }
