@@ -31,6 +31,8 @@ make pull-models     # pulls the 4 default Ollama models (phi4-mini, mistral:7b,
 
 **Note on hot reload:** with `make dev`, editing any `.py` file under `back/evaluation/` or `back/shared/` triggers uvicorn's `--reload`, which gracefully restarts the service — including waiting for any in-flight request to complete first. If a long-running job (e.g. a ground truth run hitting Ollama) is active against that service when you save a file, the whole service will stall until that request finishes. Avoid editing backend Python files while a ground truth run or benchmark is in progress; frontend and documentation changes are unaffected.
 
+**Note for Windows hosts:** the services run in Linux containers, so a local `back/.venv` is only needed for editors and host-side scripts. In that venv, `import deepeval` crashes with `OPENSSL_Uplink … no OPENSSL_Applink` (a native OpenSSL issue on Windows). It doesn't affect the containers; ignore it, or run anything that needs deepeval inside the `evaluation` container.
+
 ---
 
 ## Monorepo structure
