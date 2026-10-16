@@ -1,9 +1,15 @@
 {
-  "generated_at": "2026-05-19T20:35:34.006518Z",
+  "generated_at": "2026-10-16T05:48:39.344887Z",
+  "models": [
+    "gemma3-4b",
+    "mistral-7b",
+    "phi4-mini",
+    "qwen3-1.7b"
+  ],
   "n_result_files": 16,
   "n_entries_used": 768,
   "analysis_1_delta_specialized_vs_baseline": {
-    "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case",
+    "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case. by_difficulty_tests: prompt-level unpaired bootstrap per tier, Holm p and Bonferroni CI across tiers (tiers with fewer than 2 prompts in a group are skipped).",
     "by_generator": {
       "gemma3-4b": {
         "quality_baseline_mean": 0.9092,
@@ -146,37 +152,109 @@
         "specialized_n": 128,
         "delta": 0.0573
       }
+    },
+    "by_difficulty_tests": {
+      "easy": {
+        "delta": -0.006,
+        "ci95": [
+          -0.0454,
+          0.0283
+        ],
+        "p": 0.7846,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.8928,
+        "ci_bonferroni": [
+          -0.0565,
+          0.0351
+        ],
+        "family_size": 4
+      },
+      "medium": {
+        "delta": 0.0254,
+        "ci95": [
+          -0.0293,
+          0.0898
+        ],
+        "p": 0.4464,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 3,
+        "p_holm": 0.8928,
+        "ci_bonferroni": [
+          -0.0396,
+          0.1065
+        ],
+        "family_size": 4
+      },
+      "adversarial": {
+        "delta": 0.0338,
+        "ci95": [
+          -0.0084,
+          0.0804
+        ],
+        "p": 0.1238,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.3714,
+        "ci_bonferroni": [
+          -0.0175,
+          0.0909
+        ],
+        "family_size": 4
+      },
+      "hard": {
+        "delta": 0.0573,
+        "ci95": [
+          0.0051,
+          0.1097
+        ],
+        "p": 0.0292,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.1168,
+        "ci_bonferroni": [
+          -0.0089,
+          0.1224
+        ],
+        "family_size": 4
+      }
     }
   },
   "analysis_2_model_size_correlation": {
-    "description": "Mean composite score per generator model vs parameter count",
+    "description": "Mean composite score per generator model vs parameter count (size_B = nominal size from the model name; size_B_reported = total parameters per `ollama show`)",
     "models": {
       "gemma3-4b": {
         "size_B": 4.0,
+        "size_B_reported": 4.3,
         "mean_score": 0.9284,
         "stdev": 0.1002,
         "n": 192
       },
       "mistral-7b": {
         "size_B": 7.0,
+        "size_B_reported": 7.2,
         "mean_score": 0.9185,
         "stdev": 0.1391,
         "n": 192
       },
       "phi4-mini": {
         "size_B": 3.8,
+        "size_B_reported": 3.8,
         "mean_score": 0.9128,
         "stdev": 0.1415,
         "n": 192
       },
       "qwen3-1.7b": {
         "size_B": 1.7,
+        "size_B_reported": 2.0,
         "mean_score": 0.9263,
         "stdev": 0.1091,
         "n": 192
       }
     },
-    "pearson_size_vs_score": -0.3887
+    "pearson_size_vs_score": -0.3887,
+    "pearson_reported_size_vs_score": -0.3306,
+    "n_models": 4
   },
   "analysis_3_interjudge_disagreement_by_prompt": {
     "description": "Std dev of composite scores across 4 judges per prompt (per generator, then averaged)",
@@ -677,7 +755,7 @@
     }
   },
   "analysis_5_judge_generator_bias_matrix": {
-    "description": "Mean composite score for each (judge_model, generator_model) pair; diagonal = self-evaluation",
+    "description": "Mean composite score for each (judge_model, generator_model) pair; diagonal = self-evaluation. self_preference_rate.spr is the legacy model-level measure used in arXiv v1 — see analysis_7.",
     "matrix": {
       "gemma3-4b": {
         "gemma3-4b": {
@@ -827,5 +905,266 @@
         "cross_n": 144
       }
     }
+  },
+  "analysis_7_self_preference_formal": {
+    "description": "Self-preference relative to reference judges from other families. spr_self: share of prompts where the judge ranks its own output first (ties split) vs how often reference judges do; spr_family: same for the judge's family; score_bias_*: difference-in-differences on composite scores (controls output quality and judge severity). Percentile bootstrap over prompts, two-sided p; per measure, Holm-adjusted p and Bonferroni-adjusted CI across judges (ci95 = unadjusted, reference only).",
+    "n_prompts": 48,
+    "n_bootstrap": 10000,
+    "by_judge": {
+      "gemma3-4b": {
+        "spr_self": {
+          "estimate": -0.0359,
+          "ci95": [
+            -0.1638,
+            0.0955
+          ],
+          "p": 0.5784,
+          "n_prompts": 48,
+          "spr": 0.2674,
+          "reference": 0.3032,
+          "excess": -0.0359,
+          "chance": 0.25,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1962,
+            0.1319
+          ],
+          "family_size": 4
+        },
+        "spr_family": {
+          "estimate": -0.0359,
+          "ci95": [
+            -0.1603,
+            0.0949
+          ],
+          "p": 0.587,
+          "n_prompts": 48,
+          "excess": -0.0359,
+          "family": "gemma",
+          "family_size": 4,
+          "chance": 0.25,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1939,
+            0.1296
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0271,
+          "ci95": [
+            -0.058,
+            0.003
+          ],
+          "p": 0.0778,
+          "n_prompts": 48,
+          "p_holm": 0.3112,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0685,
+            0.0106
+          ],
+          "family_size": 4
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "mistral-7b",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "mistral-7b": {
+        "spr_self": {
+          "estimate": -0.0266,
+          "ci95": [
+            -0.1146,
+            0.0671
+          ],
+          "p": 0.5672,
+          "n_prompts": 48,
+          "spr": 0.2049,
+          "reference": 0.2315,
+          "excess": -0.0266,
+          "chance": 0.25,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1348,
+            0.0972
+          ],
+          "family_size": 4
+        },
+        "spr_family": {
+          "estimate": -0.0266,
+          "ci95": [
+            -0.1128,
+            0.07
+          ],
+          "p": 0.5584,
+          "n_prompts": 48,
+          "excess": -0.0266,
+          "family": "mistral",
+          "family_size": 4,
+          "chance": 0.25,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1319,
+            0.0966
+          ]
+        },
+        "score_bias_self": {
+          "estimate": 0.004,
+          "ci95": [
+            -0.037,
+            0.0372
+          ],
+          "p": 0.7946,
+          "n_prompts": 48,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0493,
+            0.0468
+          ],
+          "family_size": 4
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "phi4-mini": {
+        "spr_self": {
+          "estimate": -0.1088,
+          "ci95": [
+            -0.1944,
+            -0.0156
+          ],
+          "p": 0.0238,
+          "n_prompts": 48,
+          "spr": 0.1372,
+          "reference": 0.2459,
+          "excess": -0.1088,
+          "chance": 0.25,
+          "p_holm": 0.0952,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.2118,
+            0.0122
+          ],
+          "family_size": 4
+        },
+        "spr_family": {
+          "estimate": -0.1088,
+          "ci95": [
+            -0.1916,
+            -0.0156
+          ],
+          "p": 0.0232,
+          "n_prompts": 48,
+          "excess": -0.1088,
+          "family": "phi",
+          "family_size": 4,
+          "chance": 0.25,
+          "p_holm": 0.0928,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.2106,
+            0.0127
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0444,
+          "ci95": [
+            -0.1058,
+            0.0063
+          ],
+          "p": 0.1028,
+          "n_prompts": 48,
+          "p_holm": 0.3112,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1262,
+            0.0176
+          ],
+          "family_size": 4
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "mistral-7b",
+          "qwen3-1.7b"
+        ]
+      },
+      "qwen3-1.7b": {
+        "spr_self": {
+          "estimate": -0.0556,
+          "ci95": [
+            -0.1551,
+            0.0469
+          ],
+          "p": 0.2774,
+          "n_prompts": 48,
+          "spr": 0.2205,
+          "reference": 0.276,
+          "excess": -0.0556,
+          "chance": 0.25,
+          "p_holm": 0.8322,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1846,
+            0.0758
+          ],
+          "family_size": 4
+        },
+        "spr_family": {
+          "estimate": -0.0556,
+          "ci95": [
+            -0.1557,
+            0.0446
+          ],
+          "p": 0.277,
+          "n_prompts": 48,
+          "excess": -0.0556,
+          "family": "qwen",
+          "family_size": 4,
+          "chance": 0.25,
+          "p_holm": 0.831,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1834,
+            0.07
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0116,
+          "ci95": [
+            -0.0484,
+            0.0208
+          ],
+          "p": 0.5172,
+          "n_prompts": 48,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0599,
+            0.0293
+          ],
+          "family_size": 4
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "mistral-7b",
+          "phi4-mini"
+        ]
+      }
+    },
+    "significant_positive": [],
+    "significant_negative": []
   }
 }

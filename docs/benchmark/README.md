@@ -123,11 +123,11 @@ Completed. Results in `docs/benchmark/analysis/`:
 
 | # | Finding | Result |
 |---|---|---|
-| 1 | Specialised panel vs single judge | Hard prompts: +5.7 pp; easy prompts: −0.6 pp |
+| 1 | Domain-specific profiles vs quality-baseline profile | Hard prompts: +5.7 pp, Bonferroni CI [−0.9, +12.2], Holm p = 0.12 across the 4 difficulty tiers — **not significant** (12 prompts from different use cases); easy prompts: −0.6 pp. Source: `summary.json` → `analysis_1.by_difficulty_tests` |
 | 2 | Model size vs score correlation | Pearson r = −0.39 (n=4, indicative) — smallest model (qwen3:1.7b, 1.7B) ranks 2nd |
 | 3 | Inter-judge disagreement | Top discriminator: `ana_hard_01` (σ=0.256); hard/adversarial prompts concentrate disagreement |
 | 4 | Intra-judge variance by domain | phi4-mini: extreme variance on `analysis` (σ=0.29); `translation` most stable (σ≤0.023) |
-| 5 | Family bias matrix | No auto-preference detected — all judges score own model family equal or below cross-family mean |
+| 5 | Family bias matrix | No significant self-preference among these 4 models (formal test, see *8-model extension* below — not true of every model) |
 | 6 | Self vs cross evaluation | gemma3:4b self=0.849 vs cross=0.955 (bias=−0.106); phi4-mini bias=−0.024 |
 
 **Judge reliability classification** (from `judge_reliability.json`):
@@ -141,6 +141,23 @@ Completed. Results in `docs/benchmark/analysis/`:
 
 Scripts: `scripts/analyze_benchmark.py` → `summary.json`; `scripts/judge_reliability.py` → `judge_reliability.json`.
 
+### 8-model extension (provisional)
+
+The analysis scripts read their model list from [`models.json`](models.json) (slug, Ollama id, family, nominal and reported size, color) through `scripts/model_registry.py`. Nothing is hardcoded any more. `--models paper` reproduces the arXiv v1 outputs above unchanged; the default `--models all` writes `*_all.json` / `*_all.png` alongside them:
+
+```bash
+python scripts/analyze_benchmark.py                                # -> analysis/summary_all.json
+python scripts/analyze_benchmark.py --models paper                 # -> analysis/summary.json (paper, unchanged)
+python scripts/generate_figures.py --summary docs/benchmark/analysis/summary_all.json   # -> figures/*_all.png
+python scripts/judge_reliability.py --models all                   # -> analysis/judge_reliability_all.json
+```
+
+**Formal self-preference** (`analysis_7_self_preference_formal`, `scripts/self_preference.py`). The SPR of §5.2 is computed per prompt (the judge ranks its own output first; ties share the credit) and compared with how often judges from *other families* rank that same output first. A score-level difference-in-differences controls for both output quality and judge severity. Bootstrap over the 48 prompts; since each measure is tested for every judge, we report Bonferroni-adjusted CIs and Holm-adjusted p across judges. The legacy `self_preference_rate.spr` (model-level, no test) is kept only for reproducibility.
+
+On the 4 paper models, no judge shows significant self-preference (all estimates ≤ 0; consistent with Finding D). On 8 models, **`gemma4:e4b` and `ministral-3:8b` do**: score bias +0.043 (Bonferroni CI [+0.012, +0.074]) and +0.053 ([+0.018, +0.091]), Holm p = 0.001 for both; SPR excess +0.11 ([+0.00, +0.23]) and +0.17 ([+0.01, +0.35]), Holm p = 0.034 (family of 8 judges). Finding D therefore holds for the 4 historical models, not as a general property. These are also the two best ground truth judges, so they should not judge their own outputs. `lfm2.5`'s judge scores go through a parsing fallback (see the ground truth README) and its level-2 consistency (24.9%) is not meaningful.
+
+Reliability classes depend on the generator set (more generators → more level-2 rows): on 8 generators, `gemma3:4b` moves from UNRELIABLE to CALIBRATED_BUT_STRICT (consistency 69.1% → 70.2%). Treat the classes near thresholds as indicative.
+
 **Few-shot calibration** (supplementary — ground truth corpus, not benchmark pipeline):
 
-Injecting 5 annotated examples per criterion into the checklist judge prompt improves agreement on 3 of 4 judges: +11.8 pp (gemma3:4b), +8.3 pp (phi4-mini), +5.1 pp (mistral:7b). qwen3:1.7b shows no net gain (−0.2 pp). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.
+Injecting 5 annotated examples per criterion into the checklist judge prompt gives positive point estimates on 3 of 4 judges (gemma3:4b, phi4-mini, mistral:7b) and none on qwen3:1.7b, but **no gain is statistically significant** after correction for multiple comparisons with 24 evaluable cases (largest: gemma3:4b +12.5 pp, paired; Bonferroni CI over the 4 judges [−2.1, +28.1], Holm p = 0.16). See [`docs/ground_truth/README.md`](../ground_truth/README.md#few-shot-calibration-finding-10) for details and per-criterion breakdown.

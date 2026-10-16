@@ -1,0 +1,19 @@
+{
+  "_comment": "Single source of truth for the analysis scripts (analyze_benchmark, generate_figures, judge_reliability, export_groundtruth_results, groundtruth_stats, plot_order_sensitivity). size_b = total parameters as reported by `ollama show`; size_b_nominal = size in the model name, as used in the paper (Finding A). family groups models from the same vendor lineage, used for family-level self-preference. color = Okabe-Ito palette, one per model. sets.paper = the 4 models of the arXiv v1 analyses.",
+  "sets": {
+    "paper": ["phi4-mini", "qwen3-1.7b", "gemma3-4b", "mistral-7b"],
+    "candidates": ["ministral-3-8b", "granite4", "gemma4-e4b", "lfm2.5-1.2b-thinking"]
+  },
+  "models": [
+    {"slug": "phi4-mini", "id": "ollama/phi4-mini", "label": "phi4-mini", "family": "phi", "size_b": 3.8, "size_b_nominal": 3.8, "color": "#009E73"},
+    {"slug": "qwen3-1.7b", "id": "ollama/qwen3:1.7b", "label": "qwen3:1.7b", "family": "qwen", "size_b": 2.0, "size_b_nominal": 1.7, "color": "#E69F00"},
+    {"slug": "gemma3-4b", "id": "ollama/gemma3:4b", "label": "gemma3:4b", "family": "gemma", "size_b": 4.3, "size_b_nominal": 4.0, "color": "#0072B2"},
+    {"slug": "mistral-7b", "id": "ollama/mistral:7b", "label": "mistral:7b", "family": "mistral", "size_b": 7.2, "size_b_nominal": 7.0, "color": "#D55E00"},
+    {"slug": "ministral-3-8b", "id": "ollama/ministral-3:8b", "label": "ministral-3:8b", "family": "mistral", "size_b": 8.9, "size_b_nominal": 8.0, "color": "#CC79A7"},
+    {"slug": "granite4", "id": "ollama/granite4", "label": "granite4", "family": "granite", "size_b": 3.4, "size_b_nominal": 3.4, "color": "#56B4E9"},
+    {"slug": "gemma4-e4b", "id": "ollama/gemma4:e4b", "label": "gemma4:e4b", "family": "gemma", "size_b": 8.0, "size_b_nominal": 4.0, "color": "#000000"},
+    {"slug": "lfm2.5-1.2b-thinking", "id": "ollama/hf.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF:latest", "label": "lfm2.5:1.2b-thinking", "family": "lfm", "size_b": 1.17, "size_b_nominal": 1.2, "color": "#F0E442",
+     "file_slug": "hf.co-LiquidAI-LFM2.5-1.2B-Thinking-GGUF-latest",
+     "caveat": "production-mode judge scores recovered by the flattened-JSON fallback: one shared flag/reason copied to all criteria"}
+  ]
+}

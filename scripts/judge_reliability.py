@@ -18,13 +18,17 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from model_registry import select, slug_of
+
 RESULTS_DIR   = Path("docs/benchmark/results")
 VALIDITY_FILE = Path("docs/ground_truth/validity.json")
 SUMMARY_FILE  = Path("docs/benchmark/analysis/summary.json")
 PROMPTS_FILE  = Path("docs/benchmark/prompts.json")
 OUTPUT_FILE   = Path("docs/benchmark/analysis/judge_reliability.json")
 
-JUDGES = ["phi4-mini", "qwen3-1.7b", "gemma3-4b", "mistral-7b"]
+# Judges come from docs/benchmark/models.json; set in main() from --models
+# (default: the 4 judges of the paper, which writes judge_reliability.json).
+JUDGES: list[str] = []
 
 # ── Reason sentiment heuristics ───────────────────────────────────────────────
 
@@ -84,7 +88,7 @@ def _reason_sentiment(reason: str) -> str:
 
 
 def _short_name(model: str) -> str:
-    return model.removeprefix("ollama/").replace(":", "-")
+    return slug_of(model)
 
 
 def _r(v, n=3) -> float | None:
@@ -416,8 +420,25 @@ def phi4_transparency_focus(rows: list[dict]) -> dict:
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    import argparse
+    global JUDGES, SUMMARY_FILE, OUTPUT_FILE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--models", default="paper",
+                        help="'paper' (default, writes judge_reliability.json), 'all', a set, or slugs")
+    args = parser.parse_args()
+    if args.models != "paper":
+        SUMMARY_FILE = SUMMARY_FILE.with_name(f"summary_{args.models}.json")
+        OUTPUT_FILE = OUTPUT_FILE.with_name(f"judge_reliability_{args.models}.json")
+
     print("Loading data …")
     validity   = load_validity()
+    JUDGES = [j for j in select(args.models) if j in validity["validity"]]
+    missing = [j for j in select(args.models) if j not in validity["validity"]]
+    if missing:
+        print(f"  no ground truth in validity.json for: {', '.join(missing)} — skipped")
+    partial = [j for j in JUDGES if len(validity.get("orders", {}).get(j, [])) < 3]
+    if partial:
+        print(f"  WARNING level 1 uses fewer than 3 orderings for: {', '.join(partial)}")
     rows       = load_benchmark()
     summary    = load_summary()
     diff_map   = load_prompt_difficulty()
