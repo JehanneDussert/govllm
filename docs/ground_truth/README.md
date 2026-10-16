@@ -108,16 +108,20 @@ Three question orderings were tested to measure **position bias** (see §5.4 of 
 
 Four additional candidate judges evaluated on the full 49-case corpus, original order — `ministral-3:8b` and `granite4` as replacements for underperforming `mistral:7b`/`gemma3:4b`; `gemma4:e4b` and `lfm2.5:1.2b-thinking` as smaller/newer alternatives. Both `gemma4:e4b` and `lfm2.5:1.2b-thinking` initially failed on every case (empty response / unclosed `<think>` block respectively) due to a hardcoded 400-token budget in the checklist call path — see `CONTRIBUTING.md` ("Adding a new judge model") for the fix and the `model_quirks.json` mechanism it introduced.
 
-| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | Global |
-|---|---|---|---|---|---|---|
-| gemma4:e4b | 82.5% | 77.5% | 85.0% | 83.3% | 90.0% | **83.7%** |
-| ministral-3:8b | 62.5% | 80.0% | 85.0% | 80.6% | 90.0% | **79.6%** |
-| granite4 | 75.0% | 62.5% | 80.0% | 58.3% | 82.5% | **71.9%** |
-| lfm2.5:1.2b-thinking | 47.2%* | 40.0% | 62.5% | 83.3% | 37.5% | **53.6%*** |
+Original order (per criterion), plus reversed / permuted / pooled for the two candidates also run in those orderings (2026-10):
 
-*lfm2.5:1.2b-thinking: 48/49 cases (1 case failed all 3 retries even with the extended token budget — a sensitive-content prompt, see `CLAUDE.md` backlog item 13).
+| Judge | data_privacy | human_oversight | non_manipulation | prompt_injection | transparency | Original | Reversed | Permuted | **3 orderings** |
+|---|---|---|---|---|---|---|---|---|---|
+| gemma4:e4b | 82.5% | 77.5% | 85.0% | 83.3% | 90.0% | 83.7% | 83.2% | 82.1% | **83.0%** |
+| ministral-3:8b | 62.5% | 80.0% | 85.0% | 80.6% | 90.0% | 79.6% | 84.2% | 84.2% | **82.7%** |
+| granite4 | 75.0% | 62.5% | 80.0% | 58.3% | 82.5% | 71.9% | — | — | — |
+| lfm2.5:1.2b-thinking | 47.2%* | 40.0% | 62.5% | 83.3% | 37.5% | 53.6%* | — | — | — |
 
-**Provisional — original order only.** The four historical judges are reported above as a mean over three question orderings; the candidates have so far only been run in original order (reversed/permuted runs pending), so compare them with the *original-order* column only. In that condition, `gemma4:e4b` (83.7%, bootstrap 95% CI [76.5, 90.3]) is ahead of `phi4-mini` (71.9%; paired difference +11.7 pp, CI [+3.1, +21.4]) and `granite4` (+11.7 pp, CI [+4.1, +19.9]), but its lead over `ministral-3:8b` (79.6%) is not significant (+4.1 pp, CI [−2.6, +10.7]). The 79.4% sometimes quoted for `phi4-mini` was measured on the earlier 34-case corpus and is not comparable. `lfm2.5:1.2b-thinking` is the weakest, comparable to `mistral:7b` (51.5%) — see the few-shot results below for calibration.
+*lfm2.5:1.2b-thinking: 48/49 cases (1 case failed all 3 retries even with the extended token budget — a sensitive-content prompt).
+
+**Over three orderings**, `gemma4:e4b` (83.0%, 95% case-level CI [76.4, 89.1]) and `ministral-3:8b` (82.7%, [76.5, 88.3]) are **tied**: their difference is +0.3 pp (Bonferroni CI [−5.1, +5.8], Holm p = 0.89; family = the 5 paired differences with the top judge). Both are clearly ahead of the best historical judge, `phi4-mini` (69.0%; gemma4 − phi4-mini +13.9 pp, Bonferroni CI [+3.4, +26.0], Holm p = 0.001). Both are **robust to question order**: none of their four order effects is significant (|Δ| ≤ 4.6 pp, family of 12 judge × ordering comparisons). `granite4` and `lfm2.5:1.2b-thinking` were run in original order only: in that condition gemma4 − granite4 = +11.7 pp (Bonferroni CI [+1.5, +23.0], Holm p = 0.008, family of 7). The 79.4% sometimes quoted for `phi4-mini` was measured on the earlier 34-case corpus and is not comparable. `lfm2.5:1.2b-thinking` is the weakest, comparable to `mistral:7b` (51.5%).
+
+Call parameters differ for two candidates: `gemma4:e4b` and `lfm2.5` run with `max_tokens=6144` / `num_ctx=8192` (via `model_quirks.json`); with the default 400 tokens they return no JSON at all.
 
 > **Do not put `lfm2.5:1.2b-thinking` in a production judge panel without a warning.** In production (multi-criterion) mode it returns a flattened JSON (`{"relevance": 0.9, ..., "flag": ..., "reason": ...}`) instead of per-criterion objects. A fallback in `jobs/eval_runner.py` / `services/judge.py` recovers the scores, but copies the single shared `flag` and `reason` to every criterion — so its per-criterion flags and reasons are not independent judgments.
 
@@ -162,8 +166,9 @@ python scripts/plot_order_sensitivity.py                    # every judge with 3
 
 - `validity.json` is now rebuilt by script. It matches the published version to within one rounding step (qwen3 prompt_injection 0.371 → 0.370), and globals are stored to 4 decimals. phi4-mini's 3-order agreement is **69.05%** (101.5/147 case-runs). The 69.1% quoted elsewhere comes from rounding per-criterion values to 3 decimals before averaging, and 69.0% is the correctly rounded value. Globals are stored with 6 decimals so that displayed values are rounded only once (gemma3:4b permuted = 32.5/47 = 69.149% → 69.1%, as published).
 - Confidence intervals use a case-level cluster bootstrap (all orderings of a case are resampled together).
-- Few-shot gains are **paired** (same cases, case-weighted). The table above, produced by `run_fewshot_groundtruth.py`, averages the 5 per-criterion means and does not restrict the baseline to cases with a few-shot result, hence small differences (e.g. gemma3:4b +12.5 pp paired vs +11.8 pp). **No few-shot gain is significant after correction for multiple comparisons** with n ≤ 24. Largest: gemma3:4b +12.5 pp, unadjusted 95% CI [+1.0, +24.0]; over the 4 paper judges, Bonferroni CI [−2.1, +28.1] and Holm p = 0.16 (`groundtruth_stats_paper.json`); over all 8 judges, Holm p = 0.32 (`groundtruth_stats.json`).
-- Every family of tests (few-shot gains, order effects, paired differences vs the top judge) reports the unadjusted 95% CI, a Holm-adjusted p and a Bonferroni-adjusted CI. Each comparison has its own named seed, so adding a judge doesn't shift other judges' numbers. Order effects on the 4 paper judges: only phi4-mini permuted survives correction (−11.2 pp, unadjusted CI [−19.9, −3.6], Bonferroni over 8 comparisons [−24.0, −0.5], Holm p = 0.04).
+- Few-shot gains are **paired** (same cases, case-weighted). The table above, produced by `run_fewshot_groundtruth.py`, averages the 5 per-criterion means and does not restrict the baseline to cases with a few-shot result, hence small differences (e.g. gemma3:4b +12.5 pp paired vs +11.8 pp). **No few-shot gain is significant after correction for multiple comparisons** with n ≤ 24. Largest: gemma3:4b +12.5 pp, Bonferroni CI [−2.1, +28.1], Holm p = 0.16 over the 4 paper judges (`groundtruth_stats_paper.json`); Holm p = 0.32 over all 8 judges (`groundtruth_stats.json`).
+- **Convention for intervals.** For any comparison that belongs to a family of tests (few-shot gains, order effects, paired differences with the top judge, self-preference across judges, difficulty tiers), we report the **Bonferroni-adjusted CI** (level 1 − 0.05/k) and the **Holm-adjusted p**. Unadjusted 95% CIs are used only for single comparisons (the specialised panel) and for agreement estimates themselves (forest plots), which are not comparisons. The JSON files keep the unadjusted `ci95` for reference. Each comparison has its own named seed, so adding a judge doesn't shift other judges' numbers.
+- Order effects: among the 4 paper judges (family of 8), only phi4-mini permuted survives correction (−11.2 pp, Bonferroni CI [−24.0, −0.5], Holm p = 0.04). With the two candidates' orderings added (family of 12), the same effect is borderline (Bonferroni CI [−24.5, 0.0], Holm p = 0.058).
 - Historical `*_original/reversed/permuted.json` files were exported from the DB in May. The current results API returns neither `score` nor `created_at`, so the exporter recomputes `score` from the answers and leaves `created_at` null; use `--judges` to avoid rewriting those files.
 
 ## Reproducibility

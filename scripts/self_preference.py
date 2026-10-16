@@ -19,8 +19,11 @@ a genuinely better output is not mistaken for self-preference:
    replaces j's own output by its family siblings.
 
 Uncertainty: percentile bootstrap over prompts (prompts are the independent
-unit), two-sided bootstrap p-value, Holm correction across judges per measure.
-Stdlib only.
+unit), two-sided bootstrap p-value. Each measure is a family of tests across
+judges: we report the Holm-adjusted p and the Bonferroni-adjusted CI (level
+1 - 0.05/k); ci95 is the unadjusted interval, kept for reference only. One named
+seed per (measure, judge), so adding a judge does not change other judges'
+numbers. Stdlib only.
 """
 
 import random
@@ -32,7 +35,8 @@ def _mean(xs):
     return sum(xs) / len(xs) if xs else None
 
 
-def _bootstrap(values, n_boot, rng):
+def _bootstrap(values, n_boot, seed):
+    rng = random.Random(seed)
     vals = [v for v in values if v is not None]
     n = len(vals)
     if n < 5:
@@ -43,7 +47,8 @@ def _bootstrap(values, n_boot, rng):
     p_le = sum(1 for m in means if m <= 0) / n_boot
     p_ge = sum(1 for m in means if m >= 0) / n_boot
     p = min(1.0, max(2 * min(p_le, p_ge), 1 / n_boot))
-    return {"estimate": round(est, 4), "ci95": [round(lo, 4), round(hi, 4)], "p": round(p, 4), "n_prompts": n}
+    return {"estimate": round(est, 4), "ci95": [round(lo, 4), round(hi, 4)], "p": round(p, 4), "n_prompts": n,
+            "_means": means}
 
 
 def _holm(results: dict[str, dict]):
@@ -54,10 +59,16 @@ def _holm(results: dict[str, dict]):
         running = max(running, min(1.0, (m - i) * p))
         results[k]["p_holm"] = round(running, 4)
         results[k]["significant"] = running < 0.05
+    for r in results.values():
+        if not r:
+            continue
+        means, a = r.pop("_means"), 0.05 / m
+        r["ci_bonferroni"] = [round(means[int(a / 2 * len(means))], 4),
+                              round(means[int((1 - a / 2) * len(means)) - 1], 4)]
+        r["family_size"] = m
 
 
-def self_preference_analysis(entries, judges, gens, family_of, n_boot=10000, seed=0, caveats=None):
-    rng = random.Random(seed)
+def self_preference_analysis(entries, judges, gens, family_of, n_boot=10000, caveats=None):
     S = {(e["judge"], e["gen"], e["id"]): e["score"] for e in entries}
     prompts = sorted({e["id"] for e in entries})
     fam = {m: family_of(m) for m in set(judges) | set(gens)}
@@ -104,7 +115,7 @@ def self_preference_analysis(entries, judges, gens, family_of, n_boot=10000, see
             d_sib.append(did(sorted(siblings), u) if siblings else None)
 
         excess = [None if a is None or r is None else a - r for a, r in zip(spr_u, ref_u)]
-        b = _bootstrap(excess, n_boot, rng)
+        b = _bootstrap(excess, n_boot, f"spr_self:{j}")
         if b:
             b.update({
                 "spr": round(_mean(spr_u), 4),
@@ -113,14 +124,15 @@ def self_preference_analysis(entries, judges, gens, family_of, n_boot=10000, see
                 "chance": round(1 / len(gens), 4),
             })
         per["spr_self"][j] = b
-        bf = _bootstrap(fspr_u, n_boot, rng)
+        bf = _bootstrap(fspr_u, n_boot, f"spr_family:{j}")
         if bf:
             bf.update({"excess": bf["estimate"], "family": fam[j], "family_size": len(family),
                        "chance": round(len(family) / len(gens), 4)})
         per["spr_family"][j] = bf
-        per["score_bias_self"][j] = _bootstrap(d_self, n_boot, rng)
+        per["score_bias_self"][j] = _bootstrap(d_self, n_boot, f"score_bias_self:{j}")
         per["score_bias_siblings"][j] = (
-            dict(_bootstrap(d_sib, n_boot, rng) or {}, siblings=sorted(siblings)) if siblings else None
+            dict(_bootstrap(d_sib, n_boot, f"score_bias_siblings:{j}") or {}, siblings=sorted(siblings))
+            if siblings else None
         )
         raw_rates[j] = {"reference_judges": refs}
 
@@ -145,7 +157,8 @@ def self_preference_analysis(entries, judges, gens, family_of, n_boot=10000, see
             "spr_self: share of prompts where the judge ranks its own output first (ties split) "
             "vs how often reference judges do; spr_family: same for the judge's family; "
             "score_bias_*: difference-in-differences on composite scores (controls output quality "
-            "and judge severity). 95% percentile bootstrap over prompts, two-sided p, Holm across judges."
+            "and judge severity). Percentile bootstrap over prompts, two-sided p; per measure, Holm-adjusted p "
+            "and Bonferroni-adjusted CI across judges (ci95 = unadjusted, reference only)."
         ),
         "n_prompts": len(prompts),
         "n_bootstrap": n_boot,

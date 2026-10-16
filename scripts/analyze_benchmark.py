@@ -422,12 +422,13 @@ def main():
     for gen, v in analysis_6["by_generator"].items():
         print(f"  {gen:<22}  self={v['self_eval_mean']}  cross={v['cross_eval_mean']}  bias={v['bias_delta']}")
 
-    print("\n=== 7. Formal self-preference (relative to other judges; 95% bootstrap CI; Holm-adjusted p) ===")
+    print("\n=== 7. Formal self-preference (relative to other judges; Bonferroni CI and Holm p across judges) ===")
     for judge, v in analysis_7["by_judge"].items():
         s, b = v["spr_self"], v["score_bias_self"]
         line = (f"  {judge:<22} SPR={s['spr']:.3f} ref={s['reference']:.3f} excess={s['excess']:+.3f} "
-                f"[{s['ci95'][0]:+.3f},{s['ci95'][1]:+.3f}] p_holm={s['p_holm']:.3f} | "
-                f"score bias={b['estimate']:+.4f} [{b['ci95'][0]:+.4f},{b['ci95'][1]:+.4f}] p_holm={b['p_holm']:.3f}")
+                f"Bonferroni [{s['ci_bonferroni'][0]:+.3f},{s['ci_bonferroni'][1]:+.3f}] p_holm={s['p_holm']:.3f} | "
+                f"score bias={b['estimate']:+.4f} Bonferroni [{b['ci_bonferroni'][0]:+.4f},{b['ci_bonferroni'][1]:+.4f}] "
+                f"p_holm={b['p_holm']:.3f}")
         sib = v.get("score_bias_siblings")
         if sib:
             line += f" | siblings bias={sib['estimate']:+.4f} p_holm={sib['p_holm']:.3f}"

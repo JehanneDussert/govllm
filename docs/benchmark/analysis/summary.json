@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T19:04:07.618878Z",
+  "generated_at": "2026-10-16T05:48:39.344887Z",
   "models": [
     "gemma3-4b",
     "mistral-7b",
@@ -907,7 +907,7 @@
     }
   },
   "analysis_7_self_preference_formal": {
-    "description": "Self-preference relative to reference judges from other families. spr_self: share of prompts where the judge ranks its own output first (ties split) vs how often reference judges do; spr_family: same for the judge's family; score_bias_*: difference-in-differences on composite scores (controls output quality and judge severity). 95% percentile bootstrap over prompts, two-sided p, Holm across judges.",
+    "description": "Self-preference relative to reference judges from other families. spr_self: share of prompts where the judge ranks its own output first (ties split) vs how often reference judges do; spr_family: same for the judge's family; score_bias_*: difference-in-differences on composite scores (controls output quality and judge severity). Percentile bootstrap over prompts, two-sided p; per measure, Holm-adjusted p and Bonferroni-adjusted CI across judges (ci95 = unadjusted, reference only).",
     "n_prompts": 48,
     "n_bootstrap": 10000,
     "by_judge": {
@@ -915,43 +915,57 @@
         "spr_self": {
           "estimate": -0.0359,
           "ci95": [
-            -0.1603,
-            0.0961
+            -0.1638,
+            0.0955
           ],
-          "p": 0.5846,
+          "p": 0.5784,
           "n_prompts": 48,
           "spr": 0.2674,
           "reference": 0.3032,
           "excess": -0.0359,
           "chance": 0.25,
           "p_holm": 1.0,
-          "significant": false
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1962,
+            0.1319
+          ],
+          "family_size": 4
         },
         "spr_family": {
           "estimate": -0.0359,
           "ci95": [
-            -0.1615,
-            0.0972
+            -0.1603,
+            0.0949
           ],
-          "p": 0.5802,
+          "p": 0.587,
           "n_prompts": 48,
           "excess": -0.0359,
           "family": "gemma",
-          "family_size": 1,
+          "family_size": 4,
           "chance": 0.25,
           "p_holm": 1.0,
-          "significant": false
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1939,
+            0.1296
+          ]
         },
         "score_bias_self": {
           "estimate": -0.0271,
           "ci95": [
-            -0.0589,
-            0.0024
+            -0.058,
+            0.003
           ],
-          "p": 0.0744,
+          "p": 0.0778,
           "n_prompts": 48,
-          "p_holm": 0.2976,
-          "significant": false
+          "p_holm": 0.3112,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0685,
+            0.0106
+          ],
+          "family_size": 4
         },
         "score_bias_siblings": null,
         "reference_judges": [
@@ -964,43 +978,57 @@
         "spr_self": {
           "estimate": -0.0266,
           "ci95": [
-            -0.1111,
-            0.066
+            -0.1146,
+            0.0671
           ],
-          "p": 0.5612,
+          "p": 0.5672,
           "n_prompts": 48,
           "spr": 0.2049,
           "reference": 0.2315,
           "excess": -0.0266,
           "chance": 0.25,
           "p_holm": 1.0,
-          "significant": false
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1348,
+            0.0972
+          ],
+          "family_size": 4
         },
         "spr_family": {
           "estimate": -0.0266,
           "ci95": [
-            -0.1117,
-            0.0666
+            -0.1128,
+            0.07
           ],
-          "p": 0.5604,
+          "p": 0.5584,
           "n_prompts": 48,
           "excess": -0.0266,
           "family": "mistral",
-          "family_size": 1,
+          "family_size": 4,
           "chance": 0.25,
           "p_holm": 1.0,
-          "significant": false
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1319,
+            0.0966
+          ]
         },
         "score_bias_self": {
           "estimate": 0.004,
           "ci95": [
-            -0.0367,
-            0.0387
+            -0.037,
+            0.0372
           ],
-          "p": 0.7934,
+          "p": 0.7946,
           "n_prompts": 48,
           "p_holm": 1.0,
-          "significant": false
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0493,
+            0.0468
+          ],
+          "family_size": 4
         },
         "score_bias_siblings": null,
         "reference_judges": [
@@ -1013,43 +1041,57 @@
         "spr_self": {
           "estimate": -0.1088,
           "ci95": [
-            -0.1933,
-            -0.015
+            -0.1944,
+            -0.0156
           ],
-          "p": 0.0248,
+          "p": 0.0238,
           "n_prompts": 48,
           "spr": 0.1372,
           "reference": 0.2459,
           "excess": -0.1088,
           "chance": 0.25,
-          "p_holm": 0.0992,
-          "significant": false
+          "p_holm": 0.0952,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.2118,
+            0.0122
+          ],
+          "family_size": 4
         },
         "spr_family": {
           "estimate": -0.1088,
           "ci95": [
-            -0.1927,
-            -0.0174
+            -0.1916,
+            -0.0156
           ],
-          "p": 0.0196,
+          "p": 0.0232,
           "n_prompts": 48,
           "excess": -0.1088,
           "family": "phi",
-          "family_size": 1,
+          "family_size": 4,
           "chance": 0.25,
-          "p_holm": 0.0784,
-          "significant": false
+          "p_holm": 0.0928,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.2106,
+            0.0127
+          ]
         },
         "score_bias_self": {
           "estimate": -0.0444,
           "ci95": [
-            -0.1041,
-            0.0053
+            -0.1058,
+            0.0063
           ],
-          "p": 0.094,
+          "p": 0.1028,
           "n_prompts": 48,
-          "p_holm": 0.2976,
-          "significant": false
+          "p_holm": 0.3112,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1262,
+            0.0176
+          ],
+          "family_size": 4
         },
         "score_bias_siblings": null,
         "reference_judges": [
@@ -1062,43 +1104,57 @@
         "spr_self": {
           "estimate": -0.0556,
           "ci95": [
-            -0.1568,
-            0.0446
+            -0.1551,
+            0.0469
           ],
-          "p": 0.2782,
+          "p": 0.2774,
           "n_prompts": 48,
           "spr": 0.2205,
           "reference": 0.276,
           "excess": -0.0556,
           "chance": 0.25,
-          "p_holm": 0.8346,
-          "significant": false
+          "p_holm": 0.8322,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1846,
+            0.0758
+          ],
+          "family_size": 4
         },
         "spr_family": {
           "estimate": -0.0556,
           "ci95": [
-            -0.1528,
-            0.0428
+            -0.1557,
+            0.0446
           ],
-          "p": 0.2756,
+          "p": 0.277,
           "n_prompts": 48,
           "excess": -0.0556,
           "family": "qwen",
-          "family_size": 1,
+          "family_size": 4,
           "chance": 0.25,
-          "p_holm": 0.8268,
-          "significant": false
+          "p_holm": 0.831,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1834,
+            0.07
+          ]
         },
         "score_bias_self": {
           "estimate": -0.0116,
           "ci95": [
-            -0.0478,
-            0.0219
+            -0.0484,
+            0.0208
           ],
-          "p": 0.5126,
+          "p": 0.5172,
           "n_prompts": 48,
           "p_holm": 1.0,
-          "significant": false
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0599,
+            0.0293
+          ],
+          "family_size": 4
         },
         "score_bias_siblings": null,
         "reference_judges": [
