@@ -293,8 +293,15 @@ BUILT_IN_PROFILES = [
     ),
 ]
 
+# Versioned default judge. ministral-3:8b: tied best on the 49-case ground truth over
+# three question orderings (82.7% vs gemma4:e4b 83.0%, +0.3 pp, n.s.), robust to question
+# order, but with measured self-preference — so it must not also be used as the generator
+# (the Chat UI warns when it is). See README "Default judge" and docs/ground_truth/README.md.
+# A different judge_model saved in Redis is reported at startup and in Settings.
+DEFAULT_JUDGE_MODEL = "ollama/ministral-3:8b"
+
 DEFAULT_CONFIG = JudgeConfig(
-    judge_model="ollama/gemma3:4b",
+    judge_model=DEFAULT_JUDGE_MODEL,
     criteria=ALL_CRITERIA,
     use_cases=[
         UseCase(

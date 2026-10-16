@@ -16,6 +16,7 @@ from routers.groundtruth import router as groundtruth_router
 from routers.identity_access import router as identity_access_router
 from shared.config import get_evaluation_settings
 from db.database import run_migrations, close_pool
+from services.judge_config import DEFAULT_JUDGE_MODEL, get_judge_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,9 +42,25 @@ async def _drift_watcher_loop():
         await asyncio.sleep(DRIFT_CHECK_INTERVAL_SECONDS)
 
 
+async def _warn_if_judge_drifted() -> None:
+    """Make a judge_model saved in Redis that differs from the versioned default
+    visible in the logs (e.g. left over by a benchmark run)."""
+    try:
+        config = await get_judge_config()
+    except Exception as exc:  # Redis down must not block startup
+        logger.warning(f"[config] could not read judge config at startup: {exc}")
+        return
+    if config.judge_model != DEFAULT_JUDGE_MODEL:
+        logger.warning(
+            f"[config] judge_model in use is {config.judge_model!r}, not the versioned "
+            f"default {DEFAULT_JUDGE_MODEL!r} — check Settings > Judge"
+        )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await run_migrations()
+    await _warn_if_judge_drifted()
     drift_task = asyncio.create_task(_drift_watcher_loop())
     yield
     drift_task.cancel()
