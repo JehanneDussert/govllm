@@ -223,7 +223,11 @@ govllm/
 **Default judge: `ministral-3:8b`.** It is versioned in `DEFAULT_JUDGE_MODEL` (`back/evaluation/services/judge_config.py`). Why this model:
 - **Tied best on the ground truth**: 82.7% agreement over three question orderings (49 cases), against 83.0% for `gemma4:e4b`. The +0.3 pp difference is not significant (Bonferroni CI [−5.1, +5.8]).
 - **Robust to question order**: none of its order effects is significant.
-- **Measured self-preference**: it rates its own outputs higher than judges from other families do (score bias +0.053, Bonferroni CI [+0.018, +0.091]). It must therefore **not also be used as the generator**. It is still in the auto-routing pool (`BENCHMARK_MODELS`), so the Chat view warns whenever routing or a manual choice selects it.
+- **Measured self-preference**: it rates its own outputs higher than judges from other families do (score bias +0.053, Bonferroni CI [+0.018, +0.091]). It must therefore **not also be used as the generator**.
+
+**Judges are excluded from AUTO routing.** `GET /matrix/routing` never recommends an effective judge of the active profile: the global judge, plus panel members that hold active criteria. The same rule as the evaluation dispatch applies (`services/routing.py`, mirrored in `front/src/utils/judges.ts`). With the default config, `ministral-3:8b` therefore stays in the routing pool (`BENCHMARK_MODELS`) but is never auto-selected as the generator. Judges are flagged `is_judge` in the response and tagged in the Chat scoreboard.
+- **Manual selection** is kept: you can still pick a judge by hand, and the Chat view warns that it will judge its own answers.
+- **Fallback**: if excluding the judges leaves nothing to recommend for the use case (every model in the pool is a judge, or with the `strict` strategy only judges pass the thresholds), routing keeps its usual choice, returns `judge_exclusion_fallback: true`, and the Chat view shows a warning.
 
 A different `judge_model` saved in Redis (for example left over by a benchmark run) is reported in the evaluation service logs at startup and in Settings → Judge (`GET /config/judge/defaults`). `scripts/run_full_benchmark.py` now restores the judge config it found when it ends, even on error.
 

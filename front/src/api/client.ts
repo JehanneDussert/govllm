@@ -148,10 +148,13 @@ export interface ModelRoutingScore {
   trend: 'up' | 'down' | 'stable' | null
   criteria_scores: Record<string, number | null>
   meets_threshold: boolean | null // null = no threshold set or no data
+  is_judge?: boolean // effective judge of the active profile: excluded from AUTO routing
 }
 
 export interface RoutingResult {
-  recommended: string
+  recommended: string | null
+  excluded_judges?: string[]
+  judge_exclusion_fallback?: boolean // true: excluding the judges left nothing, usual choice kept
   use_case_id: string
   profile_id: string | null
   min_threshold: number | null
