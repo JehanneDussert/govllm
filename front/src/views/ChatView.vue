@@ -5,13 +5,14 @@
 
 <script setup lang="ts">
 // Imports
-import { ref, nextTick, watch, onMounted } from 'vue'
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useJudgeStore } from '@/stores/judge'
 import MessageScore from '@/components/MessageScore.vue'
 import { api } from '@/api/client'
 import type { RoutingResult } from '@/api/client'
 import { modelShortName } from '@/utils/model'
+import { effectiveJudges } from '@/utils/judges'
 
 // Stores
 const store = useChatStore()
@@ -43,6 +44,11 @@ async function fetchRouting(applyModel = true) {
     }
   } catch {}
 }
+
+// Self-judging guard: the generator should never be one of the models that will
+// evaluate its output (measured self-preference for some models — see docs/benchmark/README.md).
+const activeJudges = computed(() => (judgeStore.config ? effectiveJudges(judgeStore.config) : []))
+const selfJudging = computed(() => activeJudges.value.includes(store.currentModel))
 
 function selectModel(model: string) {
   autoRoute.value = false
@@ -160,6 +166,13 @@ watch(
         >
       </div>
 
+      <div v-if="selfJudging" class="self-judge-warning" role="status">
+        ⚠ {{ modelShortName(store.currentModel) }} is also a judge for the active profile: it will
+        evaluate its own answers. Some models rate their own outputs higher than other judges do —
+        pick another generator here, or change the judge panel in
+        <RouterLink to="/settings">Settings</RouterLink>.
+      </div>
+
       <!-- Scoreboard expanded -->
       <div v-if="routingExpanded" class="routing-scoreboard">
         <div class="scoreboard-label">
@@ -183,6 +196,12 @@ watch(
           >
             <div class="score-card-badge">
               {{ i === 0 && m.avg_score !== null ? 'RECOMMENDED' : 'model' }}
+              <span
+                v-if="activeJudges.includes(m.model)"
+                class="judge-tag"
+                title="This model is a judge for the active profile: avoid using it as the generator"
+                >· judge</span
+              >
             </div>
             <div class="score-card-name">{{ modelShortName(m.model) }}</div>
             <div class="score-card-avg" :class="{ 'score-na': m.avg_score === null }">
@@ -451,6 +470,21 @@ watch(
   font-size: 9px;
   letter-spacing: 0.06em;
   color: var(--text-dim);
+}
+.judge-tag {
+  color: var(--yellow, #e8a838);
+}
+.self-judge-warning {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--yellow, #e8a838);
+  background: rgba(232, 168, 56, 0.08);
+  border-top: 1px solid rgba(232, 168, 56, 0.25);
+  padding: 6px 28px;
+}
+.self-judge-warning a {
+  color: inherit;
+  text-decoration: underline;
 }
 .score-card.winner .score-card-badge {
   color: var(--green);

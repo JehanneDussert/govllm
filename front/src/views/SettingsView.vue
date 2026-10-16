@@ -9,6 +9,7 @@ import { ref, onMounted } from 'vue'
 import { useJudgeStore } from '@/stores/judge'
 import { api } from '@/api/client'
 import { shortModel } from '@/utils/model'
+import { effectiveJudges } from '@/utils/judges'
 
 // Types
 type SettingsTabTypes = 'profiles' | 'use_cases' | 'judge' | 'routing' | 'identity_access'
@@ -212,9 +213,12 @@ function panelFor(profileId: string) {
   return store.config?.panels.find((p) => p.profile_id === profileId)?.judges ?? []
 }
 
+// Models that would judge their own outputs: the effective judges of this profile
+// (panel members with active criteria + the global judge for uncovered criteria,
+// same rule as eval_runner) that are also a preferred generator of a use case using it.
 function generatorConflicts(profileId: string): string[] {
   if (!store.config) return []
-  const panelModels = panelFor(profileId).map((j) => j.model)
+  const panelModels = effectiveJudges(store.config, profileId)
   const preferredModels = store.config.use_cases
     .filter((uc) => uc.default_profile_id === profileId && uc.preferred_model)
     .map((uc) => uc.preferred_model as string)
@@ -506,9 +510,9 @@ onMounted(async () => {
                         .map((m) => m.replace('ollama/', ''))
                         .join(', ')
                     }}
-                    {{ generatorConflicts(profile.id).length === 1 ? 'is' : 'are' }} also the
-                    preferred generator for a use case using this profile — a model should not judge
-                    its own outputs.
+                    {{ generatorConflicts(profile.id).length === 1 ? 'is' : 'are' }} both a judge
+                    for this profile (panel member or global judge) and the preferred generator of a
+                    use case using it — a model should not judge its own outputs.
                   </div>
                 </div>
               </div>

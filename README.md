@@ -218,6 +218,8 @@ govllm/
 
 **Profile-driven routing.** Switching a governance profile at runtime updates which criteria are active and their weights. The routing layer reads the active profile from Redis at inference time and recommends the best-scoring model for that profile and use case.
 
+**No self-judging.** A model should not evaluate its own answers. The Chat view warns when the current generator (auto-routed or picked manually) is one of the judges that will score it under the active profile: a panel member with active criteria, or the global judge for the criteria the panel does not cover. Judges are also tagged in the model scoreboard. Settings flags the same conflict per profile against each use case's preferred model.
+
 **Shared schema layer.** All three microservices share `back/shared/src/shared/` for Pydantic schemas and config — single source of truth for data contracts.
 
 **Governance context injection.** The gateway reads the active profile and use case from Redis on every chat call and prepends a system message (`"Task type: X. Governance framework: Y."`) before passing messages to the model. The caller can override this by sending its own `system` message.
