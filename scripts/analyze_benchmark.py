@@ -11,32 +11,33 @@ Analyses:
   4. Intra-judge variance by domain
   5. Judge × generator bias matrix (self-preference)
   6. Self-eval vs cross-eval bias
+  7. Formal self-preference: SPR (paper definition) + score-level bias,
+     both relative to the other judges, with bootstrap CIs and Holm-corrected tests
+
+Models come from docs/benchmark/models.json (see scripts/model_registry.py).
+
+Usage:
+    python scripts/analyze_benchmark.py                 # all registered models -> summary_all.json
+    python scripts/analyze_benchmark.py --models paper  # the 4 models of arXiv v1 -> summary.json
 """
 
+import argparse
 import json
 import math
 import datetime
 from pathlib import Path
 from collections import defaultdict
 
+from model_registry import MODELS, SETS, select, slug_of, family
+from self_preference import self_preference_analysis
+
 RESULTS_DIR = Path("docs/benchmark/results")
 PROMPTS_FILE = Path("docs/benchmark/prompts.json")
 OUTPUT_DIR = Path("docs/benchmark/analysis")
 
-MODEL_SIZES = {
-    "qwen3-1.7b": 1.7,
-    "phi4-mini": 3.8,
-    "gemma3-4b": 4.0,
-    "mistral-7b": 7.0,
-}
-
 USE_CASES = ["general", "summarization", "translation", "code", "administrative_writing", "analysis"]
 BASELINE_USE_CASES = {"general", "summarization"}
 SPECIALIZED_USE_CASES = {"translation", "code", "administrative_writing", "analysis"}
-
-
-def short_name(ollama_name: str) -> str:
-    return ollama_name.removeprefix("ollama/").replace(":", "-")
 
 
 def _mean(values: list) -> float | None:
@@ -63,13 +64,19 @@ def _pearson(xs: list, ys: list) -> float | None:
     return round(num / den, 4) if den else None
 
 
-def load_all_results() -> list[dict]:
+def load_all_results(models: set[str]) -> tuple[list[dict], int]:
     entries = []
+    n_files = 0
     for fpath in sorted(RESULTS_DIR.glob("*.json")):
+        if fpath.name.endswith(".partial.json"):
+            continue
         with open(fpath, encoding="utf-8") as f:
             data = json.load(f)
-        gen = short_name(data["model"])
-        judge = short_name(data["judge_model"])
+        gen = slug_of(data["model"])
+        judge = slug_of(data["judge_model"])
+        if gen not in models or judge not in models:
+            continue
+        n_files += 1
         for r in data["results"]:
             if r.get("status") != "OK" or r.get("score") is None:
                 continue
@@ -82,7 +89,7 @@ def load_all_results() -> list[dict]:
                 "score": r["score"],
                 "criteria_scores": (r.get("eval") or {}).get("criteria_scores", []),
             })
-    return entries
+    return entries, n_files
 
 
 def load_prompt_meta() -> dict[str, dict]:
@@ -103,13 +110,71 @@ def r4(v) -> float | None:
     return round(v, 4) if v is not None else None
 
 
+def difficulty_tests(entries, prompt_meta, tiers, n_boot=10000):
+    """Specialised vs baseline profiles per difficulty tier, with uncertainty.
+
+    Unit = prompt (mean score over all generator x judge pairs for that prompt);
+    the two groups are different prompts (baseline use cases vs specialised ones),
+    so the bootstrap is unpaired, resampling prompts within each group. Seed per
+    tier. Holm-adjusted p and Bonferroni CI across the tiers tested.
+    """
+    import random
+
+    per_prompt = defaultdict(list)
+    for e in entries:
+        per_prompt[e["id"]].append(e["score"])
+    tests = {}
+    for tier in tiers:
+        ids = [pid for pid in per_prompt if prompt_meta.get(pid, {}).get("difficulty") == tier]
+        base = [_mean(per_prompt[p]) for p in ids if prompt_meta[p]["use_case"] in BASELINE_USE_CASES]
+        spec = [_mean(per_prompt[p]) for p in ids if prompt_meta[p]["use_case"] in SPECIALIZED_USE_CASES]
+        if len(base) < 2 or len(spec) < 2:
+            continue
+        rng = random.Random(f"difficulty:{tier}")
+        means = sorted(
+            _mean(rng.choices(spec, k=len(spec))) - _mean(rng.choices(base, k=len(base)))
+            for _ in range(n_boot)
+        )
+        p_le = sum(1 for m in means if m <= 0) / n_boot
+        p_ge = sum(1 for m in means if m >= 0) / n_boot
+        tests[tier] = {
+            "delta": r4(_mean(spec) - _mean(base)),
+            "ci95": [r4(means[int(0.025 * n_boot)]), r4(means[int(0.975 * n_boot) - 1])],
+            "p": round(min(1.0, max(2 * min(p_le, p_ge), 1 / n_boot)), 4),
+            "n_prompts_specialized": len(spec),
+            "n_prompts_baseline": len(base),
+            "_means": means,
+        }
+    k = len(tests)
+    running = 0.0
+    for i, (pv, tier) in enumerate(sorted((v["p"], t) for t, v in tests.items())):
+        running = max(running, min(1.0, (k - i) * pv))
+        tests[tier]["p_holm"] = round(running, 4)
+    for v in tests.values():
+        means, a = v.pop("_means"), 0.05 / k
+        v["ci_bonferroni"] = [r4(means[int(a / 2 * n_boot)]), r4(means[int((1 - a / 2) * n_boot) - 1])]
+        v["family_size"] = k
+    return tests
+
+
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--models", default="all",
+                        help=f"'all', a set from models.json {sorted(SETS)}, or comma-separated slugs")
+    parser.add_argument("--bootstrap", type=int, default=10000)
+    args = parser.parse_args()
+
+    selected = select(args.models)
+    out_name = "summary.json" if args.models == "paper" else f"summary_{args.models.replace(',', '_')}.json"
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    entries = load_all_results()
+    entries, n_files = load_all_results(set(selected))
     prompt_meta = load_prompt_meta()
 
-    all_gens = sorted(MODEL_SIZES.keys())
+    all_gens = sorted(set(e["gen"] for e in entries))
     all_judges = sorted(set(e["judge"] for e in entries))
+    # Finding A in the paper uses the nominal size from the model name.
+    model_sizes = {g: MODELS[g]["size_b_nominal"] for g in all_gens}
 
     # ── 1. Delta specialized profile vs quality_baseline ─────────────────────
 
@@ -148,9 +213,12 @@ def main():
         }
 
     analysis_1 = {
-        "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case",
+        "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case. "
+                       "by_difficulty_tests: prompt-level unpaired bootstrap per tier, Holm p and Bonferroni CI across tiers "
+                       "(tiers with fewer than 2 prompts in a group are skipped).",
         "by_generator": delta_by_gen,
         "by_difficulty": delta_by_diff,
+        "by_difficulty_tests": difficulty_tests(entries, prompt_meta, difficulties, n_boot=args.bootstrap),
     }
 
     # ── 2. Correlation model size / score ─────────────────────────────────────
@@ -159,23 +227,27 @@ def main():
     for gen in all_gens:
         scores = [e["score"] for e in entries if e["gen"] == gen]
         gen_stats[gen] = {
-            "size_B": MODEL_SIZES[gen],
+            "size_B": model_sizes[gen],
+            "size_B_reported": MODELS[gen]["size_b"],
             "mean_score": r4(_mean(scores)),
             "stdev": r4(_stdev(scores)),
             "n": len(scores),
         }
 
-    sizes = [MODEL_SIZES[g] for g in all_gens]
+    sizes = [model_sizes[g] for g in all_gens]
     means = [gen_stats[g]["mean_score"] for g in all_gens]
     analysis_2 = {
-        "description": "Mean composite score per generator model vs parameter count",
+        "description": "Mean composite score per generator model vs parameter count "
+                       "(size_B = nominal size from the model name; size_B_reported = total parameters per `ollama show`)",
         "models": gen_stats,
         "pearson_size_vs_score": _pearson(sizes, means),
+        "pearson_reported_size_vs_score": _pearson([MODELS[g]["size_b"] for g in all_gens], means),
+        "n_models": len(all_gens),
     }
 
     # ── 3. Inter-judge disagreement by prompt ─────────────────────────────────
 
-    # For each (gen, prompt_id): collect scores across all 4 judges
+    # For each (gen, prompt_id): collect scores across all judges
     by_gen_prompt: dict[tuple, list[float]] = defaultdict(list)
     for e in entries:
         by_gen_prompt[(e["gen"], e["id"])].append(e["score"])
@@ -245,7 +317,9 @@ def main():
         self_score = matrix[judge].get(judge, {}).get("mean_score")
         cross = [matrix[judge][g]["mean_score"] for g in all_gens if g != judge and matrix[judge][g]["mean_score"] is not None]
         cross_mean = _mean(cross)
-        # SPR: fraction of other generators where judge scores them lower than self
+        # Legacy (arXiv v1) "SPR": fraction of other generators whose *mean* score is
+        # below the judge's self score. Model-level, no quality control, no test —
+        # kept for reproducibility only; see analysis_7 for the formal SPR.
         wins = sum(1 for s in cross if self_score is not None and s is not None and self_score > s)
         spr[judge] = {
             "self_score": self_score,
@@ -255,7 +329,8 @@ def main():
         }
 
     analysis_5 = {
-        "description": "Mean composite score for each (judge_model, generator_model) pair; diagonal = self-evaluation",
+        "description": "Mean composite score for each (judge_model, generator_model) pair; diagonal = self-evaluation. "
+                       "self_preference_rate.spr is the legacy model-level measure used in arXiv v1 — see analysis_7.",
         "matrix": matrix,
         "self_preference_rate": spr,
     }
@@ -280,11 +355,19 @@ def main():
         "by_generator": self_eval_bias,
     }
 
+    # ── 7. Formal self-preference ────────────────────────────────────────────
+
+    analysis_7 = self_preference_analysis(
+        entries, all_judges, all_gens, family, n_boot=args.bootstrap,
+        caveats={m: MODELS[m]["caveat"] for m in all_judges if MODELS[m].get("caveat")},
+    )
+
     # ── Write output ──────────────────────────────────────────────────────────
 
     summary = {
         "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
-        "n_result_files": len(list(RESULTS_DIR.glob("*.json"))),
+        "models": all_gens,
+        "n_result_files": n_files,
         "n_entries_used": len(entries),
         "analysis_1_delta_specialized_vs_baseline": analysis_1,
         "analysis_2_model_size_correlation": analysis_2,
@@ -292,9 +375,10 @@ def main():
         "analysis_4_intrajudge_variance_by_domain": analysis_4,
         "analysis_5_judge_generator_bias_matrix": analysis_5,
         "analysis_6_self_eval_vs_cross_eval": analysis_6,
+        "analysis_7_self_preference_formal": analysis_7,
     }
 
-    out = OUTPUT_DIR / "summary.json"
+    out = OUTPUT_DIR / out_name
     with open(out, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
@@ -305,12 +389,16 @@ def main():
     print("\n=== 1. Specialized vs baseline (by difficulty) ===")
     for diff, v in analysis_1["by_difficulty"].items():
         print(f"  {diff:<14} baseline={str(v['quality_baseline_mean']):<6}  specialized={str(v['specialized_mean']):<6}  delta={v['delta']}")
+    for diff, v in analysis_1["by_difficulty_tests"].items():
+        print(f"  test {diff:<12} delta={v['delta']:+.4f} CI95 {v['ci95']} Bonferroni {v['ci_bonferroni']} "
+              f"p={v['p']:.3f} p_holm={v['p_holm']:.3f} (n={v['n_prompts_specialized']}+{v['n_prompts_baseline']}, k={v['family_size']})")
 
     print("\n=== 2. Model size vs score ===")
     for g in all_gens:
         v = analysis_2["models"][g]
-        print(f"  {g:<15} {v['size_B']}B  mean={v['mean_score']}")
-    print(f"  Pearson r = {analysis_2['pearson_size_vs_score']}")
+        print(f"  {g:<22} {v['size_B']}B (reported {v['size_B_reported']}B)  mean={v['mean_score']}")
+    print(f"  Pearson r = {analysis_2['pearson_size_vs_score']} (nominal)  "
+          f"{analysis_2['pearson_reported_size_vs_score']} (reported)  n={len(all_gens)}")
 
     print("\n=== 3. Top 10 prompts by inter-judge disagreement ===")
     for item in analysis_3["top10_highest_disagreement"]:
@@ -328,11 +416,23 @@ def main():
 
     print("\n=== 5. Self-preference delta ===")
     for judge, v in analysis_5["self_preference_rate"].items():
-        print(f"  {judge:<15}  self={v['self_score']}  cross={v['mean_cross_score']}  delta={v['self_preference_delta']}  SPR={v['spr']}")
+        print(f"  {judge:<22}  self={v['self_score']}  cross={v['mean_cross_score']}  delta={v['self_preference_delta']}  legacy SPR={v['spr']}")
 
     print("\n=== 6. Self-eval vs cross-eval bias ===")
     for gen, v in analysis_6["by_generator"].items():
-        print(f"  {gen:<15}  self={v['self_eval_mean']}  cross={v['cross_eval_mean']}  bias={v['bias_delta']}")
+        print(f"  {gen:<22}  self={v['self_eval_mean']}  cross={v['cross_eval_mean']}  bias={v['bias_delta']}")
+
+    print("\n=== 7. Formal self-preference (relative to other judges; Bonferroni CI and Holm p across judges) ===")
+    for judge, v in analysis_7["by_judge"].items():
+        s, b = v["spr_self"], v["score_bias_self"]
+        line = (f"  {judge:<22} SPR={s['spr']:.3f} ref={s['reference']:.3f} excess={s['excess']:+.3f} "
+                f"Bonferroni [{s['ci_bonferroni'][0]:+.3f},{s['ci_bonferroni'][1]:+.3f}] p_holm={s['p_holm']:.3f} | "
+                f"score bias={b['estimate']:+.4f} Bonferroni [{b['ci_bonferroni'][0]:+.4f},{b['ci_bonferroni'][1]:+.4f}] "
+                f"p_holm={b['p_holm']:.3f}")
+        sib = v.get("score_bias_siblings")
+        if sib:
+            line += f" | siblings bias={sib['estimate']:+.4f} p_holm={sib['p_holm']:.3f}"
+        print(line)
 
 
 if __name__ == "__main__":

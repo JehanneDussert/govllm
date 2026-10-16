@@ -1,0 +1,2095 @@
+{
+  "generated_at": "2026-10-16T05:48:40.866274Z",
+  "models": [
+    "gemma3-4b",
+    "gemma4-e4b",
+    "granite4",
+    "lfm2.5-1.2b-thinking",
+    "ministral-3-8b",
+    "mistral-7b",
+    "phi4-mini",
+    "qwen3-1.7b"
+  ],
+  "n_result_files": 64,
+  "n_entries_used": 3065,
+  "analysis_1_delta_specialized_vs_baseline": {
+    "description": "Compare mean score on quality_baseline profile (general+summarization) vs domain-specific profiles per use case. by_difficulty_tests: prompt-level unpaired bootstrap per tier, Holm p and Bonferroni CI across tiers (tiers with fewer than 2 prompts in a group are skipped).",
+    "by_generator": {
+      "gemma3-4b": {
+        "quality_baseline_mean": 0.8512,
+        "quality_baseline_n": 128,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8631,
+            "delta_vs_baseline": 0.0119,
+            "n": 64
+          },
+          "analysis": {
+            "mean": 0.8465,
+            "delta_vs_baseline": -0.0047,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.876,
+            "delta_vs_baseline": 0.0248,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.921,
+            "delta_vs_baseline": 0.0697,
+            "n": 64
+          }
+        }
+      },
+      "gemma4-e4b": {
+        "quality_baseline_mean": 0.8142,
+        "quality_baseline_n": 127,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8358,
+            "delta_vs_baseline": 0.0217,
+            "n": 64
+          },
+          "analysis": {
+            "mean": 0.8367,
+            "delta_vs_baseline": 0.0225,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.8778,
+            "delta_vs_baseline": 0.0636,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.929,
+            "delta_vs_baseline": 0.1148,
+            "n": 64
+          }
+        }
+      },
+      "granite4": {
+        "quality_baseline_mean": 0.8429,
+        "quality_baseline_n": 128,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8216,
+            "delta_vs_baseline": -0.0213,
+            "n": 64
+          },
+          "analysis": {
+            "mean": 0.8047,
+            "delta_vs_baseline": -0.0382,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.8925,
+            "delta_vs_baseline": 0.0497,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.8695,
+            "delta_vs_baseline": 0.0266,
+            "n": 64
+          }
+        }
+      },
+      "lfm2.5-1.2b-thinking": {
+        "quality_baseline_mean": 0.8312,
+        "quality_baseline_n": 128,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8368,
+            "delta_vs_baseline": 0.0056,
+            "n": 63
+          },
+          "analysis": {
+            "mean": 0.8453,
+            "delta_vs_baseline": 0.0141,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.8981,
+            "delta_vs_baseline": 0.0669,
+            "n": 63
+          },
+          "translation": {
+            "mean": 0.8937,
+            "delta_vs_baseline": 0.0625,
+            "n": 64
+          }
+        }
+      },
+      "ministral-3-8b": {
+        "quality_baseline_mean": 0.8279,
+        "quality_baseline_n": 128,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8288,
+            "delta_vs_baseline": 0.0009,
+            "n": 62
+          },
+          "analysis": {
+            "mean": 0.8609,
+            "delta_vs_baseline": 0.033,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.8929,
+            "delta_vs_baseline": 0.065,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.9268,
+            "delta_vs_baseline": 0.0989,
+            "n": 64
+          }
+        }
+      },
+      "mistral-7b": {
+        "quality_baseline_mean": 0.8481,
+        "quality_baseline_n": 128,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8428,
+            "delta_vs_baseline": -0.0053,
+            "n": 64
+          },
+          "analysis": {
+            "mean": 0.8197,
+            "delta_vs_baseline": -0.0284,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.8785,
+            "delta_vs_baseline": 0.0304,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.9279,
+            "delta_vs_baseline": 0.0798,
+            "n": 64
+          }
+        }
+      },
+      "phi4-mini": {
+        "quality_baseline_mean": 0.8703,
+        "quality_baseline_n": 127,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8171,
+            "delta_vs_baseline": -0.0533,
+            "n": 64
+          },
+          "analysis": {
+            "mean": 0.8485,
+            "delta_vs_baseline": -0.0218,
+            "n": 63
+          },
+          "code": {
+            "mean": 0.883,
+            "delta_vs_baseline": 0.0127,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.9149,
+            "delta_vs_baseline": 0.0446,
+            "n": 64
+          }
+        }
+      },
+      "qwen3-1.7b": {
+        "quality_baseline_mean": 0.8469,
+        "quality_baseline_n": 128,
+        "specialized": {
+          "administrative_writing": {
+            "mean": 0.8409,
+            "delta_vs_baseline": -0.006,
+            "n": 64
+          },
+          "analysis": {
+            "mean": 0.8529,
+            "delta_vs_baseline": 0.006,
+            "n": 64
+          },
+          "code": {
+            "mean": 0.8691,
+            "delta_vs_baseline": 0.0221,
+            "n": 64
+          },
+          "translation": {
+            "mean": 0.938,
+            "delta_vs_baseline": 0.0911,
+            "n": 64
+          }
+        }
+      }
+    },
+    "by_difficulty": {
+      "easy": {
+        "quality_baseline_mean": 0.8689,
+        "quality_baseline_n": 255,
+        "specialized_mean": 0.8837,
+        "specialized_n": 511,
+        "delta": 0.0148
+      },
+      "medium": {
+        "quality_baseline_mean": 0.8511,
+        "quality_baseline_n": 192,
+        "specialized_mean": 0.8794,
+        "specialized_n": 510,
+        "delta": 0.0283
+      },
+      "medium-hard": {
+        "quality_baseline_mean": 0.8592,
+        "quality_baseline_n": 64,
+        "specialized_mean": null,
+        "specialized_n": 0,
+        "delta": null
+      },
+      "adversarial": {
+        "quality_baseline_mean": 0.8371,
+        "quality_baseline_n": 255,
+        "specialized_mean": 0.8619,
+        "specialized_n": 512,
+        "delta": 0.0249
+      },
+      "hard": {
+        "quality_baseline_mean": 0.8073,
+        "quality_baseline_n": 256,
+        "specialized_mean": 0.849,
+        "specialized_n": 510,
+        "delta": 0.0416
+      }
+    },
+    "by_difficulty_tests": {
+      "easy": {
+        "delta": 0.0147,
+        "ci95": [
+          -0.0161,
+          0.0465
+        ],
+        "p": 0.3804,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.6616,
+        "ci_bonferroni": [
+          -0.0248,
+          0.0546
+        ],
+        "family_size": 4
+      },
+      "medium": {
+        "delta": 0.0282,
+        "ci95": [
+          -0.0161,
+          0.0668
+        ],
+        "p": 0.1936,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 3,
+        "p_holm": 0.5808,
+        "ci_bonferroni": [
+          -0.0297,
+          0.0748
+        ],
+        "family_size": 4
+      },
+      "adversarial": {
+        "delta": 0.025,
+        "ci95": [
+          -0.0265,
+          0.0752
+        ],
+        "p": 0.3308,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.6616,
+        "ci_bonferroni": [
+          -0.0404,
+          0.0876
+        ],
+        "family_size": 4
+      },
+      "hard": {
+        "delta": 0.0415,
+        "ci95": [
+          0.0009,
+          0.0832
+        ],
+        "p": 0.0438,
+        "n_prompts_specialized": 8,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.1752,
+        "ci_bonferroni": [
+          -0.007,
+          0.0933
+        ],
+        "family_size": 4
+      }
+    }
+  },
+  "analysis_2_model_size_correlation": {
+    "description": "Mean composite score per generator model vs parameter count (size_B = nominal size from the model name; size_B_reported = total parameters per `ollama show`)",
+    "models": {
+      "gemma3-4b": {
+        "size_B": 4.0,
+        "size_B_reported": 4.3,
+        "mean_score": 0.8682,
+        "stdev": 0.2124,
+        "n": 384
+      },
+      "gemma4-e4b": {
+        "size_B": 4.0,
+        "size_B_reported": 8.0,
+        "mean_score": 0.8514,
+        "stdev": 0.2411,
+        "n": 383
+      },
+      "granite4": {
+        "size_B": 3.4,
+        "size_B_reported": 3.4,
+        "mean_score": 0.8457,
+        "stdev": 0.219,
+        "n": 384
+      },
+      "lfm2.5-1.2b-thinking": {
+        "size_B": 1.2,
+        "size_B_reported": 1.17,
+        "mean_score": 0.856,
+        "stdev": 0.1979,
+        "n": 382
+      },
+      "ministral-3-8b": {
+        "size_B": 8.0,
+        "size_B_reported": 8.9,
+        "mean_score": 0.861,
+        "stdev": 0.2326,
+        "n": 382
+      },
+      "mistral-7b": {
+        "size_B": 7.0,
+        "size_B_reported": 7.2,
+        "mean_score": 0.8609,
+        "stdev": 0.1966,
+        "n": 384
+      },
+      "phi4-mini": {
+        "size_B": 3.8,
+        "size_B_reported": 3.8,
+        "mean_score": 0.8674,
+        "stdev": 0.1945,
+        "n": 382
+      },
+      "qwen3-1.7b": {
+        "size_B": 1.7,
+        "size_B_reported": 2.0,
+        "mean_score": 0.8658,
+        "stdev": 0.2068,
+        "n": 384
+      }
+    },
+    "pearson_size_vs_score": 0.0925,
+    "pearson_reported_size_vs_score": -0.0892,
+    "n_models": 8
+  },
+  "analysis_3_interjudge_disagreement_by_prompt": {
+    "description": "Std dev of composite scores across 4 judges per prompt (per generator, then averaged)",
+    "all_prompts": {
+      "gen_01": {
+        "use_case": "general",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.2261,
+        "n_generators": 8
+      },
+      "gen_02": {
+        "use_case": "general",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.1641,
+        "n_generators": 8
+      },
+      "gen_05": {
+        "use_case": "general",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.211,
+        "n_generators": 8
+      },
+      "gen_adv_01": {
+        "use_case": "general",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2375,
+        "n_generators": 8
+      },
+      "gen_adv_02": {
+        "use_case": "general",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2319,
+        "n_generators": 8
+      },
+      "gen_hard_01": {
+        "use_case": "general",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2421,
+        "n_generators": 8
+      },
+      "gen_hard_02": {
+        "use_case": "general",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2006,
+        "n_generators": 8
+      },
+      "sum_01": {
+        "use_case": "summarization",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.1832,
+        "n_generators": 8
+      },
+      "sum_04": {
+        "use_case": "summarization",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.173,
+        "n_generators": 8
+      },
+      "sum_05": {
+        "use_case": "summarization",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.182,
+        "n_generators": 8
+      },
+      "sum_adv_01": {
+        "use_case": "summarization",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2231,
+        "n_generators": 8
+      },
+      "sum_adv_02": {
+        "use_case": "summarization",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.1782,
+        "n_generators": 8
+      },
+      "sum_hard_01": {
+        "use_case": "summarization",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2223,
+        "n_generators": 8
+      },
+      "sum_hard_02": {
+        "use_case": "summarization",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2336,
+        "n_generators": 8
+      },
+      "tra_01": {
+        "use_case": "translation",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.0945,
+        "n_generators": 8
+      },
+      "tra_04": {
+        "use_case": "translation",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.0994,
+        "n_generators": 8
+      },
+      "tra_05": {
+        "use_case": "translation",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.1146,
+        "n_generators": 8
+      },
+      "tra_adv_01": {
+        "use_case": "translation",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.1434,
+        "n_generators": 8
+      },
+      "tra_adv_02": {
+        "use_case": "translation",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.0527,
+        "n_generators": 8
+      },
+      "tra_hard_01": {
+        "use_case": "translation",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.1553,
+        "n_generators": 8
+      },
+      "tra_hard_02": {
+        "use_case": "translation",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.1641,
+        "n_generators": 8
+      },
+      "cod_01": {
+        "use_case": "code",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.1465,
+        "n_generators": 8
+      },
+      "cod_03": {
+        "use_case": "code",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.1983,
+        "n_generators": 8
+      },
+      "cod_05": {
+        "use_case": "code",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2199,
+        "n_generators": 8
+      },
+      "cod_adv_01": {
+        "use_case": "code",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2375,
+        "n_generators": 8
+      },
+      "cod_adv_02": {
+        "use_case": "code",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.21,
+        "n_generators": 8
+      },
+      "cod_hard_01": {
+        "use_case": "code",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2249,
+        "n_generators": 8
+      },
+      "cod_hard_02": {
+        "use_case": "code",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2503,
+        "n_generators": 8
+      },
+      "adm_01": {
+        "use_case": "administrative_writing",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.2065,
+        "n_generators": 8
+      },
+      "adm_03": {
+        "use_case": "administrative_writing",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.221,
+        "n_generators": 8
+      },
+      "adm_05": {
+        "use_case": "administrative_writing",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2838,
+        "n_generators": 8
+      },
+      "adm_adv_01": {
+        "use_case": "administrative_writing",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2046,
+        "n_generators": 8
+      },
+      "adm_adv_02": {
+        "use_case": "administrative_writing",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2637,
+        "n_generators": 8
+      },
+      "adm_hard_01": {
+        "use_case": "administrative_writing",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2564,
+        "n_generators": 8
+      },
+      "adm_hard_02": {
+        "use_case": "administrative_writing",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2368,
+        "n_generators": 8
+      },
+      "ana_01": {
+        "use_case": "analysis",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.2253,
+        "n_generators": 8
+      },
+      "ana_04": {
+        "use_case": "analysis",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.2417,
+        "n_generators": 8
+      },
+      "ana_05": {
+        "use_case": "analysis",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2814,
+        "n_generators": 8
+      },
+      "ana_adv_01": {
+        "use_case": "analysis",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2261,
+        "n_generators": 8
+      },
+      "ana_adv_02": {
+        "use_case": "analysis",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.174,
+        "n_generators": 8
+      },
+      "ana_hard_01": {
+        "use_case": "analysis",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2763,
+        "n_generators": 8
+      },
+      "ana_hard_02": {
+        "use_case": "analysis",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2006,
+        "n_generators": 8
+      },
+      "gen_06": {
+        "use_case": "general",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2027,
+        "n_generators": 8
+      },
+      "sum_06": {
+        "use_case": "summarization",
+        "difficulty": "medium-hard",
+        "mean_interjudge_stdev": 0.1437,
+        "n_generators": 8
+      },
+      "tra_06": {
+        "use_case": "translation",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.1038,
+        "n_generators": 8
+      },
+      "adm_06": {
+        "use_case": "administrative_writing",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2113,
+        "n_generators": 8
+      },
+      "ana_06": {
+        "use_case": "analysis",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.1701,
+        "n_generators": 8
+      },
+      "cod_06": {
+        "use_case": "code",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.1459,
+        "n_generators": 8
+      }
+    },
+    "top10_highest_disagreement": [
+      {
+        "id": "adm_05",
+        "use_case": "administrative_writing",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2838,
+        "n_generators": 8
+      },
+      {
+        "id": "ana_05",
+        "use_case": "analysis",
+        "difficulty": "medium",
+        "mean_interjudge_stdev": 0.2814,
+        "n_generators": 8
+      },
+      {
+        "id": "ana_hard_01",
+        "use_case": "analysis",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2763,
+        "n_generators": 8
+      },
+      {
+        "id": "adm_adv_02",
+        "use_case": "administrative_writing",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2637,
+        "n_generators": 8
+      },
+      {
+        "id": "adm_hard_01",
+        "use_case": "administrative_writing",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2564,
+        "n_generators": 8
+      },
+      {
+        "id": "cod_hard_02",
+        "use_case": "code",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2503,
+        "n_generators": 8
+      },
+      {
+        "id": "gen_hard_01",
+        "use_case": "general",
+        "difficulty": "hard",
+        "mean_interjudge_stdev": 0.2421,
+        "n_generators": 8
+      },
+      {
+        "id": "ana_04",
+        "use_case": "analysis",
+        "difficulty": "easy",
+        "mean_interjudge_stdev": 0.2417,
+        "n_generators": 8
+      },
+      {
+        "id": "gen_adv_01",
+        "use_case": "general",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2375,
+        "n_generators": 8
+      },
+      {
+        "id": "cod_adv_01",
+        "use_case": "code",
+        "difficulty": "adversarial",
+        "mean_interjudge_stdev": 0.2375,
+        "n_generators": 8
+      }
+    ]
+  },
+  "analysis_4_intrajudge_variance_by_domain": {
+    "description": "Mean and std dev of scores per judge model × use case (across all generators × prompts)",
+    "by_judge_and_domain": {
+      "gemma3-4b": {
+        "general": {
+          "mean": 0.715,
+          "stdev": 0.1192,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.786,
+          "stdev": 0.1347,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.9495,
+          "stdev": 0.034,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.8847,
+          "stdev": 0.1055,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.8973,
+          "stdev": 0.057,
+          "n": 64
+        },
+        "analysis": {
+          "mean": 0.8836,
+          "stdev": 0.037,
+          "n": 64
+        }
+      },
+      "gemma4-e4b": {
+        "general": {
+          "mean": 0.9426,
+          "stdev": 0.1069,
+          "n": 63
+        },
+        "summarization": {
+          "mean": 0.9692,
+          "stdev": 0.0506,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.9347,
+          "stdev": 0.117,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.9782,
+          "stdev": 0.0655,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.9274,
+          "stdev": 0.1138,
+          "n": 64
+        },
+        "analysis": {
+          "mean": 0.9042,
+          "stdev": 0.1191,
+          "n": 64
+        }
+      },
+      "granite4": {
+        "general": {
+          "mean": 0.9141,
+          "stdev": 0.0504,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.9176,
+          "stdev": 0.056,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.9196,
+          "stdev": 0.0458,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.9724,
+          "stdev": 0.0767,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.9596,
+          "stdev": 0.0256,
+          "n": 64
+        },
+        "analysis": {
+          "mean": 0.9149,
+          "stdev": 0.057,
+          "n": 64
+        }
+      },
+      "lfm2.5-1.2b-thinking": {
+        "general": {
+          "mean": 0.4147,
+          "stdev": 0.2331,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.4592,
+          "stdev": 0.1628,
+          "n": 63
+        },
+        "translation": {
+          "mean": 0.708,
+          "stdev": 0.3069,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.4391,
+          "stdev": 0.2974,
+          "n": 63
+        },
+        "administrative_writing": {
+          "mean": 0.2907,
+          "stdev": 0.2136,
+          "n": 63
+        },
+        "analysis": {
+          "mean": 0.42,
+          "stdev": 0.2985,
+          "n": 63
+        }
+      },
+      "ministral-3-8b": {
+        "general": {
+          "mean": 0.8615,
+          "stdev": 0.1291,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.8773,
+          "stdev": 0.0699,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.8606,
+          "stdev": 0.1251,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.9109,
+          "stdev": 0.1095,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.8883,
+          "stdev": 0.0889,
+          "n": 62
+        },
+        "analysis": {
+          "mean": 0.9016,
+          "stdev": 0.0791,
+          "n": 64
+        }
+      },
+      "mistral-7b": {
+        "general": {
+          "mean": 0.9798,
+          "stdev": 0.0617,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.9431,
+          "stdev": 0.1453,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.9805,
+          "stdev": 0.0172,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.9538,
+          "stdev": 0.0616,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.892,
+          "stdev": 0.1083,
+          "n": 64
+        },
+        "analysis": {
+          "mean": 0.9094,
+          "stdev": 0.1094,
+          "n": 64
+        }
+      },
+      "phi4-mini": {
+        "general": {
+          "mean": 0.8672,
+          "stdev": 0.1546,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.9095,
+          "stdev": 0.1354,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.9742,
+          "stdev": 0.0214,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.957,
+          "stdev": 0.1273,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.9206,
+          "stdev": 0.0756,
+          "n": 64
+        },
+        "analysis": {
+          "mean": 0.8307,
+          "stdev": 0.34,
+          "n": 64
+        }
+      },
+      "qwen3-1.7b": {
+        "general": {
+          "mean": 0.9489,
+          "stdev": 0.0979,
+          "n": 64
+        },
+        "summarization": {
+          "mean": 0.9553,
+          "stdev": 0.0775,
+          "n": 64
+        },
+        "translation": {
+          "mean": 0.9938,
+          "stdev": 0.0159,
+          "n": 64
+        },
+        "code": {
+          "mean": 0.9646,
+          "stdev": 0.1088,
+          "n": 64
+        },
+        "administrative_writing": {
+          "mean": 0.9042,
+          "stdev": 0.1152,
+          "n": 64
+        },
+        "analysis": {
+          "mean": 0.9442,
+          "stdev": 0.1134,
+          "n": 64
+        }
+      }
+    }
+  },
+  "analysis_5_judge_generator_bias_matrix": {
+    "description": "Mean composite score for each (judge_model, generator_model) pair; diagonal = self-evaluation. self_preference_rate.spr is the legacy model-level measure used in arXiv v1 — see analysis_7.",
+    "matrix": {
+      "gemma3-4b": {
+        "gemma3-4b": {
+          "mean_score": 0.8491,
+          "n": 48,
+          "is_self": true
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.8291,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.8535,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.8657,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.8432,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.8691,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.8695,
+          "n": 48,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.8422,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "gemma4-e4b": {
+        "gemma3-4b": {
+          "mean_score": 0.9543,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.9699,
+          "n": 47,
+          "is_self": true
+        },
+        "granite4": {
+          "mean_score": 0.926,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.9276,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.9497,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.9454,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.9325,
+          "n": 48,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.937,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "granite4": {
+        "gemma3-4b": {
+          "mean_score": 0.9406,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.9353,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.9315,
+          "n": 48,
+          "is_self": true
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.9269,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.9342,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.923,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.9355,
+          "n": 48,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.9374,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "lfm2.5-1.2b-thinking": {
+        "gemma3-4b": {
+          "mean_score": 0.4492,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.3808,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.4505,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.4999,
+          "n": 46,
+          "is_self": true
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.3917,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.4986,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.52,
+          "n": 46,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.4606,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "ministral-3-8b": {
+        "gemma3-4b": {
+          "mean_score": 0.8878,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.9248,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.8614,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.8515,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.9254,
+          "n": 46,
+          "is_self": true
+        },
+        "mistral-7b": {
+          "mean_score": 0.8459,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.8854,
+          "n": 48,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.8862,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "mistral-7b": {
+        "gemma3-4b": {
+          "mean_score": 0.9487,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.9279,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.9407,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.9324,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.9612,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.9449,
+          "n": 48,
+          "is_self": true
+        },
+        "phi4-mini": {
+          "mean_score": 0.9423,
+          "n": 48,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.9466,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "phi4-mini": {
+        "gemma3-4b": {
+          "mean_score": 0.9583,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.8841,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.8648,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.8891,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.9259,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.8978,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.8952,
+          "n": 48,
+          "is_self": true
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.964,
+          "n": 48,
+          "is_self": false
+        }
+      },
+      "qwen3-1.7b": {
+        "gemma3-4b": {
+          "mean_score": 0.9574,
+          "n": 48,
+          "is_self": false
+        },
+        "gemma4-e4b": {
+          "mean_score": 0.9615,
+          "n": 48,
+          "is_self": false
+        },
+        "granite4": {
+          "mean_score": 0.9368,
+          "n": 48,
+          "is_self": false
+        },
+        "lfm2.5-1.2b-thinking": {
+          "mean_score": 0.9401,
+          "n": 48,
+          "is_self": false
+        },
+        "ministral-3-8b": {
+          "mean_score": 0.9599,
+          "n": 48,
+          "is_self": false
+        },
+        "mistral-7b": {
+          "mean_score": 0.9624,
+          "n": 48,
+          "is_self": false
+        },
+        "phi4-mini": {
+          "mean_score": 0.9443,
+          "n": 48,
+          "is_self": false
+        },
+        "qwen3-1.7b": {
+          "mean_score": 0.9524,
+          "n": 48,
+          "is_self": true
+        }
+      }
+    },
+    "self_preference_rate": {
+      "gemma3-4b": {
+        "self_score": 0.8491,
+        "mean_cross_score": 0.8532,
+        "self_preference_delta": -0.0041,
+        "spr": 0.4286
+      },
+      "gemma4-e4b": {
+        "self_score": 0.9699,
+        "mean_cross_score": 0.9389,
+        "self_preference_delta": 0.031,
+        "spr": 1.0
+      },
+      "granite4": {
+        "self_score": 0.9315,
+        "mean_cross_score": 0.9333,
+        "self_preference_delta": -0.0018,
+        "spr": 0.2857
+      },
+      "lfm2.5-1.2b-thinking": {
+        "self_score": 0.4999,
+        "mean_cross_score": 0.4502,
+        "self_preference_delta": 0.0497,
+        "spr": 0.8571
+      },
+      "ministral-3-8b": {
+        "self_score": 0.9254,
+        "mean_cross_score": 0.8776,
+        "self_preference_delta": 0.0478,
+        "spr": 1.0
+      },
+      "mistral-7b": {
+        "self_score": 0.9449,
+        "mean_cross_score": 0.9428,
+        "self_preference_delta": 0.0021,
+        "spr": 0.5714
+      },
+      "phi4-mini": {
+        "self_score": 0.8952,
+        "mean_cross_score": 0.912,
+        "self_preference_delta": -0.0168,
+        "spr": 0.4286
+      },
+      "qwen3-1.7b": {
+        "self_score": 0.9524,
+        "mean_cross_score": 0.9518,
+        "self_preference_delta": 0.0006,
+        "spr": 0.4286
+      }
+    }
+  },
+  "analysis_6_self_eval_vs_cross_eval": {
+    "description": "Comparison of self-evaluation (judge==generator) vs cross-evaluation scores per model",
+    "by_generator": {
+      "gemma3-4b": {
+        "self_eval_mean": 0.8491,
+        "cross_eval_mean": 0.8709,
+        "bias_delta": -0.0218,
+        "self_n": 48,
+        "cross_n": 336
+      },
+      "gemma4-e4b": {
+        "self_eval_mean": 0.9699,
+        "cross_eval_mean": 0.8348,
+        "bias_delta": 0.1351,
+        "self_n": 47,
+        "cross_n": 336
+      },
+      "granite4": {
+        "self_eval_mean": 0.9315,
+        "cross_eval_mean": 0.8334,
+        "bias_delta": 0.0981,
+        "self_n": 48,
+        "cross_n": 336
+      },
+      "lfm2.5-1.2b-thinking": {
+        "self_eval_mean": 0.4999,
+        "cross_eval_mean": 0.9047,
+        "bias_delta": -0.4049,
+        "self_n": 46,
+        "cross_n": 336
+      },
+      "ministral-3-8b": {
+        "self_eval_mean": 0.9254,
+        "cross_eval_mean": 0.8522,
+        "bias_delta": 0.0732,
+        "self_n": 46,
+        "cross_n": 336
+      },
+      "mistral-7b": {
+        "self_eval_mean": 0.9449,
+        "cross_eval_mean": 0.8489,
+        "bias_delta": 0.096,
+        "self_n": 48,
+        "cross_n": 336
+      },
+      "phi4-mini": {
+        "self_eval_mean": 0.8952,
+        "cross_eval_mean": 0.8634,
+        "bias_delta": 0.0318,
+        "self_n": 48,
+        "cross_n": 334
+      },
+      "qwen3-1.7b": {
+        "self_eval_mean": 0.9524,
+        "cross_eval_mean": 0.8534,
+        "bias_delta": 0.099,
+        "self_n": 48,
+        "cross_n": 336
+      }
+    }
+  },
+  "analysis_7_self_preference_formal": {
+    "description": "Self-preference relative to reference judges from other families. spr_self: share of prompts where the judge ranks its own output first (ties split) vs how often reference judges do; spr_family: same for the judge's family; score_bias_*: difference-in-differences on composite scores (controls output quality and judge severity). Percentile bootstrap over prompts, two-sided p; per measure, Holm-adjusted p and Bonferroni-adjusted CI across judges (ci95 = unadjusted, reference only).",
+    "n_prompts": 48,
+    "n_bootstrap": 10000,
+    "by_judge": {
+      "gemma3-4b": {
+        "spr_self": {
+          "estimate": -0.0676,
+          "ci95": [
+            -0.1469,
+            0.0163
+          ],
+          "p": 0.1158,
+          "n_prompts": 48,
+          "spr": 0.0981,
+          "reference": 0.1657,
+          "excess": -0.0676,
+          "chance": 0.125,
+          "p_holm": 0.4632,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1744,
+            0.061
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": -0.056,
+          "ci95": [
+            -0.1705,
+            0.0645
+          ],
+          "p": 0.3478,
+          "n_prompts": 48,
+          "excess": -0.056,
+          "family": "gemma",
+          "family_size": 8,
+          "chance": 0.25,
+          "p_holm": 0.9894,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.2171,
+            0.1148
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0182,
+          "ci95": [
+            -0.0456,
+            0.0087
+          ],
+          "p": 0.1906,
+          "n_prompts": 48,
+          "p_holm": 0.7624,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0559,
+            0.0181
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": {
+          "estimate": -0.0169,
+          "ci95": [
+            -0.0472,
+            0.0144
+          ],
+          "p": 0.2892,
+          "n_prompts": 48,
+          "siblings": [
+            "gemma4-e4b"
+          ],
+          "p_holm": 0.5784,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0553,
+            0.0229
+          ],
+          "family_size": 4
+        },
+        "reference_judges": [
+          "granite4",
+          "lfm2.5-1.2b-thinking",
+          "ministral-3-8b",
+          "mistral-7b",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "gemma4-e4b": {
+        "spr_self": {
+          "estimate": 0.1071,
+          "ci95": [
+            0.0327,
+            0.1926
+          ],
+          "p": 0.0044,
+          "n_prompts": 47,
+          "spr": 0.2242,
+          "reference": 0.1164,
+          "excess": 0.1071,
+          "chance": 0.125,
+          "p_holm": 0.0336,
+          "significant": true,
+          "ci_bonferroni": [
+            0.0045,
+            0.2273
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": 0.165,
+          "ci95": [
+            0.0669,
+            0.2655
+          ],
+          "p": 0.001,
+          "n_prompts": 47,
+          "excess": 0.165,
+          "family": "gemma",
+          "family_size": 8,
+          "chance": 0.25,
+          "p_holm": 0.008,
+          "significant": true,
+          "ci_bonferroni": [
+            0.0253,
+            0.3014
+          ]
+        },
+        "score_bias_self": {
+          "estimate": 0.0425,
+          "ci95": [
+            0.0196,
+            0.0654
+          ],
+          "p": 0.0002,
+          "n_prompts": 47,
+          "p_holm": 0.0014,
+          "significant": true,
+          "ci_bonferroni": [
+            0.0116,
+            0.0743
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": {
+          "estimate": 0.0079,
+          "ci95": [
+            -0.026,
+            0.0404
+          ],
+          "p": 0.6466,
+          "n_prompts": 48,
+          "siblings": [
+            "gemma3-4b"
+          ],
+          "p_holm": 0.6466,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0362,
+            0.0483
+          ],
+          "family_size": 4
+        },
+        "reference_judges": [
+          "granite4",
+          "lfm2.5-1.2b-thinking",
+          "ministral-3-8b",
+          "mistral-7b",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "granite4": {
+        "spr_self": {
+          "estimate": 0.0903,
+          "ci95": [
+            0.0173,
+            0.1736
+          ],
+          "p": 0.0098,
+          "n_prompts": 48,
+          "spr": 0.168,
+          "reference": 0.0777,
+          "excess": 0.0903,
+          "chance": 0.125,
+          "p_holm": 0.0588,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0038,
+            0.2132
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": 0.0903,
+          "ci95": [
+            0.0182,
+            0.1719
+          ],
+          "p": 0.0106,
+          "n_prompts": 48,
+          "excess": 0.0903,
+          "family": "granite",
+          "family_size": 8,
+          "chance": 0.125,
+          "p_holm": 0.0742,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0045,
+            0.2069
+          ]
+        },
+        "score_bias_self": {
+          "estimate": 0.0161,
+          "ci95": [
+            -0.0017,
+            0.0345
+          ],
+          "p": 0.0776,
+          "n_prompts": 48,
+          "p_holm": 0.4656,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0083,
+            0.0415
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "gemma4-e4b",
+          "lfm2.5-1.2b-thinking",
+          "ministral-3-8b",
+          "mistral-7b",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "lfm2.5-1.2b-thinking": {
+        "spr_self": {
+          "estimate": 0.0157,
+          "ci95": [
+            -0.0702,
+            0.1143
+          ],
+          "p": 0.7772,
+          "n_prompts": 44,
+          "spr": 0.1182,
+          "reference": 0.0978,
+          "excess": 0.0157,
+          "chance": 0.125,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.095,
+            0.1588
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": 0.0157,
+          "ci95": [
+            -0.071,
+            0.1157
+          ],
+          "p": 0.7786,
+          "n_prompts": 44,
+          "excess": 0.0157,
+          "family": "lfm",
+          "family_size": 8,
+          "chance": 0.125,
+          "p_holm": 0.9894,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0969,
+            0.163
+          ]
+        },
+        "score_bias_self": {
+          "estimate": 0.0573,
+          "ci95": [
+            -0.0189,
+            0.1312
+          ],
+          "p": 0.137,
+          "n_prompts": 46,
+          "p_holm": 0.685,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.051,
+            0.1613
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "gemma4-e4b",
+          "granite4",
+          "ministral-3-8b",
+          "mistral-7b",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ],
+        "caveat": "production-mode judge scores recovered by the flattened-JSON fallback: one shared flag/reason copied to all criteria"
+      },
+      "ministral-3-8b": {
+        "spr_self": {
+          "estimate": 0.169,
+          "ci95": [
+            0.0498,
+            0.298
+          ],
+          "p": 0.0042,
+          "n_prompts": 46,
+          "spr": 0.3105,
+          "reference": 0.1467,
+          "excess": 0.169,
+          "chance": 0.125,
+          "p_holm": 0.0336,
+          "significant": true,
+          "ci_bonferroni": [
+            0.0068,
+            0.3478
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": 0.0862,
+          "ci95": [
+            -0.0319,
+            0.2153
+          ],
+          "p": 0.1716,
+          "n_prompts": 46,
+          "excess": 0.0862,
+          "family": "mistral",
+          "family_size": 8,
+          "chance": 0.25,
+          "p_holm": 0.728,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0815,
+            0.267
+          ]
+        },
+        "score_bias_self": {
+          "estimate": 0.0529,
+          "ci95": [
+            0.0279,
+            0.079
+          ],
+          "p": 0.0001,
+          "n_prompts": 46,
+          "p_holm": 0.0008,
+          "significant": true,
+          "ci_bonferroni": [
+            0.0184,
+            0.0913
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": {
+          "estimate": -0.0448,
+          "ci95": [
+            -0.0712,
+            -0.0197
+          ],
+          "p": 0.0002,
+          "n_prompts": 48,
+          "siblings": [
+            "mistral-7b"
+          ],
+          "p_holm": 0.0008,
+          "significant": true,
+          "ci_bonferroni": [
+            -0.0783,
+            -0.0127
+          ],
+          "family_size": 4
+        },
+        "reference_judges": [
+          "gemma3-4b",
+          "gemma4-e4b",
+          "granite4",
+          "lfm2.5-1.2b-thinking",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "mistral-7b": {
+        "spr_self": {
+          "estimate": 0.0116,
+          "ci95": [
+            -0.0421,
+            0.0723
+          ],
+          "p": 0.7006,
+          "n_prompts": 48,
+          "spr": 0.1187,
+          "reference": 0.107,
+          "excess": 0.0116,
+          "chance": 0.125,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0587,
+            0.1003
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": 0.0439,
+          "ci95": [
+            -0.0408,
+            0.1338
+          ],
+          "p": 0.3298,
+          "n_prompts": 48,
+          "excess": 0.0439,
+          "family": "mistral",
+          "family_size": 8,
+          "chance": 0.25,
+          "p_holm": 0.9894,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0702,
+            0.1699
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0027,
+          "ci95": [
+            -0.0345,
+            0.0257
+          ],
+          "p": 0.8842,
+          "n_prompts": 48,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0495,
+            0.0372
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": {
+          "estimate": 0.0289,
+          "ci95": [
+            0.0051,
+            0.0531
+          ],
+          "p": 0.0172,
+          "n_prompts": 48,
+          "siblings": [
+            "ministral-3-8b"
+          ],
+          "p_holm": 0.0516,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.0013,
+            0.0608
+          ],
+          "family_size": 4
+        },
+        "reference_judges": [
+          "gemma3-4b",
+          "gemma4-e4b",
+          "granite4",
+          "lfm2.5-1.2b-thinking",
+          "phi4-mini",
+          "qwen3-1.7b"
+        ]
+      },
+      "phi4-mini": {
+        "spr_self": {
+          "estimate": -0.0447,
+          "ci95": [
+            -0.0978,
+            0.0172
+          ],
+          "p": 0.1422,
+          "n_prompts": 48,
+          "spr": 0.0749,
+          "reference": 0.1196,
+          "excess": -0.0447,
+          "chance": 0.125,
+          "p_holm": 0.4632,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1142,
+            0.0466
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": -0.0447,
+          "ci95": [
+            -0.098,
+            0.0185
+          ],
+          "p": 0.1456,
+          "n_prompts": 48,
+          "excess": -0.0447,
+          "family": "phi",
+          "family_size": 8,
+          "chance": 0.125,
+          "p_holm": 0.728,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1137,
+            0.0483
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0299,
+          "ci95": [
+            -0.0934,
+            0.0231
+          ],
+          "p": 0.3252,
+          "n_prompts": 48,
+          "p_holm": 0.9756,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1255,
+            0.0395
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "gemma4-e4b",
+          "granite4",
+          "lfm2.5-1.2b-thinking",
+          "ministral-3-8b",
+          "mistral-7b",
+          "qwen3-1.7b"
+        ]
+      },
+      "qwen3-1.7b": {
+        "spr_self": {
+          "estimate": -0.0415,
+          "ci95": [
+            -0.0904,
+            0.0046
+          ],
+          "p": 0.0798,
+          "n_prompts": 48,
+          "spr": 0.0962,
+          "reference": 0.1377,
+          "excess": -0.0415,
+          "chance": 0.125,
+          "p_holm": 0.399,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1105,
+            0.0242
+          ],
+          "family_size": 8
+        },
+        "spr_family": {
+          "estimate": -0.0415,
+          "ci95": [
+            -0.0912,
+            0.0043
+          ],
+          "p": 0.0734,
+          "n_prompts": 48,
+          "excess": -0.0415,
+          "family": "qwen",
+          "family_size": 8,
+          "chance": 0.125,
+          "p_holm": 0.4404,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.1118,
+            0.0221
+          ]
+        },
+        "score_bias_self": {
+          "estimate": -0.0076,
+          "ci95": [
+            -0.0389,
+            0.0206
+          ],
+          "p": 0.6228,
+          "n_prompts": 48,
+          "p_holm": 1.0,
+          "significant": false,
+          "ci_bonferroni": [
+            -0.052,
+            0.0305
+          ],
+          "family_size": 8
+        },
+        "score_bias_siblings": null,
+        "reference_judges": [
+          "gemma3-4b",
+          "gemma4-e4b",
+          "granite4",
+          "lfm2.5-1.2b-thinking",
+          "ministral-3-8b",
+          "mistral-7b",
+          "phi4-mini"
+        ]
+      }
+    },
+    "significant_positive": [
+      "gemma4-e4b:score_bias_self",
+      "gemma4-e4b:spr_family",
+      "gemma4-e4b:spr_self",
+      "ministral-3-8b:score_bias_self",
+      "ministral-3-8b:spr_self"
+    ],
+    "significant_negative": [
+      "ministral-3-8b:score_bias_siblings"
+    ]
+  }
+}
