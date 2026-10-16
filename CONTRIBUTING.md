@@ -17,7 +17,7 @@ cp infra/.env.example infra/.env
 
 make dev            # hot reload — back/evaluation, back/shared, back/llm-gateway,
                      # back/observability are bind-mounted, code changes apply immediately
-make pull-models     # pulls the 4 default Ollama models (phi4-mini, mistral:7b, gemma3:4b, qwen3:1.7b)
+make pull-models     # pulls the 4 default generators (phi4-mini, mistral:7b, gemma3:4b, qwen3:1.7b) + the default judge (ministral-3:8b)
 ```
 
 | Service | URL |

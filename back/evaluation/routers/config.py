@@ -3,7 +3,12 @@
 
 from fastapi import APIRouter, HTTPException
 from shared.schemas.judge import JudgeConfig
-from services.judge_config import get_judge_config, save_judge_config, apply_profile
+from services.judge_config import (
+    DEFAULT_JUDGE_MODEL,
+    apply_profile,
+    get_judge_config,
+    save_judge_config,
+)
 from shared.config import get_evaluation_settings
 
 router = APIRouter(prefix="/config", tags=["config"])
@@ -18,6 +23,12 @@ async def get_available_models() -> dict:
 @router.get("/judge", response_model=JudgeConfig)
 async def get_config():
     return await get_judge_config()
+
+
+@router.get("/judge/defaults")
+async def get_config_defaults() -> dict:
+    """Versioned defaults, so clients can show when the saved config drifted from them."""
+    return {"judge_model": DEFAULT_JUDGE_MODEL}
 
 
 @router.put("/judge", response_model=JudgeConfig)

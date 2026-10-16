@@ -146,7 +146,7 @@ Profiles are applied at runtime — switching a profile updates which criteria a
 | Fairness | AI Act, ethics | — |
 | Robustness | ANSSI | — |
 
-The judge model runs locally (`ollama/gemma3:4b` by default). Evaluation calls are filtered from the traces view so only user interactions appear.
+The judge model runs locally (`ollama/ministral-3:8b` by default, see *Default judge* below). Evaluation calls are filtered from the traces view so only user interactions appear.
 
 ---
 
@@ -219,6 +219,13 @@ govllm/
 **Profile-driven routing.** Switching a governance profile at runtime updates which criteria are active and their weights. The routing layer reads the active profile from Redis at inference time and recommends the best-scoring model for that profile and use case.
 
 **No self-judging.** A model should not evaluate its own answers. The Chat view warns when the current generator (auto-routed or picked manually) is one of the judges that will score it under the active profile: a panel member with active criteria, or the global judge for the criteria the panel does not cover. Judges are also tagged in the model scoreboard. Settings flags the same conflict per profile against each use case's preferred model.
+
+**Default judge: `ministral-3:8b`.** It is versioned in `DEFAULT_JUDGE_MODEL` (`back/evaluation/services/judge_config.py`). Why this model:
+- **Tied best on the ground truth**: 82.7% agreement over three question orderings (49 cases), against 83.0% for `gemma4:e4b`. The +0.3 pp difference is not significant (Bonferroni CI [−5.1, +5.8]).
+- **Robust to question order**: none of its order effects is significant.
+- **Measured self-preference**: it rates its own outputs higher than judges from other families do (score bias +0.053, Bonferroni CI [+0.018, +0.091]). It must therefore **not also be used as the generator**. It is still in the auto-routing pool (`BENCHMARK_MODELS`), so the Chat view warns whenever routing or a manual choice selects it.
+
+A different `judge_model` saved in Redis (for example left over by a benchmark run) is reported in the evaluation service logs at startup and in Settings → Judge (`GET /config/judge/defaults`). `scripts/run_full_benchmark.py` now restores the judge config it found when it ends, even on error.
 
 **Shared schema layer.** All three microservices share `back/shared/src/shared/` for Pydantic schemas and config — single source of truth for data contracts.
 

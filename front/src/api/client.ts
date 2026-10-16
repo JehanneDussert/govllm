@@ -437,6 +437,7 @@ export const api = {
 
   // Judge config
   getJudgeConfig: () => evaluation.get<JudgeConfig>('/config/judge'),
+  getJudgeDefaults: () => evaluation.get<{ judge_model: string }>('/config/judge/defaults'),
 
   saveJudgeConfig: (config: JudgeConfig) => evaluation.put<JudgeConfig>('/config/judge', config),
 

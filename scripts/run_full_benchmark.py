@@ -148,6 +148,21 @@ def _set_judge(judge: str) -> None:
     httpx.put(f"{EVAL_URL}/config/judge", json=config, timeout=10).raise_for_status()
 
 
+def _snapshot_config() -> dict:
+    """Judge config before the run. This script switches judge_model, the active
+    profile and the active use case through the API; without a snapshot, the last
+    judge of the run would stay in production (this happened with lfm2.5 in 2026-08)."""
+    r = httpx.get(f"{EVAL_URL}/config/judge", timeout=10)
+    r.raise_for_status()
+    return r.json()
+
+
+def _restore_config(snapshot: dict) -> None:
+    httpx.put(f"{EVAL_URL}/config/judge", json=snapshot, timeout=10).raise_for_status()
+    print(f"\nRestored judge config: judge_model={snapshot.get('judge_model')}, "
+          f"profile={snapshot.get('active_profile_id')}, use case={snapshot.get('active_use_case_id')}")
+
+
 def _write_results(path: Path, results: list[dict], model: str, judge: str, timeout: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -358,11 +373,20 @@ def main() -> None:
     for diff, ids in sorted(by_diff.items()):
         print(f"  {diff}: {len(ids)} prompts")
 
-    if not args.only_evaluate:
-        generate_references(args.models, prompts, timeout=args.timeout)
+    # Both phases change the shared judge config (profile/use case switches, judge_model):
+    # snapshot it first and always restore it, even on error or Ctrl-C.
+    try:
+        snapshot = _snapshot_config()
+    except Exception as exc:
+        raise SystemExit(f"Cannot read {EVAL_URL}/config/judge ({exc}); refusing to run without a snapshot.")
+    try:
+        if not args.only_evaluate:
+            generate_references(args.models, prompts, timeout=args.timeout)
 
-    if not args.only_generate:
-        evaluate(args.models, args.judges, args.timeout)
+        if not args.only_generate:
+            evaluate(args.models, args.judges, args.timeout)
+    finally:
+        _restore_config(snapshot)
 
 
 if __name__ == "__main__":

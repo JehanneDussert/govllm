@@ -20,6 +20,7 @@ const store = useJudgeStore()
 // Reactive state
 const saved = ref(false)
 const availableModels = ref<string[]>([])
+const defaultJudgeModel = ref<string | null>(null)
 const activeTab = ref<SettingsTabTypes>('profiles')
 const expandedProfile = ref<string | null>(null)
 const expandedUseCase = ref<string | null>(null)
@@ -266,11 +267,13 @@ async function save() {
 
 // Lifecycle
 onMounted(async () => {
-  const [, modelsRes] = await Promise.all([
+  const [, modelsRes, defaultsRes] = await Promise.all([
     store.fetchConfig(),
     api.availableModels().catch(() => ({ data: { models: [] } })),
+    api.getJudgeDefaults().catch(() => null),
   ])
   availableModels.value = modelsRes.data.models
+  defaultJudgeModel.value = defaultsRes?.data.judge_model ?? null
   if (store.config?.active_profile_id) expandedProfile.value = store.config.active_profile_id
   if (store.config?.active_use_case_id) expandedUseCase.value = store.config.active_use_case_id
 })
@@ -695,7 +698,21 @@ onMounted(async () => {
         <section class="settings-section">
           <div class="section-header">
             <div class="section-title">JUDGE MODEL</div>
-            <div class="section-desc">Local Ollama model used to score every response.</div>
+            <div class="section-desc">
+              Local Ollama model used to score every response (criteria not covered by a profile's
+              judge panel).
+              <span v-if="defaultJudgeModel">
+                Versioned default: <strong>{{ defaultJudgeModel.replace('ollama/', '') }}</strong>.
+              </span>
+            </div>
+          </div>
+          <div
+            v-if="defaultJudgeModel && store.config.judge_model !== defaultJudgeModel"
+            class="panel-warning"
+          >
+            ⚠ The judge in use ({{ store.config.judge_model.replace('ollama/', '') }}) differs from the
+            versioned default ({{ defaultJudgeModel.replace('ollama/', '') }}). If you didn't choose
+            it on purpose (e.g. left over by a benchmark run), select the default and save.
           </div>
           <select v-model="store.config.judge_model" class="field-select">
             <option v-for="m in availableModels" :key="m" :value="m">

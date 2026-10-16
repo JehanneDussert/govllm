@@ -117,6 +117,7 @@ pull-models:
 	$(COMPOSE_DEV) exec ollama ollama pull mistral:7b
 	$(COMPOSE_DEV) exec ollama ollama pull phi4-mini
 	$(COMPOSE_DEV) exec ollama ollama pull qwen3:1.7b
+	$(COMPOSE_DEV) exec ollama ollama pull ministral-3:8b   # default judge (DEFAULT_JUDGE_MODEL)
 
 # Redis
 flush-redis:
