@@ -26,7 +26,7 @@ Usage:
     python scripts/groundtruth_stats.py --condition original   # original order only (all judges)
     python scripts/groundtruth_stats.py --models paper         # the 4 judges of arXiv v1 (README figures)
 
-Writes docs/ground_truth/analysis/groundtruth_stats[_<models>].json and
+Writes docs/ground_truth/analysis/groundtruth_stats[_<models>][_<condition>].json and
 docs/ground_truth/figures/agreement_forest_<condition>.{png,pdf}. The figure needs matplotlib;
 the statistics are stdlib only.
 """
@@ -271,7 +271,9 @@ def main():
         "order_effects": order_effects,
         "specialised_panel": panel,
     }
-    out_json = OUT_JSON if args.models == "all" else OUT_JSON.with_name(f"groundtruth_stats_{args.models}.json")
+    # One file per (models, condition): pooled + all models keeps the historical name.
+    suffix = ("" if args.models == "all" else f"_{args.models}") + ("" if cond == "pooled" else f"_{cond}")
+    out_json = OUT_JSON.with_name(f"groundtruth_stats{suffix}.json")
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Written: {out_json}")

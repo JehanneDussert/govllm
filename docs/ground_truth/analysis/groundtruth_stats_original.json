@@ -1,0 +1,806 @@
+{
+  "description": "Agreement with ground truth: mean of per-case agreement; 95% CI = case-level cluster bootstrap (all orderings of a case resampled together). 'pooled' only for judges with all three orderings. Few-shot: same evaluable cases, original order; paired bootstrap; Holm across judges.",
+  "n_bootstrap": 10000,
+  "agreement": {
+    "phi4-mini": {
+      "original": {
+        "estimate": 0.719388,
+        "ci95": [
+          0.627551,
+          0.806122
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.744898,
+        "ci95": [
+          0.658163,
+          0.826531
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.607143,
+        "ci95": [
+          0.505102,
+          0.709184
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.690476,
+        "ci95": [
+          0.608844,
+          0.772109
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "qwen3-1.7b": {
+      "original": {
+        "estimate": 0.653061,
+        "ci95": [
+          0.566327,
+          0.734694
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.581633,
+        "ci95": [
+          0.489796,
+          0.673469
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.571429,
+        "ci95": [
+          0.47449,
+          0.663265
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.602041,
+        "ci95": [
+          0.528912,
+          0.67517
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "gemma3-4b": {
+      "original": {
+        "estimate": 0.658163,
+        "ci95": [
+          0.566327,
+          0.744898
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.640625,
+        "ci95": [
+          0.5625,
+          0.713542
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 48,
+        "n_case_runs": 48
+      },
+      "permuted": {
+        "estimate": 0.691489,
+        "ci95": [
+          0.611702,
+          0.771277
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 47,
+        "n_case_runs": 47
+      },
+      "pooled": {
+        "estimate": 0.663194,
+        "ci95": [
+          0.594406,
+          0.732639
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 144
+      }
+    },
+    "mistral-7b": {
+      "original": {
+        "estimate": 0.515306,
+        "ci95": [
+          0.403061,
+          0.627551
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.515306,
+        "ci95": [
+          0.403061,
+          0.627551
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.515306,
+        "ci95": [
+          0.403061,
+          0.627551
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.515306,
+        "ci95": [
+          0.403061,
+          0.627551
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "ministral-3-8b": {
+      "original": {
+        "estimate": 0.795918,
+        "ci95": [
+          0.719388,
+          0.867347
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.841837,
+        "ci95": [
+          0.780612,
+          0.897959
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.841837,
+        "ci95": [
+          0.77551,
+          0.897959
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.826531,
+        "ci95": [
+          0.765306,
+          0.882653
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "granite4": {
+      "original": {
+        "estimate": 0.719388,
+        "ci95": [
+          0.642857,
+          0.795918
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      }
+    },
+    "gemma4-e4b": {
+      "original": {
+        "estimate": 0.836735,
+        "ci95": [
+          0.765306,
+          0.897959
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.831633,
+        "ci95": [
+          0.765306,
+          0.892857
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.821429,
+        "ci95": [
+          0.755102,
+          0.887755
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.829932,
+        "ci95": [
+          0.763605,
+          0.891156
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
+      }
+    },
+    "lfm2.5-1.2b-thinking": {
+      "original": {
+        "estimate": 0.536458,
+        "ci95": [
+          0.432292,
+          0.640625
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 48,
+        "n_case_runs": 48
+      }
+    }
+  },
+  "paired_vs_top": {
+    "reference": "gemma4-e4b",
+    "condition": "original",
+    "differences": {
+      "phi4-mini": {
+        "estimate": 0.117347,
+        "ci95": [
+          0.030612,
+          0.214286
+        ],
+        "p_two_sided_vs_0": 0.0062,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0124,
+        "ci_bonferroni": [
+          0.005102,
+          0.25
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "qwen3-1.7b": {
+        "estimate": 0.183673,
+        "ci95": [
+          0.107143,
+          0.265306
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0007,
+        "ci_bonferroni": [
+          0.081633,
+          0.295918
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "gemma3-4b": {
+        "estimate": 0.178571,
+        "ci95": [
+          0.096939,
+          0.260204
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0007,
+        "ci_bonferroni": [
+          0.071429,
+          0.290816
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "mistral-7b": {
+        "estimate": 0.321429,
+        "ci95": [
+          0.204082,
+          0.443878
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0007,
+        "ci_bonferroni": [
+          0.163265,
+          0.494898
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "ministral-3-8b": {
+        "estimate": 0.040816,
+        "ci95": [
+          -0.02551,
+          0.107143
+        ],
+        "p_two_sided_vs_0": 0.2534,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.2534,
+        "ci_bonferroni": [
+          -0.05102,
+          0.127551
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "granite4": {
+        "estimate": 0.117347,
+        "ci95": [
+          0.035714,
+          0.19898
+        ],
+        "p_two_sided_vs_0": 0.0028,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0084,
+        "ci_bonferroni": [
+          0.015306,
+          0.229592
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "lfm2.5-1.2b-thinking": {
+        "estimate": 0.296875,
+        "ci95": [
+          0.182292,
+          0.416667
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 48,
+        "n_case_runs": 48,
+        "p_holm": 0.0007,
+        "ci_bonferroni": [
+          0.140625,
+          0.458333
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      }
+    }
+  },
+  "fewshot_gain": {
+    "phi4-mini": {
+      "estimate": 0.083333,
+      "ci95": [
+        -0.041667,
+        0.21875
+      ],
+      "p_two_sided_vs_0": 0.2528,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.6458,
+      "fewshot": 0.7292,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.09375,
+        0.28125
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "qwen3-1.7b": {
+      "estimate": -0.020833,
+      "ci95": [
+        -0.197917,
+        0.135417
+      ],
+      "p_two_sided_vs_0": 0.8722,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.6146,
+      "fewshot": 0.5938,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.270833,
+        0.197917
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "gemma3-4b": {
+      "estimate": 0.125,
+      "ci95": [
+        0.010417,
+        0.239583
+      ],
+      "p_two_sided_vs_0": 0.0406,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.6354,
+      "fewshot": 0.7604,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 0.3248,
+      "ci_bonferroni": [
+        -0.03125,
+        0.302083
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "mistral-7b": {
+      "estimate": 0.076087,
+      "ci95": [
+        -0.021739,
+        0.173913
+      ],
+      "p_two_sided_vs_0": 0.1506,
+      "n_cases": 23,
+      "n_case_runs": 23,
+      "baseline": 0.5326,
+      "fewshot": 0.6087,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 0.9036,
+      "ci_bonferroni": [
+        -0.054348,
+        0.217391
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "ministral-3-8b": {
+      "estimate": 0.03125,
+      "ci95": [
+        -0.020833,
+        0.083333
+      ],
+      "p_two_sided_vs_0": 0.3268,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.75,
+      "fewshot": 0.7812,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.03125,
+        0.114583
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "granite4": {
+      "estimate": 0.0,
+      "ci95": [
+        -0.104167,
+        0.104167
+      ],
+      "p_two_sided_vs_0": 1.0,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.7188,
+      "fewshot": 0.7188,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.145833,
+        0.145833
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "gemma4-e4b": {
+      "estimate": 0.010417,
+      "ci95": [
+        -0.041667,
+        0.0625
+      ],
+      "p_two_sided_vs_0": 0.886,
+      "n_cases": 24,
+      "n_case_runs": 24,
+      "baseline": 0.8229,
+      "fewshot": 0.8333,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.052083,
+        0.104167
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    },
+    "lfm2.5-1.2b-thinking": {
+      "estimate": 0.130952,
+      "ci95": [
+        -0.02381,
+        0.285714
+      ],
+      "p_two_sided_vs_0": 0.1266,
+      "n_cases": 21,
+      "n_case_runs": 21,
+      "baseline": 0.5357,
+      "fewshot": 0.6667,
+      "unmatched_fewshot_cases": 1,
+      "p_holm": 0.8862,
+      "ci_bonferroni": [
+        -0.083333,
+        0.357143
+      ],
+      "ci_bonferroni_level": 0.9938,
+      "family_size": 8
+    }
+  },
+  "order_effects": {
+    "phi4-mini:reversed": {
+      "estimate": 0.02551,
+      "ci95": [
+        0.0,
+        0.056122
+      ],
+      "p_two_sided_vs_0": 0.097,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 0.97,
+      "ci_bonferroni": [
+        -0.010204,
+        0.076531
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "phi4-mini:permuted": {
+      "estimate": -0.112245,
+      "ci95": [
+        -0.19898,
+        -0.035714
+      ],
+      "p_two_sided_vs_0": 0.0048,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 0.0576,
+      "ci_bonferroni": [
+        -0.244898,
+        0.0
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "qwen3-1.7b:reversed": {
+      "estimate": -0.071429,
+      "ci95": [
+        -0.153061,
+        0.005102
+      ],
+      "p_two_sided_vs_0": 0.078,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 0.858,
+      "ci_bonferroni": [
+        -0.188776,
+        0.035714
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "qwen3-1.7b:permuted": {
+      "estimate": -0.081633,
+      "ci95": [
+        -0.188776,
+        0.020408
+      ],
+      "p_two_sided_vs_0": 0.1408,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.234694,
+        0.071429
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "gemma3-4b:reversed": {
+      "estimate": -0.010417,
+      "ci95": [
+        -0.09375,
+        0.072917
+      ],
+      "p_two_sided_vs_0": 0.8794,
+      "n_cases": 48,
+      "n_case_runs": 48,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.140625,
+        0.104167
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "gemma3-4b:permuted": {
+      "estimate": 0.026596,
+      "ci95": [
+        -0.053191,
+        0.101064
+      ],
+      "p_two_sided_vs_0": 0.5494,
+      "n_cases": 47,
+      "n_case_runs": 47,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.101064,
+        0.12766
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "mistral-7b:reversed": {
+      "estimate": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_two_sided_vs_0": 1.0,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        0.0,
+        0.0
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "mistral-7b:permuted": {
+      "estimate": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_two_sided_vs_0": 1.0,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        0.0,
+        0.0
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "ministral-3-8b:reversed": {
+      "estimate": 0.045918,
+      "ci95": [
+        -0.010204,
+        0.107143
+      ],
+      "p_two_sided_vs_0": 0.1344,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.030612,
+        0.142857
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "ministral-3-8b:permuted": {
+      "estimate": 0.045918,
+      "ci95": [
+        -0.005102,
+        0.102041
+      ],
+      "p_two_sided_vs_0": 0.1036,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 0.97,
+      "ci_bonferroni": [
+        -0.030612,
+        0.132653
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "gemma4-e4b:reversed": {
+      "estimate": -0.005102,
+      "ci95": [
+        -0.02551,
+        0.015306
+      ],
+      "p_two_sided_vs_0": 0.8346,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.040816,
+        0.030612
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    },
+    "gemma4-e4b:permuted": {
+      "estimate": -0.015306,
+      "ci95": [
+        -0.045918,
+        0.010204
+      ],
+      "p_two_sided_vs_0": 0.4202,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.061224,
+        0.02551
+      ],
+      "ci_bonferroni_level": 0.9958,
+      "family_size": 12
+    }
+  },
+  "specialised_panel": {
+    "assignment": {
+      "data_privacy": "ministral-3-8b",
+      "human_oversight": "ministral-3-8b",
+      "non_manipulation": "gemma4-e4b",
+      "prompt_injection": "ministral-3-8b",
+      "transparency": "ministral-3-8b"
+    },
+    "best_single_judge": "gemma4-e4b",
+    "panel_agreement": {
+      "estimate": 0.833333,
+      "ci95": [
+        0.77381,
+        0.887755
+      ],
+      "p_two_sided_vs_0": 0.0001,
+      "n_cases": 49,
+      "n_case_runs": 147
+    },
+    "panel_minus_best": {
+      "estimate": 0.003401,
+      "ci95": [
+        -0.028912,
+        0.039116
+      ],
+      "p_two_sided_vs_0": 0.9218,
+      "n_cases": 49,
+      "n_case_runs": 147
+    },
+    "note": "in-sample selection: the assignment is chosen on the same cases; single comparison"
+  }
+}
