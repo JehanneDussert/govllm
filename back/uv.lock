@@ -360,7 +360,7 @@ wheels = [
 [[package]]
 name = "evaluation"
 version = "0.1.0"
-source = { editable = "evaluation" }
+source = { virtual = "evaluation" }
 dependencies = [
     { name = "asyncpg" },
     { name = "deepeval" },
@@ -369,18 +369,20 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "redis" },
+    { name = "shared" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.29.0" },
-    { name = "deepeval", specifier = ">=0.21.73" },
+    { name = "deepeval", specifier = ">=3.8.9" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-settings", specifier = ">=2.5.2" },
     { name = "redis", specifier = ">=5.0.0" },
+    { name = "shared", editable = "shared" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.6" },
 ]
 
@@ -725,6 +727,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "redis" },
+    { name = "shared" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -735,6 +738,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-settings", specifier = ">=2.5.2" },
     { name = "redis", specifier = ">=5.0.0" },
+    { name = "shared", editable = "shared" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.6" },
 ]
 
@@ -940,6 +944,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "redis" },
+    { name = "shared" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -950,6 +955,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-settings", specifier = ">=2.5.2" },
     { name = "redis", specifier = ">=5.0.0" },
+    { name = "shared", editable = "shared" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.6" },
 ]
 
