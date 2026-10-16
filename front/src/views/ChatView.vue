@@ -38,7 +38,11 @@ async function fetchRouting(applyModel = true) {
       if (!recommended || recommended.meets_threshold !== false) {
         store.currentModel = res.data.recommended
       } else {
-        const firstValid = res.data.models.find((m) => m.meets_threshold === true)
+        // Never fall back to a judge of the active profile, unless the backend
+        // already had to (judge_exclusion_fallback).
+        const firstValid = res.data.models.find(
+          (m) => m.meets_threshold === true && (!m.is_judge || res.data.judge_exclusion_fallback),
+        )
         if (firstValid) store.currentModel = firstValid.model
       }
     }
@@ -173,6 +177,11 @@ watch(
         <RouterLink to="/settings">Settings</RouterLink>.
       </div>
 
+      <div v-if="autoRoute && routing?.judge_exclusion_fallback" class="self-judge-warning" role="status">
+        ⚠ AUTO routing could not exclude the judges of the active profile: no other model in the
+        routing pool can be recommended for this use case, so the usual choice was kept.
+      </div>
+
       <!-- Scoreboard expanded -->
       <div v-if="routingExpanded" class="routing-scoreboard">
         <div class="scoreboard-label">
@@ -185,21 +194,21 @@ watch(
         </div>
         <div class="scoreboard-grid">
           <div
-            v-for="(m, i) in routing?.models ?? []"
+            v-for="m in routing?.models ?? []"
             :key="m.model"
             class="score-card"
             :class="{
-              winner: i === 0 && m.avg_score !== null && m.meets_threshold !== false,
+              winner: m.model === routing?.recommended && m.avg_score !== null && m.meets_threshold !== false,
               selected: store.currentModel === m.model,
               'below-threshold': m.meets_threshold === false,
             }"
           >
             <div class="score-card-badge">
-              {{ i === 0 && m.avg_score !== null ? 'RECOMMENDED' : 'model' }}
+              {{ m.model === routing?.recommended ? 'RECOMMENDED' : 'model' }}
               <span
                 v-if="activeJudges.includes(m.model)"
                 class="judge-tag"
-                title="This model is a judge for the active profile: avoid using it as the generator"
+                title="Judge for the active profile: excluded from AUTO routing; avoid it as the generator"
                 >· judge</span
               >
             </div>
@@ -221,13 +230,13 @@ watch(
             </div>
             <button
               class="score-card-btn"
-              :class="{ 'btn-recommended': i === 0 && m.avg_score !== null }"
+              :class="{ 'btn-recommended': m.model === routing?.recommended }"
               @click.stop="selectModel(m.model)"
             >
               {{
                 store.currentModel === m.model
                   ? '✓ selected'
-                  : i === 0 && m.avg_score !== null
+                  : m.model === routing?.recommended
                     ? 'use this model'
                     : 'select'
               }}

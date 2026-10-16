@@ -7,6 +7,7 @@ import math
 import redis.asyncio as aioredis
 from shared.config import get_evaluation_settings
 from services.judge_config import get_judge_config
+from services.routing import effective_judges, recommend
 
 router = APIRouter(prefix="/matrix", tags=["matrix"])
 settings = get_evaluation_settings()
@@ -76,6 +77,12 @@ async def get_routing():
     Returns the recommended model for the active profile + use case.
     Routing strategy is read from config: best_score | progression | stability | strict.
     Per-criterion min_score thresholds from the active profile act as a compliance gate.
+
+    The effective judges of the active profile (global judge + panel members with
+    active criteria) are excluded from the recommendation, so AUTO routing never
+    picks a model that would judge its own answers. If that leaves nothing to
+    recommend, the unrestricted recommendation is returned with
+    judge_exclusion_fallback=true. Each model carries is_judge for the UI.
     """
     config = await get_judge_config()
     models = settings.benchmark_models
@@ -145,6 +152,8 @@ async def get_routing():
             return True
         return m["avg_score"] is not None and m["avg_score"] >= min_threshold
 
+    judges = effective_judges(config)
+
     # ── Apply routing strategy ───────────────────────────────────────────────
     if strategy == "progression":
 
@@ -175,17 +184,25 @@ async def get_routing():
             key=lambda m: m["avg_score"] if m["avg_score"] is not None else -1.0,
             reverse=True,
         )
-        recommended = eligible[0]["model"] if eligible else None
         for m in model_scores:
             m["meets_threshold"] = _passes_global_threshold(
                 m
             ) and _passes_criterion_gate(m)
+        routing = recommend(
+            model_scores,
+            models,
+            judges,
+            strict=True,
+            passes=lambda m: _passes_global_threshold(m) and _passes_criterion_gate(m),
+        )
+        for m in model_scores:
+            m["is_judge"] = m["model"] in judges
         # Remove internal fields before returning
         for m in model_scores:
             m.pop("delta_score", None)
             m.pop("variance", None)
         return {
-            "recommended": recommended,
+            **routing,
             "use_case_id": use_case_id,
             "profile_id": config.active_profile_id,
             "min_threshold": min_threshold,
@@ -209,11 +226,9 @@ async def get_routing():
             else None
         )
 
-    recommended = (
-        model_scores[0]["model"]
-        if model_scores and model_scores[0]["avg_score"] is not None
-        else (models[0] if models else None)
-    )
+    routing = recommend(model_scores, models, judges, strict=False, passes=lambda m: True)
+    for m in model_scores:
+        m["is_judge"] = m["model"] in judges
 
     # Remove internal fields before returning
     for m in model_scores:
@@ -221,7 +236,7 @@ async def get_routing():
         m.pop("variance", None)
 
     return {
-        "recommended": recommended,
+        **routing,
         "use_case_id": use_case_id,
         "profile_id": config.active_profile_id,
         "min_threshold": min_threshold,
