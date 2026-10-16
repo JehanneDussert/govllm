@@ -31,7 +31,12 @@ make pull-models     # pulls the 4 default generators (phi4-mini, mistral:7b, ge
 
 **Note on hot reload:** with `make dev`, editing any `.py` file under `back/evaluation/` or `back/shared/` triggers uvicorn's `--reload`, which gracefully restarts the service — including waiting for any in-flight request to complete first. If a long-running job (e.g. a ground truth run hitting Ollama) is active against that service when you save a file, the whole service will stall until that request finishes. Avoid editing backend Python files while a ground truth run or benchmark is in progress; frontend and documentation changes are unaffected.
 
-**Note for Windows hosts:** the services run in Linux containers, so a local `back/.venv` is only needed for editors and host-side scripts. In that venv, `import deepeval` crashes with `OPENSSL_Uplink … no OPENSSL_Applink` (a native OpenSSL issue on Windows). It doesn't affect the containers; ignore it, or run anything that needs deepeval inside the `evaluation` container.
+**Note for Windows hosts — `SSLKEYLOGFILE`:** the services run in Linux containers, so a local `back/.venv` is only needed for editors and host-side scripts. If the `SSLKEYLOGFILE` environment variable is set (some network-monitoring / TLS-inspection tools set it, often to a named pipe), Python builds that lack OpenSSL's `applink` shim crash on the first TLS context with `OPENSSL_Uplink … no OPENSSL_Applink`. That includes the "standalone" CPython that `uv` downloads by default. In practice it shows up as `import deepeval` or any `httpx`/`urllib` HTTPS-capable client failing in the host venv. Fix: build the venv on a python.org or Microsoft Store Python 3.12, which ships `applink`, then sync from the lock:
+```bash
+uv venv --python <path-to-python.org-or-Store-python3.12> back/.venv
+cd back && uv sync --frozen --all-packages
+```
+Alternatively, unset `SSLKEYLOGFILE` for your shell. The containers are not affected.
 
 ---
 
