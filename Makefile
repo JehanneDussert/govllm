@@ -72,7 +72,8 @@ dev:
 	@echo ""
 	@echo "  Dev stack running with hot reload."
 	@echo "  Edit any file in back/ — uvicorn reloads automatically."
-	@echo "  Frontend: cd front && pnpm dev"
+	@echo "  Edit any file in front/ — Vite HMR reloads automatically."
+	@echo "  Frontend: http://localhost:5173"
 	@echo ""
 
 prod:

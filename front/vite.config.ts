@@ -13,4 +13,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  // Set by docker-compose.dev.yml: bind mounts on Docker Desktop don't emit file events.
+  server: {
+    watch: { usePolling: process.env.VITE_USE_POLLING === 'true' },
+  },
 })

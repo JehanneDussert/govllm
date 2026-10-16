@@ -1,10 +1,28 @@
 services:
 
+  front:
+    build:
+      context: ../front
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ../front:/app
+      - front_node_modules:/app/node_modules
+    ports: !override
+      - "5173:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    environment:
+      VITE_USE_POLLING: "true"  # read by vite.config.ts (chokidar 4 ignores CHOKIDAR_USEPOLLING)
+
   llm-gateway:
     volumes:
       - ../back/llm-gateway:/app
       - ../back/shared/src/shared:/app/shared
       - llm_gateway_venv:/app/.venv
+    # Docker Desktop (Windows/macOS) bind mounts don't propagate file events:
+    # without polling, --reload never fires and the server keeps running old code.
+    environment:
+      WATCHFILES_FORCE_POLLING: "true"
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
 
   observability:
@@ -12,16 +30,26 @@ services:
       - ../back/observability:/app
       - ../back/shared/src/shared:/app/shared
       - observability_venv:/app/.venv
+    # Docker Desktop (Windows/macOS) bind mounts don't propagate file events:
+    # without polling, --reload never fires and the server keeps running old code.
+    environment:
+      WATCHFILES_FORCE_POLLING: "true"
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
 
   evaluation:
     volumes:
       - ../back/evaluation:/app
       - ../back/shared/src/shared:/app/shared
+      - ../docs/ground_truth:/app/docs_ground_truth:ro
       - evaluation_venv:/app/.venv
+    # Docker Desktop (Windows/macOS) bind mounts don't propagate file events:
+    # without polling, --reload never fires and the server keeps running old code.
+    environment:
+      WATCHFILES_FORCE_POLLING: "true"
     command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
 
 volumes:
   llm_gateway_venv:
   observability_venv:
   evaluation_venv:
+  front_node_modules:
