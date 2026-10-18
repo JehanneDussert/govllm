@@ -14,6 +14,6 @@
     {"slug": "gemma4-e4b", "id": "ollama/gemma4:e4b", "label": "gemma4:e4b", "family": "gemma", "size_b": 8.0, "size_b_nominal": 4.0, "color": "#000000"},
     {"slug": "lfm2.5-1.2b-thinking", "id": "ollama/hf.co/LiquidAI/LFM2.5-1.2B-Thinking-GGUF:latest", "label": "lfm2.5:1.2b-thinking", "family": "lfm", "size_b": 1.17, "size_b_nominal": 1.2, "color": "#F0E442",
      "file_slug": "hf.co-LiquidAI-LFM2.5-1.2B-Thinking-GGUF-latest",
-     "caveat": "production-mode judge scores recovered by the flattened-JSON fallback: one shared flag/reason copied to all criteria"}
+     "caveat": "judge output only parses through fallbacks: in checklist mode (ground truth) answers often come as a positional list mapped to q1..qN; in production mode the flattened JSON is rebuilt with one shared flag/reason copied to all criteria. Needs an extended token budget (6144). Interpret its figures with caution."}
   ]
 }

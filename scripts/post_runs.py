@@ -13,6 +13,10 @@ Modes:
     python scripts/post_runs.py --force      # run the pipeline now (no readiness check)
     python scripts/post_runs.py --dry-run    # log what would run, change nothing
 
+Which runs to wait for and export is configurable (defaults = the 2026-10-15 runs):
+    --run-log /tmp/gt_candidates2.log --judges granite4,lfm2.5-1.2b-thinking
+    --expected-branch analysis/granite-lfm-3orders
+
 Must run from the repo root (or a worktree) on the branch holding the analysis
 scripts, with matplotlib/numpy available for the figures, e.g.
     uv run --no-project --with matplotlib==3.9.2 --with numpy==2.1.3 python scripts/post_runs.py --check
@@ -32,9 +36,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_STATE = ROOT.parent / "govllm-post-runs"
 CONTAINER = "evaluation"
+# Defaults; overridden by --run-log / --judges / --expected-branch.
 RUN_LOG = "/tmp/gt_candidates.log"           # log of the runs inside the container
 DONE_LINE = "ALL_DONE"                        # last line written by the chained runs
-JUDGES = ["ollama/gemma4:e4b", "ollama/ministral-3:8b"]
 JUDGE_SLUGS = "gemma4-e4b,ministral-3-8b"
 EVAL_URL = "http://localhost:8003"
 EXPECTED_BRANCH = "analysis/8x8"
@@ -150,6 +154,14 @@ def summarise(pl: Pipeline):
                   f"- panel {panel['panel_agreement']['estimate'] * 100:.1f}% vs {panel['best_single_judge']}: "
                   f"{pm['estimate'] * 100:+.1f} pp [{pm['ci95'][0] * 100:+.1f}, {pm['ci95'][1] * 100:+.1f}]"]
     changed = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout
+    # Caveats for the judges of this run (and any other judge in the results) from models.json
+    from model_registry import MODELS
+    flagged = [s for s in MODELS if MODELS[s].get("caveat")
+               and (s in JUDGE_SLUGS.split(",") or s in stats["agreement"])]
+    if flagged:
+        lines += ["", "## Caveats — interpret with caution", ""]
+        for s in flagged:
+            lines.append(f"- **{s}**: {MODELS[s]['caveat']}")
     lines += ["", "## Files written in the worktree (not committed)", "", "```", changed.rstrip(), "```"]
     out = pl.state / "post_runs_summary.md"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -182,13 +194,18 @@ def pipeline(pl: Pipeline):
 
 
 def main():
+    global RUN_LOG, JUDGE_SLUGS, EXPECTED_BRANCH
     ap = argparse.ArgumentParser()
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--force", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
     ap.add_argument("--state-dir", default=str(DEFAULT_STATE))
+    ap.add_argument("--run-log", default=RUN_LOG, help="log of the chained runs inside the container")
+    ap.add_argument("--judges", default=JUDGE_SLUGS, help="comma-separated slugs to export (models.json)")
+    ap.add_argument("--expected-branch", default=EXPECTED_BRANCH, help="branch the worktree must be on")
     args = ap.parse_args()
+    RUN_LOG, JUDGE_SLUGS, EXPECTED_BRANCH = args.run_log, args.judges, args.expected_branch
 
     pl = Pipeline(Path(args.state_dir), dry_run=args.dry_run)
     done_marker = pl.state / "post_runs.done"
