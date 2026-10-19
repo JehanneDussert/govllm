@@ -88,6 +88,18 @@ CREATE TABLE IF NOT EXISTS groundtruth_results (
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Columns added after the initial table (idempotent, safe on existing data).
+-- status: ok | call_error | json_error | empty | parse_error. Unusable judge
+-- answers are stored with status != 'ok' and NULL score/agreement, so that an
+-- unusable answer is a recorded outcome rather than a missing row.
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS question_order TEXT NOT NULL DEFAULT 'original';
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS incoherence_validated BOOLEAN DEFAULT NULL;
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'ok';
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS raw_response TEXT;
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS parse_fallback TEXT;
+ALTER TABLE groundtruth_results ALTER COLUMN score DROP NOT NULL;
+ALTER TABLE groundtruth_results ALTER COLUMN agreement DROP NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion  ON groundtruth_cases(criterion);
 CREATE INDEX IF NOT EXISTS idx_gt_results_case     ON groundtruth_results(case_id);
 CREATE INDEX IF NOT EXISTS idx_gt_results_judge    ON groundtruth_results(judge_model);

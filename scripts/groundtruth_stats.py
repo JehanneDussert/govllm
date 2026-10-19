@@ -15,6 +15,13 @@ Ground truth statistics with uncertainty, from docs/ground_truth/results/.
    judge. The assignment is selected on the same cases it is evaluated on
    (in-sample), which favours the panel; reported as a single comparison.
 6. Forest plot of (1).
+7. Usable-answer rate per judge and ordering: share of corpus cases for which the
+   judge returned a complete true/false answer vector (status "ok"); the other
+   statuses (call_error, json_error, empty, parse_error, not_recorded) are counted.
+8. Sensitivity of (1) to unusable answers: agreement excluding them (the headline
+   figure, as in 1) vs worst case, where every unusable answer counts as a full
+   disagreement (agreement 0 for that case). A judge is flagged when the worst-case
+   estimate falls outside the 95% CI of the headline estimate.
 
 Multiple comparisons: every family of tests (2, 3, 4) reports the unadjusted 95% CI,
 a Holm-adjusted p-value and a Bonferroni-adjusted CI (level 1 - 0.05/k, k = tests in
@@ -51,11 +58,28 @@ def case_key(r):
     return (r["criterion"], r["prompt"][:120])
 
 
-def load(slug, order):
+def load_entries(slug, order):
+    """All entries of an exported file (full corpus grid, every status), or None."""
     path = RESULTS / f"{slug}_{order}.json"
     if not path.exists():
         return None
-    return {case_key(r): r["agreement"] for r in json.loads(path.read_text(encoding="utf-8"))["results"]}
+    return json.loads(path.read_text(encoding="utf-8"))["results"]
+
+
+def load(slug, order):
+    """case -> agreement, usable answers only (status ok)."""
+    entries = load_entries(slug, order)
+    if entries is None:
+        return None
+    return {case_key(r): r["agreement"] for r in entries if r.get("status", "ok") == "ok"}
+
+
+def load_worst_case(slug, order):
+    """case -> agreement, every unusable answer counted as a full disagreement (0)."""
+    entries = load_entries(slug, order)
+    if entries is None:
+        return None
+    return {case_key(r): (r["agreement"] if r.get("status", "ok") == "ok" else 0.0) for r in entries}
 
 
 def load_fewshot(slug):
@@ -69,7 +93,8 @@ def load_fewshot(slug):
 def cluster_bootstrap(by_case: dict, n_boot: int, seed: str):
     """by_case: case -> list of values (one per ordering). Mean over all values."""
     rng = random.Random(seed)
-    cases = [c for c, vs in by_case.items() if vs]
+    # Sorted, so the CI does not depend on the order of the cases in the result files
+    cases = sorted(c for c, vs in by_case.items() if vs)
     allv = [v for c in cases for v in by_case[c]]
     est = sum(allv) / len(allv)
     means = []
@@ -259,6 +284,44 @@ def main():
     if order_effects:
         holm(order_effects)
 
+    # 7. Usable-answer rate per judge and ordering
+    usable = defaultdict(dict)
+    for j in data:
+        for o in ORDERS:
+            entries = load_entries(j, o)
+            if not entries:
+                continue
+            counts = defaultdict(int)
+            for r in entries:
+                counts[r.get("status", "ok")] += 1
+            usable[j][o] = {"n_usable": counts.get("ok", 0), "n_expected": len(entries),
+                            "rate": round(counts.get("ok", 0) / len(entries), 6),
+                            "status_counts": dict(sorted(counts.items()))}
+
+    # 8. Sensitivity to unusable answers: excluded (headline) vs counted as disagreements
+    sensitivity = defaultdict(dict)
+    for j in data:
+        worst = {o: load_worst_case(j, o) for o in ORDERS}
+        conditions = [o for o in ORDERS if worst[o]]
+        if all(worst[o] for o in ORDERS):
+            conditions.append("pooled")
+        for o in conditions:
+            if o not in agreement[j]:
+                continue
+            orders = ORDERS if o == "pooled" else [o]
+            by_case = defaultdict(list)
+            for oo in orders:
+                for c, v in worst[oo].items():
+                    by_case[c].append(v)
+            w = strip(cluster_bootstrap(by_case, args.bootstrap, f"worst:{j}:{o}"))
+            h = agreement[j][o]
+            sensitivity[j][o] = {
+                "excluding_unusable": {k: h[k] for k in ("estimate", "ci95", "n_cases", "n_case_runs")},
+                "unusable_as_disagreement": w,
+                "difference_pp": round((h["estimate"] - w["estimate"]) * 100, 2),
+                "flag": not (h["ci95"][0] <= w["estimate"] <= h["ci95"][1]),
+            }
+
     out = {
         "description": "Agreement with ground truth: mean of per-case agreement; 95% CI = case-level cluster "
                        "bootstrap (all orderings of a case resampled together). 'pooled' only for judges with "
@@ -270,6 +333,8 @@ def main():
         "fewshot_gain": fewshot,
         "order_effects": order_effects,
         "specialised_panel": panel,
+        "usable_answers": usable,
+        "sensitivity_unusable": sensitivity,
     }
     # One file per (models, condition): pooled + all models keeps the historical name.
     suffix = ("" if args.models == "all" else f"_{args.models}") + ("" if cond == "pooled" else f"_{cond}")
@@ -300,6 +365,17 @@ def main():
     print("\n=== Order effects (ordering minus original, paired by case) ===")
     for name, s in order_effects.items():
         print(f"  {name:<32} {_fmt(s)}")
+    print("\n=== Usable answers (status ok / corpus cases) ===")
+    for j, by_o in usable.items():
+        cells = "  ".join(f"{o} {u['n_usable']}/{u['n_expected']}" for o, u in by_o.items())
+        print(f"  {j:<22} {cells}")
+    print("\n=== Sensitivity: excluding unusable vs counted as disagreements ===")
+    for j, by_o in sensitivity.items():
+        for o, s in by_o.items():
+            h, w = s["excluding_unusable"], s["unusable_as_disagreement"]
+            if s["difference_pp"] or s["flag"]:
+                print(f"  {j:<22} {o:<9} {h['estimate'] * 100:5.1f}% vs {w['estimate'] * 100:5.1f}%  "
+                      f"({s['difference_pp']:+.1f} pp){'  FLAG' if s['flag'] else ''}")
 
     if not args.no_figure and in_cond:
         forest(in_cond, cond, f"agreement_forest_{cond}")

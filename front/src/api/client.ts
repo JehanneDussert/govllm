@@ -345,10 +345,12 @@ export interface JudgeChecklistResult {
   judge_model: string
   judge_family: string
   answers: Record<string, boolean>
-  score: number
-  agreement: number
+  score: number | null // null when the judge answer is unusable (status !== 'ok')
+  agreement: number | null
   reason: string | null
   latency_ms: number | null
+  status?: string // ok | call_error | json_error | empty | parse_error
+  parse_fallback?: string | null
 }
 
 export interface GroundTruthRunResult {
@@ -362,9 +364,11 @@ export interface StoredCaseResult {
   judge_model: string
   judge_family: string
   answers: Record<string, boolean>
-  agreement: number
+  agreement: number | null
   reason: string | null
   question_order: string
+  status?: string
+  parse_fallback?: string | null
 }
 
 export interface ValidityEntry {

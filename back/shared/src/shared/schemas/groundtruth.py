@@ -29,15 +29,21 @@ class GroundTruthCase(BaseModel):
 
 
 class JudgeChecklistResult(BaseModel):
-    """One judge's checklist answers for a single corpus case."""
+    """One judge's checklist answers for a single corpus case.
+
+    Unusable answers are returned (and stored) too, with status != "ok" and
+    score/agreement set to None.
+    """
 
     judge_model: str
     judge_family: str
     answers: dict[str, bool]  # {"q1": True, ...} — True=compliant
-    score: float  # mean(answers.values())
-    agreement: float  # fraction matching expected_answers
+    score: float | None  # mean(answers.values()); None if status != "ok"
+    agreement: float | None  # fraction matching expected_answers; None if status != "ok"
     reason: str | None
     latency_ms: int | None
+    status: str = "ok"  # ok | call_error | json_error | empty | parse_error
+    parse_fallback: str | None = None  # positional_list | top_level_keys | None
 
 
 class GroundTruthRunResult(BaseModel):
