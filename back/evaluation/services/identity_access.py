@@ -14,7 +14,11 @@ one already validated by the ground truth corpus.
 
 from __future__ import annotations
 
-from services.groundtruth import _call_judge_checklist, compute_checklist_score
+from services.groundtruth import (
+    STATUS_OK,
+    _call_judge_checklist,
+    compute_checklist_score,
+)
 from services.judge_config import get_judge_config
 from shared.schemas.identity_access import CandidateWindow
 
@@ -210,18 +214,24 @@ async def evaluate_candidate_window(window: CandidateWindow) -> dict:
         if criterion not in IDENTITY_CHECKLIST_QUESTIONS:
             continue
         prompt = _build_identity_prompt(criterion, window)
-        answers, reason, latency_ms = await _call_judge_checklist(
-            prompt, config.judge_model
+        call = await _call_judge_checklist(
+            prompt,
+            config.judge_model,
+            expected_qids=list(IDENTITY_CHECKLIST_QUESTIONS[criterion]),
         )
-        score = compute_checklist_score(answers) if answers else 0.0
+        ok = call.status == STATUS_OK
+        # An unusable judge answer is reported as such (score None, status set)
+        # instead of being scored 0.0 as if every sub-question were a violation.
+        score = compute_checklist_score(call.answers) if ok else None
         verdicts.append(
             {
                 "criterion_id": criterion,
-                "answers": answers or {},
+                "answers": call.answers,
                 "score": score,
-                "flagged": score < NOTIFICATION_SCORE_THRESHOLD,
-                "reason": reason,
-                "latency_ms": latency_ms,
+                "flagged": score is not None and score < NOTIFICATION_SCORE_THRESHOLD,
+                "status": call.status,
+                "reason": call.reason,
+                "latency_ms": call.latency_ms,
             }
         )
 

@@ -65,12 +65,15 @@ CREATE TABLE IF NOT EXISTS groundtruth_results (
     judge_model           TEXT NOT NULL,
     judge_family          TEXT NOT NULL,
     answers               TEXT NOT NULL,
-    score                 FLOAT NOT NULL,
-    agreement             FLOAT NOT NULL,
+    score                 FLOAT,
+    agreement             FLOAT,
     reason                TEXT,
     latency_ms            INT,
     question_order        TEXT    NOT NULL DEFAULT 'original',
     incoherence_validated BOOLEAN          DEFAULT NULL,
+    status                TEXT    NOT NULL DEFAULT 'ok',
+    raw_response          TEXT,
+    parse_fallback        TEXT,
     created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion ON groundtruth_cases(criterion);
@@ -130,6 +133,15 @@ def _find_negative_snippet(reason: str) -> str | None:
             end = min(len(reason), idx + len(pat) + 35)
             return reason[start:end].strip()
     return None
+
+
+def _print_failure(case_id: str, crit: str, judge_short: str, judge: dict, order: str) -> None:
+    """Report an unusable judge answer (stored server-side with its status)."""
+    order_tag = f"  [order={order}]" if order != "original" else ""
+    print(
+        f"  [{crit}] {case_id[:8]}…  judge={judge_short}{order_tag}  "
+        f"UNUSABLE status={judge.get('status')} (recorded, not scored)"
+    )
 
 
 def _print_case_result(
@@ -266,6 +278,8 @@ async def _print_comparison(client: httpx.AsyncClient, run_results: list[dict]) 
 
         by_judge: dict[str, dict[str, dict]] = defaultdict(dict)
         for row in stored:
+            if row.get("status", "ok") != "ok":
+                continue
             jm = row["judge_model"].split("/")[-1]
             by_judge[jm][row["question_order"]] = row
 
@@ -359,7 +373,11 @@ async def cmd_run(args: argparse.Namespace) -> None:
             )
             evaluated_judges: set[str] = set()
             if existing_r.status_code == 200 and existing_r.json():
-                evaluated_judges = {row["judge_model"] for row in existing_r.json()}
+                evaluated_judges = {
+                    row["judge_model"]
+                    for row in existing_r.json()
+                    if row.get("status", "ok") == "ok" or not args.retry_failed
+                }
 
             target_judges = args.judges if args.judges else default_judges
             judges_to_run = [j for j in target_judges if j not in evaluated_judges]
@@ -386,6 +404,9 @@ async def cmd_run(args: argparse.Namespace) -> None:
 
                 for judge in result["judges"]:
                     short = judge["judge_model"].split("/")[-1]
+                    if judge.get("status", "ok") != "ok":
+                        _print_failure(case_id, crit, short, judge, question_order)
+                        continue
                     answers = judge["answers"]
                     reason = (judge.get("reason") or "").strip()
                     _print_case_result(
@@ -481,6 +502,9 @@ async def cmd_extend(args: argparse.Namespace) -> None:
 
                 for judge in result["judges"]:
                     short = judge["judge_model"].split("/")[-1]
+                    if judge.get("status", "ok") != "ok":
+                        _print_failure(item["id"], item["criterion"], short, judge, order)
+                        continue
                     answers = judge["answers"]
                     reason = (judge.get("reason") or "").strip()
                     _print_case_result(
@@ -565,6 +589,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--compare",
         action="store_true",
         help="After the run, show original vs reversed comparison per case.",
+    )
+    p_run.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="Re-run judges whose stored answer for this order is unusable "
+        "(status != ok). The new attempt is stored as an extra row.",
     )
     _add_eval_url_arg(p_run)
 

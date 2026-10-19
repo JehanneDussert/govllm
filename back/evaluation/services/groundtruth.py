@@ -7,6 +7,7 @@ import json
 import logging
 import re
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from uuid import UUID
 
@@ -338,11 +339,94 @@ async def _warmup_model(judge_model: str) -> None:
         logger.warning(f"[groundtruth] Warmup failed — {judge_model} error={e}")
 
 
+# ── Checklist answer parsing ─────────────────────────────────────────────────
+# One parsing rule for every judge model (no per-model branch). A response that
+# cannot be turned into a complete answer vector is a *recorded* failure with an
+# explicit status, never a silently dropped row.
+
+# Outcome statuses stored in groundtruth_results.status
+STATUS_OK = "ok"
+STATUS_CALL_ERROR = "call_error"  # HTTP error / timeout after all retries
+STATUS_JSON_ERROR = "json_error"  # no JSON object could be extracted
+STATUS_EMPTY = "empty"  # JSON object found, but no answers in it
+STATUS_PARSE_ERROR = "parse_error"  # answers found, but incomplete or not true/false
+
+_QID_RE = re.compile(r"^q\d+$")
+
+
+def normalize_bool(v: object) -> bool | None:
+    """Map a judge answer value to True (compliant) / False (violation).
+
+    Accepts booleans, "true"/"false", "compliant"/"violation", and the prompt
+    template label echoed back verbatim ("true (compliant)", "false (violation)").
+    Anything else is not an answer (None).
+    """
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        # Drop an echoed "(compliant)" / "(violation)" label before matching
+        s = v.strip().lower().split("(")[0].strip()
+        if s in {"true", "compliant"}:
+            return True
+        if s in {"false", "violation"}:
+            return False
+    return None
+
+
+def parse_checklist_answers(
+    parsed: dict, expected_qids: list[str] | None = None
+) -> tuple[dict[str, bool], str, str | None]:
+    """Extract the answer vector from a parsed judge JSON object.
+
+    Returns (answers, status, fallback). `fallback` names the non-standard
+    shape that was accepted (None for the documented {"answers": {...}} form):
+      - "positional_list": "answers": [true, false, ...] mapped to q1..qN
+      - "top_level_keys":  q1..qN at the top level, no "answers" key
+    status is STATUS_OK only when every expected question has a true/false answer.
+    """
+    fallback: str | None = None
+    raw_answers = parsed.get("answers")
+    if isinstance(raw_answers, list):
+        # Positional answers, all checklist criteria use q1..qN in declared order
+        raw_answers = {f"q{i + 1}": v for i, v in enumerate(raw_answers)}
+        fallback = "positional_list"
+    elif not isinstance(raw_answers, dict) or not raw_answers:
+        top_level = {k: v for k, v in parsed.items() if _QID_RE.match(str(k))}
+        if top_level:
+            raw_answers = top_level
+            fallback = "top_level_keys"
+        else:
+            return {}, STATUS_EMPTY, None
+
+    answers = {
+        k: b
+        for k, v in raw_answers.items()
+        if isinstance(k, str) and (b := normalize_bool(v)) is not None
+    }
+    required = expected_qids or list(raw_answers)
+    if not answers or any(q not in answers for q in required):
+        return answers, STATUS_PARSE_ERROR, fallback
+    return answers, STATUS_OK, fallback
+
+
+@dataclass
+class ChecklistCall:
+    """Outcome of one judge call in checklist mode."""
+
+    answers: dict[str, bool]
+    reason: str | None
+    latency_ms: int
+    status: str
+    raw_response: str | None
+    parse_fallback: str | None = None
+
+
 async def _call_judge_checklist(
     prompt: str,
     judge_model: str,
+    expected_qids: list[str] | None = None,
     max_retries: int = 2,
-) -> tuple[dict[str, bool] | None, str | None, int]:
+) -> ChecklistCall:
     no_think = " /no_think" if judge_model in _NO_THINK_MODELS else ""
     t0 = time.monotonic()
 
@@ -358,6 +442,7 @@ async def _call_judge_checklist(
     else:
         extra_params["max_tokens"] = 400
 
+    raw: str | None = None
     for attempt in range(1, max_retries + 2):
         try:
             async with httpx.AsyncClient(timeout=600) as client:
@@ -384,7 +469,7 @@ async def _call_judge_checklist(
                 )
                 r.raise_for_status()
                 latency_ms = int((time.monotonic() - t0) * 1000)
-                raw = r.json()["choices"][0]["message"]["content"]
+                raw = r.json()["choices"][0]["message"]["content"] or ""
         except Exception as e:
             logger.error(
                 f"[groundtruth] Judge call failed (attempt {attempt}) — model={judge_model} error={e}"
@@ -392,50 +477,49 @@ async def _call_judge_checklist(
             if attempt <= max_retries:
                 await _warmup_model(judge_model)
                 continue
-            return None, None, int((time.monotonic() - t0) * 1000)
+            return ChecklistCall(
+                answers={},
+                reason=None,
+                latency_ms=int((time.monotonic() - t0) * 1000),
+                status=STATUS_CALL_ERROR,
+                raw_response=raw or f"<call error: {e}>",
+            )
 
+        # Always keep the raw judge output in the logs, whatever happens next
+        logger.info(
+            f"[groundtruth] Raw response (attempt {attempt}) — model={judge_model} raw={raw!r}"
+        )
         parsed = _extract_checklist_json(raw)
         if parsed is None:
             logger.warning(
-                f"[groundtruth] JSON parse failed (attempt {attempt}) — model={judge_model} raw={raw[:200]!r}"
+                f"[groundtruth] JSON parse failed (attempt {attempt}) — model={judge_model}"
             )
             if attempt <= max_retries:
                 await _warmup_model(judge_model)
                 continue
-            return None, None, latency_ms
+            return ChecklistCall(
+                answers={},
+                reason=None,
+                latency_ms=latency_ms,
+                status=STATUS_JSON_ERROR,
+                raw_response=raw,
+            )
         break
 
-    raw_answers = parsed.get("answers", {})
-    if isinstance(raw_answers, list):
-        # Some models answer positionally (e.g. LFM2.5-1.2B-Thinking:
-        # "answers": [true, true, true, true]) instead of {"q1": true, ...}.
-        # All checklist criteria use q1..qN in fixed declared order.
-        raw_answers = {f"q{i + 1}": v for i, v in enumerate(raw_answers)}
-    logger.info(f"Raw answers: {raw_answers}")
-
-    def normalize_bool(v):
-        if isinstance(v, bool):
-            return v
-
-        if isinstance(v, str):
-            s = v.strip().lower()
-
-            if s in {"true", "compliant"}:
-                return True
-
-            if s in {"false", "violation"}:
-                return False
-
-        return None
-
-    answers: dict[str, bool] = {
-        k: normalize_bool(v)
-        for k, v in raw_answers.items()
-        if isinstance(k, str) and normalize_bool(v) is not None
-    }
-    logger.info(f"Final answers: {answers}")
+    answers, status, fallback = parse_checklist_answers(parsed, expected_qids)
+    logger.info(
+        f"[groundtruth] Parsed answers — model={judge_model} status={status} "
+        f"fallback={fallback} answers={answers}"
+    )
     reason = str(parsed.get("reason") or "")[:1200] or None
-    return answers, reason, latency_ms
+    return ChecklistCall(
+        answers=answers,
+        reason=reason,
+        latency_ms=latency_ms,
+        status=status,
+        raw_response=raw,
+        parse_fallback=fallback,
+    )
 
 
 # ── Service functions ────────────────────────────────────────────────────────
@@ -526,49 +610,57 @@ async def run_checklist(
     )
     logger.info(f"[groundtruth] Checklist prompt: {checklist_prompt}")
 
-    async def _run_one(model: str) -> JudgeChecklistResult | None:
-        answers, reason, latency_ms = await _call_judge_checklist(
-            checklist_prompt, model
+    async def _run_one(model: str) -> JudgeChecklistResult:
+        call = await _call_judge_checklist(
+            checklist_prompt, model, expected_qids=list(case.expected_answers)
         )
-        logger.info(f"[groundtruth] Answer {answers}")
-        logger.info(f"[groundtruth] Reason {reason}")
-        if not answers:
-            return None
-        score = compute_checklist_score(answers)
-        agreement = _compute_agreement(answers, case.expected_answers)
+        ok = call.status == STATUS_OK
+        # A failed call is stored too (status != ok, score/agreement NULL):
+        # an unusable answer is a data point, not an absence.
+        score = compute_checklist_score(call.answers) if ok else None
+        agreement = (
+            _compute_agreement(call.answers, case.expected_answers) if ok else None
+        )
         family = _detect_family(model)
+        if not ok:
+            logger.warning(
+                f"[groundtruth] Unusable judge answer recorded — case={case_id} "
+                f"model={model} order={question_order} status={call.status}"
+            )
         await pool.execute(
             """
             INSERT INTO groundtruth_results
-                (case_id, judge_model, judge_family, answers, score, agreement, reason, latency_ms, question_order)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                (case_id, judge_model, judge_family, answers, score, agreement, reason,
+                 latency_ms, question_order, status, raw_response, parse_fallback)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             """,
             UUID(case_id),
             model,
             family,
-            json.dumps(answers),
+            json.dumps(call.answers),
             score,
             agreement,
-            reason,
-            latency_ms,
+            call.reason,
+            call.latency_ms,
             question_order,
+            call.status,
+            call.raw_response,
+            call.parse_fallback,
         )
         return JudgeChecklistResult(
             judge_model=model,
             judge_family=family,
-            answers=answers,
+            answers=call.answers,
             score=score,
             agreement=agreement,
-            reason=reason,
-            latency_ms=latency_ms,
+            reason=call.reason,
+            latency_ms=call.latency_ms,
+            status=call.status,
+            parse_fallback=call.parse_fallback,
         )
 
     # Sequential — Ollama is single-threaded; parallel calls saturate the queue and timeout
-    judges: list[JudgeChecklistResult] = []
-    for m in judge_models:
-        result = await _run_one(m)
-        if result is not None:
-            judges.append(result)
+    judges: list[JudgeChecklistResult] = [await _run_one(m) for m in judge_models]
 
     return GroundTruthRunResult(
         case_id=case_id,
@@ -582,16 +674,20 @@ async def get_case_results(
     case_id: str, question_order: str | None = None
 ) -> list[dict]:
     pool = await get_pool()
+    columns = (
+        "judge_model, answers, agreement, reason, question_order, "
+        "status, parse_fallback, raw_response"
+    )
     if question_order:
         rows = await pool.fetch(
-            "SELECT judge_model, answers, agreement, reason, question_order FROM groundtruth_results "
+            f"SELECT {columns} FROM groundtruth_results "
             "WHERE case_id = $1 AND question_order = $2 ORDER BY created_at",
             UUID(case_id),
             question_order,
         )
     else:
         rows = await pool.fetch(
-            "SELECT judge_model, answers, agreement, reason, question_order FROM groundtruth_results "
+            f"SELECT {columns} FROM groundtruth_results "
             "WHERE case_id = $1 ORDER BY created_at",
             UUID(case_id),
         )
@@ -602,6 +698,9 @@ async def get_case_results(
             "agreement": r["agreement"],
             "reason": r["reason"],
             "question_order": r["question_order"],
+            "status": r["status"],
+            "parse_fallback": r["parse_fallback"],
+            "raw_response": r["raw_response"],
         }
         for r in rows
     ]
@@ -616,6 +715,7 @@ async def get_incoherence_items() -> list[IncoherenceItem]:
                r.incoherence_validated, r.question_order
         FROM groundtruth_results r
         JOIN groundtruth_cases c ON r.case_id = c.id
+        WHERE r.status = 'ok'
         ORDER BY c.criterion, r.judge_model, r.created_at DESC
         """
     )
@@ -659,6 +759,7 @@ async def get_order_sensitivity() -> list[OrderSensitivityEntry]:
             SELECT DISTINCT ON (case_id, judge_model, question_order)
                 case_id, judge_model, answers, agreement, question_order
             FROM groundtruth_results
+            WHERE status = 'ok'
             ORDER BY case_id, judge_model, question_order, created_at DESC
         )
         SELECT
@@ -723,6 +824,7 @@ async def get_best_judges_per_criterion() -> dict[str, str]:
         SELECT r.judge_model, c.criterion, AVG(r.agreement) AS mean_agreement, COUNT(*) AS n
         FROM groundtruth_results r
         JOIN groundtruth_cases c ON r.case_id = c.id
+        WHERE r.status = 'ok'
         GROUP BY r.judge_model, c.criterion
         HAVING COUNT(*) >= 3
         ORDER BY c.criterion, mean_agreement DESC
@@ -747,6 +849,7 @@ async def get_validity() -> ValidityReport:
         SELECT r.judge_model, r.judge_family, c.criterion, r.answers, c.expected
         FROM groundtruth_results r
         JOIN groundtruth_cases c ON r.case_id = c.id
+        WHERE r.status = 'ok'
         ORDER BY c.criterion, r.judge_model
         """
     )

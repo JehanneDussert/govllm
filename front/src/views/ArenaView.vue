@@ -358,10 +358,12 @@ async function loadStoredResults(caseId: string) {
         judge_model: r.judge_model,
         judge_family: r.judge_family,
         answers: r.answers,
-        score: score(r.answers),
+        score: r.status && r.status !== 'ok' ? null : score(r.answers),
         agreement: r.agreement,
         reason: r.reason,
         latency_ms: null,
+        status: r.status,
+        parse_fallback: r.parse_fallback,
       })),
     }
     corpusResultIsStored.value = true
@@ -1327,8 +1329,18 @@ onUnmounted(() => {
                       >{{ j.answers[qid] ? '✓' : '✗' }}</span
                     >
                   </td>
-                  <td class="col-score">{{ (j.score * 100).toFixed(0) }}%</td>
+                  <td class="col-score">
+                    {{ j.score === null ? '—' : `${(j.score * 100).toFixed(0)}%` }}
+                  </td>
                   <td
+                    v-if="j.agreement === null"
+                    class="col-agree agree-bad"
+                    title="Unusable judge answer, recorded but not scored"
+                  >
+                    unusable ({{ j.status }})
+                  </td>
+                  <td
+                    v-else
                     class="col-agree"
                     :class="
                       j.agreement >= 0.75
