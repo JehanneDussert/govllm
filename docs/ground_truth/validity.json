@@ -50,7 +50,9 @@
       "permuted"
     ],
     "granite4": [
-      "original"
+      "original",
+      "reversed",
+      "permuted"
     ],
     "gemma4-e4b": [
       "original",
@@ -58,7 +60,9 @@
       "permuted"
     ],
     "lfm2.5-1.2b-thinking": [
-      "original"
+      "original",
+      "reversed",
+      "permuted"
     ]
   },
   "by_order": {
@@ -226,8 +230,8 @@
       },
       "lfm2.5-1.2b-thinking": {
         "data_privacy": {
-          "agreement": 0.472,
-          "n_cases": 9
+          "agreement": 0.525,
+          "n_cases": 10
         },
         "human_oversight": {
           "agreement": 0.4,
@@ -245,7 +249,7 @@
           "agreement": 0.375,
           "n_cases": 10
         },
-        "global": 0.536458
+        "global": 0.545918
       }
     },
     "reversed": {
@@ -313,10 +317,10 @@
           "n_cases": 9
         },
         "transparency": {
-          "agreement": 0.556,
-          "n_cases": 9
+          "agreement": 0.6,
+          "n_cases": 10
         },
-        "global": 0.640625
+        "global": 0.647959
       },
       "mistral-7b": {
         "data_privacy": {
@@ -364,6 +368,29 @@
         },
         "global": 0.841837
       },
+      "granite4": {
+        "data_privacy": {
+          "agreement": 0.75,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.625,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.775,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.75,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.625,
+          "n_cases": 10
+        },
+        "global": 0.704082
+      },
       "gemma4-e4b": {
         "data_privacy": {
           "agreement": 0.8,
@@ -386,6 +413,29 @@
           "n_cases": 10
         },
         "global": 0.831633
+      },
+      "lfm2.5-1.2b-thinking": {
+        "data_privacy": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.4,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.5,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.583,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.459184
       }
     },
     "permuted": {
@@ -437,8 +487,8 @@
       },
       "gemma3-4b": {
         "data_privacy": {
-          "agreement": 0.611,
-          "n_cases": 9
+          "agreement": 0.55,
+          "n_cases": 10
         },
         "human_oversight": {
           "agreement": 0.694,
@@ -456,7 +506,7 @@
           "agreement": 0.55,
           "n_cases": 10
         },
-        "global": 0.691489
+        "global": 0.677083
       },
       "mistral-7b": {
         "data_privacy": {
@@ -504,6 +554,29 @@
         },
         "global": 0.841837
       },
+      "granite4": {
+        "data_privacy": {
+          "agreement": 0.75,
+          "n_cases": 10
+        },
+        "human_oversight": {
+          "agreement": 0.5,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.8,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.611,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.55,
+          "n_cases": 10
+        },
+        "global": 0.642857
+      },
       "gemma4-e4b": {
         "data_privacy": {
           "agreement": 0.75,
@@ -526,6 +599,29 @@
           "n_cases": 10
         },
         "global": 0.821429
+      },
+      "lfm2.5-1.2b-thinking": {
+        "data_privacy": {
+          "agreement": 0.472,
+          "n_cases": 9
+        },
+        "human_oversight": {
+          "agreement": 0.3,
+          "n_cases": 10
+        },
+        "non_manipulation": {
+          "agreement": 0.6,
+          "n_cases": 10
+        },
+        "prompt_injection": {
+          "agreement": 0.639,
+          "n_cases": 9
+        },
+        "transparency": {
+          "agreement": 0.425,
+          "n_cases": 10
+        },
+        "global": 0.484375
       }
     }
   },
@@ -578,8 +674,8 @@
     },
     "gemma3-4b": {
       "data_privacy": {
-        "agreement": 0.552,
-        "n": 29
+        "agreement": 0.533,
+        "n": 30
       },
       "human_oversight": {
         "agreement": 0.638,
@@ -594,10 +690,10 @@
         "n": 27
       },
       "transparency": {
-        "agreement": 0.638,
-        "n": 29
+        "agreement": 0.65,
+        "n": 30
       },
-      "global": 0.663194
+      "global": 0.660959
     },
     "mistral-7b": {
       "data_privacy": {
@@ -648,25 +744,25 @@
     "granite4": {
       "data_privacy": {
         "agreement": 0.75,
-        "n": 10
+        "n": 30
       },
       "human_oversight": {
-        "agreement": 0.625,
-        "n": 10
+        "agreement": 0.583,
+        "n": 30
       },
       "non_manipulation": {
-        "agreement": 0.8,
-        "n": 10
+        "agreement": 0.792,
+        "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.583,
-        "n": 9
+        "agreement": 0.648,
+        "n": 27
       },
       "transparency": {
-        "agreement": 0.825,
-        "n": 10
+        "agreement": 0.667,
+        "n": 30
       },
-      "global": 0.719388
+      "global": 0.688776
     },
     "gemma4-e4b": {
       "data_privacy": {
@@ -693,26 +789,26 @@
     },
     "lfm2.5-1.2b-thinking": {
       "data_privacy": {
-        "agreement": 0.472,
-        "n": 9
+        "agreement": 0.466,
+        "n": 29
       },
       "human_oversight": {
-        "agreement": 0.4,
-        "n": 10
+        "agreement": 0.367,
+        "n": 30
       },
       "non_manipulation": {
-        "agreement": 0.625,
-        "n": 10
+        "agreement": 0.575,
+        "n": 30
       },
       "prompt_injection": {
-        "agreement": 0.833,
-        "n": 9
+        "agreement": 0.685,
+        "n": 27
       },
       "transparency": {
-        "agreement": 0.375,
-        "n": 10
+        "agreement": 0.408,
+        "n": 30
       },
-      "global": 0.536458
+      "global": 0.496575
     }
   }
 }

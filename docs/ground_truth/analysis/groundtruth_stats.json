@@ -6,7 +6,7 @@
       "original": {
         "estimate": 0.719388,
         "ci95": [
-          0.627551,
+          0.632653,
           0.806122
         ],
         "p_two_sided_vs_0": 0.0001,
@@ -36,8 +36,8 @@
       "pooled": {
         "estimate": 0.690476,
         "ci95": [
-          0.608844,
-          0.772109
+          0.607143,
+          0.770408
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
@@ -78,7 +78,7 @@
       "pooled": {
         "estimate": 0.602041,
         "ci95": [
-          0.528912,
+          0.530612,
           0.67517
         ],
         "p_two_sided_vs_0": 0.0001,
@@ -98,34 +98,34 @@
         "n_case_runs": 49
       },
       "reversed": {
-        "estimate": 0.640625,
+        "estimate": 0.647959,
         "ci95": [
-          0.5625,
-          0.713542
+          0.571429,
+          0.719388
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.677083,
+        "ci95": [
+          0.59375,
+          0.755208
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 48,
         "n_case_runs": 48
       },
-      "permuted": {
-        "estimate": 0.691489,
-        "ci95": [
-          0.611702,
-          0.771277
-        ],
-        "p_two_sided_vs_0": 0.0001,
-        "n_cases": 47,
-        "n_case_runs": 47
-      },
       "pooled": {
-        "estimate": 0.663194,
+        "estimate": 0.660959,
         "ci95": [
-          0.594406,
-          0.732639
+          0.590753,
+          0.729452
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
-        "n_case_runs": 144
+        "n_case_runs": 146
       }
     },
     "mistral-7b": {
@@ -143,7 +143,7 @@
         "estimate": 0.515306,
         "ci95": [
           0.403061,
-          0.627551
+          0.622449
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
@@ -222,6 +222,36 @@
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
         "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.704082,
+        "ci95": [
+          0.622449,
+          0.785714
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.642857,
+        "ci95": [
+          0.556122,
+          0.72449
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "pooled": {
+        "estimate": 0.688776,
+        "ci95": [
+          0.622449,
+          0.755102
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 147
       }
     },
     "gemma4-e4b": {
@@ -268,14 +298,44 @@
     },
     "lfm2.5-1.2b-thinking": {
       "original": {
-        "estimate": 0.536458,
+        "estimate": 0.545918,
         "ci95": [
-          0.432292,
-          0.640625
+          0.438776,
+          0.653061
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "reversed": {
+        "estimate": 0.459184,
+        "ci95": [
+          0.362245,
+          0.556122
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49
+      },
+      "permuted": {
+        "estimate": 0.484375,
+        "ci95": [
+          0.380208,
+          0.588542
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 48,
         "n_case_runs": 48
+      },
+      "pooled": {
+        "estimate": 0.496575,
+        "ci95": [
+          0.408163,
+          0.586806
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 146
       }
     }
   },
@@ -294,11 +354,11 @@
         "n_case_runs": 147,
         "p_holm": 0.0012,
         "ci_bonferroni": [
-          0.034014,
-          0.260204
+          0.030612,
+          0.265306
         ],
-        "ci_bonferroni_level": 0.99,
-        "family_size": 5
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
       },
       "qwen3-1.7b": {
         "estimate": 0.227891,
@@ -309,30 +369,30 @@
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
         "n_case_runs": 147,
-        "p_holm": 0.0005,
+        "p_holm": 0.0007,
         "ci_bonferroni": [
-          0.127551,
-          0.329932
+          0.122449,
+          0.333333
         ],
-        "ci_bonferroni_level": 0.99,
-        "family_size": 5
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
       },
       "gemma3-4b": {
-        "estimate": 0.166667,
+        "estimate": 0.167808,
         "ci95": [
-          0.101399,
-          0.234155
+          0.102041,
+          0.234694
         ],
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
-        "n_case_runs": 144,
-        "p_holm": 0.0005,
+        "n_case_runs": 146,
+        "p_holm": 0.0007,
         "ci_bonferroni": [
-          0.082192,
-          0.255208
+          0.081034,
+          0.260204
         ],
-        "ci_bonferroni_level": 0.99,
-        "family_size": 5
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
       },
       "mistral-7b": {
         "estimate": 0.314626,
@@ -343,13 +403,13 @@
         "p_two_sided_vs_0": 0.0001,
         "n_cases": 49,
         "n_case_runs": 147,
-        "p_holm": 0.0005,
+        "p_holm": 0.0007,
         "ci_bonferroni": [
-          0.168367,
-          0.47449
+          0.158163,
+          0.477891
         ],
-        "ci_bonferroni_level": 0.99,
-        "family_size": 5
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
       },
       "ministral-3-8b": {
         "estimate": 0.003401,
@@ -362,11 +422,45 @@
         "n_case_runs": 147,
         "p_holm": 0.8876,
         "ci_bonferroni": [
-          -0.05102,
-          0.057823
+          -0.052721,
+          0.059524
         ],
-        "ci_bonferroni_level": 0.99,
-        "family_size": 5
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "granite4": {
+        "estimate": 0.141156,
+        "ci95": [
+          0.061224,
+          0.219388
+        ],
+        "p_two_sided_vs_0": 0.0002,
+        "n_cases": 49,
+        "n_case_runs": 147,
+        "p_holm": 0.0007,
+        "ci_bonferroni": [
+          0.030612,
+          0.246599
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
+      },
+      "lfm2.5-1.2b-thinking": {
+        "estimate": 0.332192,
+        "ci95": [
+          0.234589,
+          0.438356
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 146,
+        "p_holm": 0.0007,
+        "ci_bonferroni": [
+          0.195205,
+          0.477891
+        ],
+        "ci_bonferroni_level": 0.9929,
+        "family_size": 7
       }
     }
   },
@@ -377,7 +471,7 @@
         -0.041667,
         0.21875
       ],
-      "p_two_sided_vs_0": 0.2528,
+      "p_two_sided_vs_0": 0.2484,
       "n_cases": 24,
       "n_case_runs": 24,
       "baseline": 0.6458,
@@ -394,10 +488,10 @@
     "qwen3-1.7b": {
       "estimate": -0.020833,
       "ci95": [
-        -0.197917,
-        0.135417
+        -0.1875,
+        0.145833
       ],
-      "p_two_sided_vs_0": 0.8722,
+      "p_two_sided_vs_0": 0.8716,
       "n_cases": 24,
       "n_case_runs": 24,
       "baseline": 0.6146,
@@ -405,7 +499,7 @@
       "unmatched_fewshot_cases": 0,
       "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.270833,
+        -0.25,
         0.197917
       ],
       "ci_bonferroni_level": 0.9938,
@@ -415,18 +509,18 @@
       "estimate": 0.125,
       "ci95": [
         0.010417,
-        0.239583
+        0.25
       ],
-      "p_two_sided_vs_0": 0.0406,
+      "p_two_sided_vs_0": 0.0454,
       "n_cases": 24,
       "n_case_runs": 24,
       "baseline": 0.6354,
       "fewshot": 0.7604,
       "unmatched_fewshot_cases": 0,
-      "p_holm": 0.3248,
+      "p_holm": 0.3632,
       "ci_bonferroni": [
-        -0.03125,
-        0.302083
+        -0.041667,
+        0.291667
       ],
       "ci_bonferroni_level": 0.9938,
       "family_size": 8
@@ -434,19 +528,19 @@
     "mistral-7b": {
       "estimate": 0.076087,
       "ci95": [
-        -0.021739,
+        -0.01087,
         0.173913
       ],
-      "p_two_sided_vs_0": 0.1506,
+      "p_two_sided_vs_0": 0.1346,
       "n_cases": 23,
       "n_case_runs": 23,
       "baseline": 0.5326,
       "fewshot": 0.6087,
       "unmatched_fewshot_cases": 0,
-      "p_holm": 0.9036,
+      "p_holm": 0.9422,
       "ci_bonferroni": [
         -0.054348,
-        0.217391
+        0.228261
       ],
       "ci_bonferroni_level": 0.9938,
       "family_size": 8
@@ -457,7 +551,7 @@
         -0.020833,
         0.083333
       ],
-      "p_two_sided_vs_0": 0.3268,
+      "p_two_sided_vs_0": 0.3362,
       "n_cases": 24,
       "n_case_runs": 24,
       "baseline": 0.75,
@@ -497,7 +591,7 @@
         -0.041667,
         0.0625
       ],
-      "p_two_sided_vs_0": 0.886,
+      "p_two_sided_vs_0": 0.909,
       "n_cases": 24,
       "n_case_runs": 24,
       "baseline": 0.8229,
@@ -505,28 +599,28 @@
       "unmatched_fewshot_cases": 0,
       "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.052083,
-        0.104167
+        -0.0625,
+        0.09375
       ],
       "ci_bonferroni_level": 0.9938,
       "family_size": 8
     },
     "lfm2.5-1.2b-thinking": {
-      "estimate": 0.130952,
+      "estimate": 0.079545,
       "ci95": [
-        -0.02381,
-        0.285714
+        -0.102273,
+        0.25
       ],
-      "p_two_sided_vs_0": 0.1266,
-      "n_cases": 21,
-      "n_case_runs": 21,
-      "baseline": 0.5357,
-      "fewshot": 0.6667,
-      "unmatched_fewshot_cases": 1,
-      "p_holm": 0.8862,
+      "p_two_sided_vs_0": 0.4154,
+      "n_cases": 22,
+      "n_case_runs": 22,
+      "baseline": 0.5568,
+      "fewshot": 0.6364,
+      "unmatched_fewshot_cases": 0,
+      "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.083333,
-        0.357143
+        -0.181818,
+        0.318182
       ],
       "ci_bonferroni_level": 0.9938,
       "family_size": 8
@@ -539,16 +633,16 @@
         0.0,
         0.056122
       ],
-      "p_two_sided_vs_0": 0.097,
+      "p_two_sided_vs_0": 0.0872,
       "n_cases": 49,
       "n_case_runs": 49,
-      "p_holm": 0.97,
+      "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.010204,
+        -0.015306,
         0.076531
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "phi4-mini:permuted": {
       "estimate": -0.112245,
@@ -559,13 +653,13 @@
       "p_two_sided_vs_0": 0.0048,
       "n_cases": 49,
       "n_case_runs": 49,
-      "p_holm": 0.0576,
+      "p_holm": 0.0768,
       "ci_bonferroni": [
-        -0.244898,
+        -0.25,
         0.0
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "qwen3-1.7b:reversed": {
       "estimate": -0.071429,
@@ -573,16 +667,16 @@
         -0.153061,
         0.005102
       ],
-      "p_two_sided_vs_0": 0.078,
+      "p_two_sided_vs_0": 0.0742,
       "n_cases": 49,
       "n_case_runs": 49,
-      "p_holm": 0.858,
+      "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.188776,
+        -0.19898,
         0.035714
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "qwen3-1.7b:permuted": {
       "estimate": -0.081633,
@@ -595,45 +689,45 @@
       "n_case_runs": 49,
       "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.234694,
-        0.071429
+        -0.239796,
+        0.076531
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "gemma3-4b:reversed": {
-      "estimate": -0.010417,
+      "estimate": -0.010204,
       "ci95": [
-        -0.09375,
-        0.072917
+        -0.096939,
+        0.071429
       ],
-      "p_two_sided_vs_0": 0.8794,
+      "p_two_sided_vs_0": 0.8834,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.142857,
+        0.102041
+      ],
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
+    },
+    "gemma3-4b:permuted": {
+      "estimate": 0.026042,
+      "ci95": [
+        -0.052083,
+        0.098958
+      ],
+      "p_two_sided_vs_0": 0.5316,
       "n_cases": 48,
       "n_case_runs": 48,
       "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.140625,
-        0.104167
+        -0.104167,
+        0.130208
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
-    },
-    "gemma3-4b:permuted": {
-      "estimate": 0.026596,
-      "ci95": [
-        -0.053191,
-        0.101064
-      ],
-      "p_two_sided_vs_0": 0.5494,
-      "n_cases": 47,
-      "n_case_runs": 47,
-      "p_holm": 1.0,
-      "ci_bonferroni": [
-        -0.101064,
-        0.12766
-      ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "mistral-7b:reversed": {
       "estimate": 0.0,
@@ -649,8 +743,8 @@
         0.0,
         0.0
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "mistral-7b:permuted": {
       "estimate": 0.0,
@@ -666,8 +760,8 @@
         0.0,
         0.0
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "ministral-3-8b:reversed": {
       "estimate": 0.045918,
@@ -681,10 +775,10 @@
       "p_holm": 1.0,
       "ci_bonferroni": [
         -0.030612,
-        0.142857
+        0.147959
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "ministral-3-8b:permuted": {
       "estimate": 0.045918,
@@ -695,13 +789,47 @@
       "p_two_sided_vs_0": 0.1036,
       "n_cases": 49,
       "n_case_runs": 49,
-      "p_holm": 0.97,
+      "p_holm": 1.0,
       "ci_bonferroni": [
         -0.030612,
         0.132653
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
+    },
+    "granite4:reversed": {
+      "estimate": -0.015306,
+      "ci95": [
+        -0.107143,
+        0.071429
+      ],
+      "p_two_sided_vs_0": 0.7752,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.158163,
+        0.117347
+      ],
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
+    },
+    "granite4:permuted": {
+      "estimate": -0.076531,
+      "ci95": [
+        -0.168367,
+        0.010204
+      ],
+      "p_two_sided_vs_0": 0.099,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.214286,
+        0.061224
+      ],
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "gemma4-e4b:reversed": {
       "estimate": -0.005102,
@@ -717,8 +845,8 @@
         -0.040816,
         0.030612
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     },
     "gemma4-e4b:permuted": {
       "estimate": -0.015306,
@@ -731,11 +859,45 @@
       "n_case_runs": 49,
       "p_holm": 1.0,
       "ci_bonferroni": [
-        -0.061224,
+        -0.066327,
         0.02551
       ],
-      "ci_bonferroni_level": 0.9958,
-      "family_size": 12
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
+    },
+    "lfm2.5-1.2b-thinking:reversed": {
+      "estimate": -0.086735,
+      "ci95": [
+        -0.168367,
+        -0.005102
+      ],
+      "p_two_sided_vs_0": 0.0448,
+      "n_cases": 49,
+      "n_case_runs": 49,
+      "p_holm": 0.672,
+      "ci_bonferroni": [
+        -0.214286,
+        0.030612
+      ],
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
+    },
+    "lfm2.5-1.2b-thinking:permuted": {
+      "estimate": -0.052083,
+      "ci95": [
+        -0.130208,
+        0.020833
+      ],
+      "p_two_sided_vs_0": 0.2004,
+      "n_cases": 48,
+      "n_case_runs": 48,
+      "p_holm": 1.0,
+      "ci_bonferroni": [
+        -0.1875,
+        0.052083
+      ],
+      "ci_bonferroni_level": 0.9969,
+      "family_size": 16
     }
   },
   "specialised_panel": {
@@ -768,5 +930,971 @@
       "n_case_runs": 147
     },
     "note": "in-sample selection: the assignment is chosen on the same cases; single comparison"
+  },
+  "usable_answers": {
+    "phi4-mini": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      }
+    },
+    "qwen3-1.7b": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      }
+    },
+    "gemma3-4b": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 48,
+        "n_expected": 49,
+        "rate": 0.979592,
+        "status_counts": {
+          "ok": 48,
+          "parse_error": 1
+        }
+      }
+    },
+    "mistral-7b": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      }
+    },
+    "ministral-3-8b": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      }
+    },
+    "granite4": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      }
+    },
+    "gemma4-e4b": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      }
+    },
+    "lfm2.5-1.2b-thinking": {
+      "original": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "reversed": {
+        "n_usable": 49,
+        "n_expected": 49,
+        "rate": 1.0,
+        "status_counts": {
+          "ok": 49
+        }
+      },
+      "permuted": {
+        "n_usable": 48,
+        "n_expected": 49,
+        "rate": 0.979592,
+        "status_counts": {
+          "json_error": 1,
+          "ok": 48
+        }
+      }
+    }
+  },
+  "sensitivity_unusable": {
+    "phi4-mini": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.719388,
+          "ci95": [
+            0.632653,
+            0.806122
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.719388,
+          "ci95": [
+            0.627551,
+            0.806122
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.744898,
+          "ci95": [
+            0.658163,
+            0.826531
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.744898,
+          "ci95": [
+            0.658163,
+            0.826531
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.607143,
+          "ci95": [
+            0.505102,
+            0.709184
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.607143,
+          "ci95": [
+            0.505102,
+            0.709184
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.690476,
+          "ci95": [
+            0.607143,
+            0.770408
+          ],
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.690476,
+          "ci95": [
+            0.605442,
+            0.772109
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      }
+    },
+    "qwen3-1.7b": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.653061,
+          "ci95": [
+            0.566327,
+            0.734694
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.653061,
+          "ci95": [
+            0.566327,
+            0.739796
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.581633,
+          "ci95": [
+            0.489796,
+            0.673469
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.581633,
+          "ci95": [
+            0.489796,
+            0.673469
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.571429,
+          "ci95": [
+            0.47449,
+            0.663265
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.571429,
+          "ci95": [
+            0.47449,
+            0.663265
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.602041,
+          "ci95": [
+            0.530612,
+            0.67517
+          ],
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.602041,
+          "ci95": [
+            0.530612,
+            0.673469
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      }
+    },
+    "gemma3-4b": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.658163,
+          "ci95": [
+            0.566327,
+            0.744898
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.658163,
+          "ci95": [
+            0.571429,
+            0.739796
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.647959,
+          "ci95": [
+            0.571429,
+            0.719388
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.647959,
+          "ci95": [
+            0.571429,
+            0.72449
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.677083,
+          "ci95": [
+            0.59375,
+            0.755208
+          ],
+          "n_cases": 48,
+          "n_case_runs": 48
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.663265,
+          "ci95": [
+            0.576531,
+            0.75
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 1.38,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.660959,
+          "ci95": [
+            0.590753,
+            0.729452
+          ],
+          "n_cases": 49,
+          "n_case_runs": 146
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.656463,
+          "ci95": [
+            0.586735,
+            0.72619
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.45,
+        "flag": false
+      }
+    },
+    "mistral-7b": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.622449
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.632653
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      }
+    },
+    "ministral-3-8b": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.795918,
+          "ci95": [
+            0.719388,
+            0.867347
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.795918,
+          "ci95": [
+            0.719388,
+            0.867347
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.841837,
+          "ci95": [
+            0.780612,
+            0.897959
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.841837,
+          "ci95": [
+            0.780612,
+            0.897959
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.841837,
+          "ci95": [
+            0.77551,
+            0.897959
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.841837,
+          "ci95": [
+            0.780612,
+            0.897959
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.826531,
+          "ci95": [
+            0.765306,
+            0.882653
+          ],
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.826531,
+          "ci95": [
+            0.763605,
+            0.882653
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      }
+    },
+    "granite4": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.719388,
+          "ci95": [
+            0.642857,
+            0.795918
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.719388,
+          "ci95": [
+            0.642857,
+            0.795918
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.704082,
+          "ci95": [
+            0.622449,
+            0.785714
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.704082,
+          "ci95": [
+            0.617347,
+            0.785714
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.642857,
+          "ci95": [
+            0.556122,
+            0.72449
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.642857,
+          "ci95": [
+            0.556122,
+            0.72449
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.688776,
+          "ci95": [
+            0.622449,
+            0.755102
+          ],
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.688776,
+          "ci95": [
+            0.622449,
+            0.753401
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      }
+    },
+    "gemma4-e4b": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.836735,
+          "ci95": [
+            0.765306,
+            0.897959
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.836735,
+          "ci95": [
+            0.765306,
+            0.897959
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.831633,
+          "ci95": [
+            0.765306,
+            0.892857
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.831633,
+          "ci95": [
+            0.765306,
+            0.892857
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.821429,
+          "ci95": [
+            0.755102,
+            0.887755
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.821429,
+          "ci95": [
+            0.755102,
+            0.882653
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.829932,
+          "ci95": [
+            0.763605,
+            0.891156
+          ],
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.829932,
+          "ci95": [
+            0.763605,
+            0.891156
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      }
+    },
+    "lfm2.5-1.2b-thinking": {
+      "original": {
+        "excluding_unusable": {
+          "estimate": 0.545918,
+          "ci95": [
+            0.438776,
+            0.653061
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.545918,
+          "ci95": [
+            0.438776,
+            0.653061
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "reversed": {
+        "excluding_unusable": {
+          "estimate": 0.459184,
+          "ci95": [
+            0.362245,
+            0.556122
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.459184,
+          "ci95": [
+            0.362245,
+            0.561224
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.0,
+        "flag": false
+      },
+      "permuted": {
+        "excluding_unusable": {
+          "estimate": 0.484375,
+          "ci95": [
+            0.380208,
+            0.588542
+          ],
+          "n_cases": 48,
+          "n_case_runs": 48
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.47449,
+          "ci95": [
+            0.372449,
+            0.581633
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 49
+        },
+        "difference_pp": 0.99,
+        "flag": false
+      },
+      "pooled": {
+        "excluding_unusable": {
+          "estimate": 0.496575,
+          "ci95": [
+            0.408163,
+            0.586806
+          ],
+          "n_cases": 49,
+          "n_case_runs": 146
+        },
+        "unusable_as_disagreement": {
+          "estimate": 0.493197,
+          "ci95": [
+            0.406463,
+            0.581633
+          ],
+          "p_two_sided_vs_0": 0.0001,
+          "n_cases": 49,
+          "n_case_runs": 147
+        },
+        "difference_pp": 0.34,
+        "flag": false
+      }
+    }
   }
 }
