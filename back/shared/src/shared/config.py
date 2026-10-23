@@ -64,6 +64,8 @@ class EvaluationSettings(BaseSettings):
     benchmark_models: list[str]
     eval_interval_seconds: int
     allowed_origins: list[str]
+    # Ollama API, used to record the digest of the model behind each judge call
+    ollama_base_url: str = "http://ollama:11434"
 
     @field_validator("benchmark_models", "allowed_origins", mode="before")
     @classmethod

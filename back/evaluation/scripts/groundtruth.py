@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS groundtruth_results (
     status                TEXT    NOT NULL DEFAULT 'ok',
     raw_response          TEXT,
     parse_fallback        TEXT,
+    run_label             TEXT    NOT NULL DEFAULT 'main',
+    model_digest          TEXT,
     created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion ON groundtruth_cases(criterion);
@@ -370,6 +372,7 @@ async def cmd_run(args: argparse.Namespace) -> None:
             # Per-judge skip: only run judges not yet evaluated for this (case, order)
             existing_r = await client.get(
                 f"/groundtruth/results/{case_id}?question_order={question_order}"
+                f"&run_label={args.run_label}"
             )
             evaluated_judges: set[str] = set()
             if existing_r.status_code == 200 and existing_r.json():
@@ -394,6 +397,8 @@ async def cmd_run(args: argparse.Namespace) -> None:
                     params.append(f"judge_models={judge_model}")
                 if question_order != "original":
                     params.append(f"question_order={question_order}")
+                if args.run_label != "main":
+                    params.append(f"run_label={args.run_label}")
                 run_url = f"/groundtruth/run/{case_id}" + (
                     f"?{'&'.join(params)}" if params else ""
                 )
@@ -589,6 +594,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--compare",
         action="store_true",
         help="After the run, show original vs reversed comparison per case.",
+    )
+    p_run.add_argument(
+        "--run-label",
+        default="main",
+        help="Label stored with each result (default 'main', the runs every analysis reads). "
+        "Any other label (e.g. retest-r1) is a separate repetition: skipped per label, "
+        "excluded from validity / exports / order sensitivity.",
     )
     p_run.add_argument(
         "--retry-failed",

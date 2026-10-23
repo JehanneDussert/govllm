@@ -49,11 +49,18 @@ async def run_groundtruth(
         "original",
         description="Question presentation order: 'original', 'reversed', or 'permuted' (q2→q4→q1→q3)",
     ),
+    run_label: str = Query(
+        "main",
+        description="Run label stored with the results; only 'main' is read by the analyses",
+    ),
 ):
     """Submit a corpus case to configured judges in checklist mode. Stores results."""
     try:
         return await gt_service.run_checklist(
-            case_id, judge_models=judge_models, question_order=question_order
+            case_id,
+            judge_models=judge_models,
+            question_order=question_order,
+            run_label=run_label,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -65,9 +72,10 @@ async def run_groundtruth(
 async def get_case_results(
     case_id: str,
     question_order: str | None = Query(None, description="Filter by question_order"),
+    run_label: str = Query("main", description="Run label to return; 'all' for every run"),
 ) -> list[dict]:
-    """All stored judge results for a case, optionally filtered by question_order."""
-    return await gt_service.get_case_results(case_id, question_order)
+    """Stored judge results for a case, optionally filtered by question_order and run label."""
+    return await gt_service.get_case_results(case_id, question_order, run_label)
 
 
 @router.get("/validity/best-judges", response_model=dict[str, str])

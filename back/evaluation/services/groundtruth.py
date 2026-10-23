@@ -577,10 +577,33 @@ async def list_cases(criterion: str | None = None) -> list[GroundTruthCase]:
     ]
 
 
+def resolve_digest(model: str, tags: list[dict]) -> str | None:
+    """Ollama digest of a LiteLLM model id ('ollama/phi4-mini') from /api/tags entries."""
+    name = model.removeprefix("ollama/")
+    candidates = {name, name if ":" in name.rsplit("/", 1)[-1] else f"{name}:latest"}
+    for tag in tags:
+        if tag.get("name") in candidates or tag.get("model") in candidates:
+            return tag.get("digest")
+    return None
+
+
+async def _ollama_tags() -> list[dict]:
+    """Installed Ollama models (name, digest). Fail-silent: [] if Ollama is unreachable."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(f"{settings.ollama_base_url}/api/tags")
+            r.raise_for_status()
+            return r.json().get("models", [])
+    except Exception as e:
+        logger.warning(f"[groundtruth] Could not read Ollama model digests: {e}")
+        return []
+
+
 async def run_checklist(
     case_id: str,
     judge_models: list[str] | None = None,
     question_order: str = "original",
+    run_label: str = "main",
 ) -> GroundTruthRunResult:
     pool = await get_pool()
 
@@ -610,7 +633,10 @@ async def run_checklist(
     )
     logger.info(f"[groundtruth] Checklist prompt: {checklist_prompt}")
 
+    tags = await _ollama_tags()
+
     async def _run_one(model: str) -> JudgeChecklistResult:
+        digest = resolve_digest(model, tags)
         call = await _call_judge_checklist(
             checklist_prompt, model, expected_qids=list(case.expected_answers)
         )
@@ -631,8 +657,9 @@ async def run_checklist(
             """
             INSERT INTO groundtruth_results
                 (case_id, judge_model, judge_family, answers, score, agreement, reason,
-                 latency_ms, question_order, status, raw_response, parse_fallback)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                 latency_ms, question_order, status, raw_response, parse_fallback,
+                 run_label, model_digest)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             """,
             UUID(case_id),
             model,
@@ -646,6 +673,8 @@ async def run_checklist(
             call.status,
             call.raw_response,
             call.parse_fallback,
+            run_label,
+            digest,
         )
         return JudgeChecklistResult(
             judge_model=model,
@@ -657,6 +686,8 @@ async def run_checklist(
             latency_ms=call.latency_ms,
             status=call.status,
             parse_fallback=call.parse_fallback,
+            run_label=run_label,
+            model_digest=digest,
         )
 
     # Sequential — Ollama is single-threaded; parallel calls saturate the queue and timeout
@@ -671,26 +702,25 @@ async def run_checklist(
 
 
 async def get_case_results(
-    case_id: str, question_order: str | None = None
+    case_id: str, question_order: str | None = None, run_label: str = "main"
 ) -> list[dict]:
+    """Results of one case; run_label 'main' by default, 'all' for every run."""
     pool = await get_pool()
     columns = (
-        "judge_model, answers, agreement, reason, question_order, "
-        "status, parse_fallback, raw_response"
+        "judge_model, answers, agreement, reason, question_order, status, "
+        "parse_fallback, raw_response, run_label, model_digest, latency_ms, created_at"
     )
+    where, params = ["case_id = $1"], [UUID(case_id)]
     if question_order:
-        rows = await pool.fetch(
-            f"SELECT {columns} FROM groundtruth_results "
-            "WHERE case_id = $1 AND question_order = $2 ORDER BY created_at",
-            UUID(case_id),
-            question_order,
-        )
-    else:
-        rows = await pool.fetch(
-            f"SELECT {columns} FROM groundtruth_results "
-            "WHERE case_id = $1 ORDER BY created_at",
-            UUID(case_id),
-        )
+        params.append(question_order)
+        where.append(f"question_order = ${len(params)}")
+    if run_label != "all":
+        params.append(run_label)
+        where.append(f"run_label = ${len(params)}")
+    rows = await pool.fetch(
+        f"SELECT {columns} FROM groundtruth_results WHERE {' AND '.join(where)} ORDER BY created_at",
+        *params,
+    )
     return [
         {
             "judge_model": r["judge_model"],
@@ -701,6 +731,10 @@ async def get_case_results(
             "status": r["status"],
             "parse_fallback": r["parse_fallback"],
             "raw_response": r["raw_response"],
+            "run_label": r["run_label"],
+            "model_digest": r["model_digest"],
+            "latency_ms": r["latency_ms"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
         }
         for r in rows
     ]
@@ -715,7 +749,7 @@ async def get_incoherence_items() -> list[IncoherenceItem]:
                r.incoherence_validated, r.question_order
         FROM groundtruth_results r
         JOIN groundtruth_cases c ON r.case_id = c.id
-        WHERE r.status = 'ok'
+        WHERE r.status = 'ok' AND r.run_label = 'main'
         ORDER BY c.criterion, r.judge_model, r.created_at DESC
         """
     )
@@ -759,7 +793,7 @@ async def get_order_sensitivity() -> list[OrderSensitivityEntry]:
             SELECT DISTINCT ON (case_id, judge_model, question_order)
                 case_id, judge_model, answers, agreement, question_order
             FROM groundtruth_results
-            WHERE status = 'ok'
+            WHERE status = 'ok' AND run_label = 'main'
             ORDER BY case_id, judge_model, question_order, created_at DESC
         )
         SELECT
@@ -824,7 +858,7 @@ async def get_best_judges_per_criterion() -> dict[str, str]:
         SELECT r.judge_model, c.criterion, AVG(r.agreement) AS mean_agreement, COUNT(*) AS n
         FROM groundtruth_results r
         JOIN groundtruth_cases c ON r.case_id = c.id
-        WHERE r.status = 'ok'
+        WHERE r.status = 'ok' AND r.run_label = 'main'
         GROUP BY r.judge_model, c.criterion
         HAVING COUNT(*) >= 3
         ORDER BY c.criterion, mean_agreement DESC
@@ -849,7 +883,7 @@ async def get_validity() -> ValidityReport:
         SELECT r.judge_model, r.judge_family, c.criterion, r.answers, c.expected
         FROM groundtruth_results r
         JOIN groundtruth_cases c ON r.case_id = c.id
-        WHERE r.status = 'ok'
+        WHERE r.status = 'ok' AND r.run_label = 'main'
         ORDER BY c.criterion, r.judge_model
         """
     )
