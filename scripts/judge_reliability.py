@@ -110,6 +110,10 @@ def load_benchmark() -> list[dict]:
             data = json.load(f)
         gen   = _short_name(data["model"])
         judge = _short_name(data["judge_model"])
+        # Only the selected models (--models), as generators and as judges:
+        # otherwise --models paper also reads the 8x8 extension files.
+        if gen not in JUDGES or judge not in JUDGES:
+            continue
         for r in data["results"]:
             if r.get("status") != "OK" or not r.get("eval"):
                 continue
