@@ -1,0 +1,770 @@
+{
+  "description": "Inter-judge sigma per (generator, prompt), averaged per prompt; raw vs judge-centred scores (score minus the judge's overall mean), with all judges and without lfm2.5.",
+  "judges": [
+    "gemma3-4b",
+    "gemma4-e4b",
+    "granite4",
+    "lfm2.5-1.2b-thinking",
+    "ministral-3-8b",
+    "mistral-7b",
+    "phi4-mini",
+    "qwen3-1.7b"
+  ],
+  "judge_mean_score": {
+    "gemma3-4b": 0.8527,
+    "gemma4-e4b": 0.9427,
+    "granite4": 0.933,
+    "lfm2.5-1.2b-thinking": 0.4558,
+    "ministral-3-8b": 0.8833,
+    "mistral-7b": 0.9431,
+    "phi4-mini": 0.9099,
+    "qwen3-1.7b": 0.9518
+  },
+  "tail_threshold": 0.15,
+  "variants": {
+    "raw_all": {
+      "top10_prompts": [
+        [
+          "adm_05",
+          0.2838
+        ],
+        [
+          "ana_05",
+          0.2814
+        ],
+        [
+          "ana_hard_01",
+          0.2763
+        ],
+        [
+          "adm_adv_02",
+          0.2637
+        ],
+        [
+          "adm_hard_01",
+          0.2564
+        ],
+        [
+          "cod_hard_02",
+          0.2503
+        ],
+        [
+          "gen_hard_01",
+          0.2421
+        ],
+        [
+          "ana_04",
+          0.2417
+        ],
+        [
+          "cod_adv_01",
+          0.2375
+        ],
+        [
+          "gen_adv_01",
+          0.2375
+        ]
+      ],
+      "by_difficulty": {
+        "adversarial": {
+          "n_pairs": 96,
+          "median": 0.2187,
+          "mean": 0.1986,
+          "share_above_tail": 0.6667
+        },
+        "easy": {
+          "n_pairs": 96,
+          "median": 0.1796,
+          "mean": 0.1816,
+          "share_above_tail": 0.6042
+        },
+        "hard": {
+          "n_pairs": 96,
+          "median": 0.2208,
+          "mean": 0.2219,
+          "share_above_tail": 0.7708
+        },
+        "medium": {
+          "n_pairs": 96,
+          "median": 0.178,
+          "mean": 0.1892,
+          "share_above_tail": 0.6771
+        }
+      },
+      "prompt_sigma": {
+        "adm_01": 0.2065,
+        "adm_03": 0.221,
+        "adm_05": 0.2838,
+        "adm_06": 0.2113,
+        "adm_adv_01": 0.2046,
+        "adm_adv_02": 0.2637,
+        "adm_hard_01": 0.2564,
+        "adm_hard_02": 0.2368,
+        "ana_01": 0.2253,
+        "ana_04": 0.2417,
+        "ana_05": 0.2814,
+        "ana_06": 0.1701,
+        "ana_adv_01": 0.2261,
+        "ana_adv_02": 0.174,
+        "ana_hard_01": 0.2763,
+        "ana_hard_02": 0.2006,
+        "cod_01": 0.1465,
+        "cod_03": 0.1983,
+        "cod_05": 0.2199,
+        "cod_06": 0.1459,
+        "cod_adv_01": 0.2375,
+        "cod_adv_02": 0.21,
+        "cod_hard_01": 0.2249,
+        "cod_hard_02": 0.2503,
+        "gen_01": 0.2261,
+        "gen_02": 0.1641,
+        "gen_05": 0.211,
+        "gen_06": 0.2027,
+        "gen_adv_01": 0.2375,
+        "gen_adv_02": 0.2319,
+        "gen_hard_01": 0.2421,
+        "gen_hard_02": 0.2006,
+        "sum_01": 0.1832,
+        "sum_04": 0.173,
+        "sum_05": 0.182,
+        "sum_06": 0.1437,
+        "sum_adv_01": 0.2231,
+        "sum_adv_02": 0.1782,
+        "sum_hard_01": 0.2223,
+        "sum_hard_02": 0.2336,
+        "tra_01": 0.0945,
+        "tra_04": 0.0994,
+        "tra_05": 0.1146,
+        "tra_06": 0.1038,
+        "tra_adv_01": 0.1434,
+        "tra_adv_02": 0.0527,
+        "tra_hard_01": 0.1553,
+        "tra_hard_02": 0.1641
+      }
+    },
+    "centred_all": {
+      "top10_prompts": [
+        [
+          "ana_hard_01",
+          0.2307
+        ],
+        [
+          "ana_05",
+          0.212
+        ],
+        [
+          "tra_hard_01",
+          0.1789
+        ],
+        [
+          "ana_adv_01",
+          0.171
+        ],
+        [
+          "gen_hard_01",
+          0.1625
+        ],
+        [
+          "cod_hard_01",
+          0.1584
+        ],
+        [
+          "cod_hard_02",
+          0.1558
+        ],
+        [
+          "sum_hard_02",
+          0.1554
+        ],
+        [
+          "tra_hard_02",
+          0.1547
+        ],
+        [
+          "adm_05",
+          0.1538
+        ]
+      ],
+      "by_difficulty": {
+        "adversarial": {
+          "n_pairs": 96,
+          "median": 0.1244,
+          "mean": 0.1269,
+          "share_above_tail": 0.3229
+        },
+        "easy": {
+          "n_pairs": 96,
+          "median": 0.1068,
+          "mean": 0.1129,
+          "share_above_tail": 0.2292
+        },
+        "hard": {
+          "n_pairs": 96,
+          "median": 0.1414,
+          "mean": 0.1495,
+          "share_above_tail": 0.4375
+        },
+        "medium": {
+          "n_pairs": 96,
+          "median": 0.1149,
+          "mean": 0.1228,
+          "share_above_tail": 0.3125
+        }
+      },
+      "prompt_sigma": {
+        "adm_01": 0.1301,
+        "adm_03": 0.099,
+        "adm_05": 0.1538,
+        "adm_06": 0.0765,
+        "adm_adv_01": 0.1388,
+        "adm_adv_02": 0.1416,
+        "adm_hard_01": 0.1065,
+        "adm_hard_02": 0.0947,
+        "ana_01": 0.1401,
+        "ana_04": 0.1428,
+        "ana_05": 0.212,
+        "ana_06": 0.1283,
+        "ana_adv_01": 0.171,
+        "ana_adv_02": 0.0903,
+        "ana_hard_01": 0.2307,
+        "ana_hard_02": 0.1383,
+        "cod_01": 0.0907,
+        "cod_03": 0.0801,
+        "cod_05": 0.1204,
+        "cod_06": 0.0801,
+        "cod_adv_01": 0.1535,
+        "cod_adv_02": 0.1193,
+        "cod_hard_01": 0.1584,
+        "cod_hard_02": 0.1558,
+        "gen_01": 0.1141,
+        "gen_02": 0.0869,
+        "gen_05": 0.1238,
+        "gen_06": 0.1366,
+        "gen_adv_01": 0.1144,
+        "gen_adv_02": 0.1463,
+        "gen_hard_01": 0.1625,
+        "gen_hard_02": 0.1282,
+        "sum_01": 0.0887,
+        "sum_04": 0.0989,
+        "sum_05": 0.0865,
+        "sum_06": 0.1052,
+        "sum_adv_01": 0.0932,
+        "sum_adv_02": 0.0716,
+        "sum_hard_01": 0.1293,
+        "sum_hard_02": 0.1554,
+        "tra_01": 0.1498,
+        "tra_04": 0.1334,
+        "tra_05": 0.1182,
+        "tra_06": 0.1315,
+        "tra_adv_01": 0.1458,
+        "tra_adv_02": 0.1372,
+        "tra_hard_01": 0.1789,
+        "tra_hard_02": 0.1547
+      }
+    },
+    "raw_without_lfm": {
+      "top10_prompts": [
+        [
+          "ana_hard_01",
+          0.2193
+        ],
+        [
+          "gen_hard_01",
+          0.1645
+        ],
+        [
+          "ana_05",
+          0.1584
+        ],
+        [
+          "sum_hard_02",
+          0.1583
+        ],
+        [
+          "gen_06",
+          0.1536
+        ],
+        [
+          "sum_hard_01",
+          0.1393
+        ],
+        [
+          "tra_hard_01",
+          0.1319
+        ],
+        [
+          "cod_adv_01",
+          0.131
+        ],
+        [
+          "gen_adv_02",
+          0.1296
+        ],
+        [
+          "gen_05",
+          0.1294
+        ]
+      ],
+      "by_difficulty": {
+        "adversarial": {
+          "n_pairs": 96,
+          "median": 0.0678,
+          "mean": 0.0867,
+          "share_above_tail": 0.125
+        },
+        "easy": {
+          "n_pairs": 96,
+          "median": 0.0695,
+          "mean": 0.0774,
+          "share_above_tail": 0.0521
+        },
+        "hard": {
+          "n_pairs": 96,
+          "median": 0.1082,
+          "mean": 0.119,
+          "share_above_tail": 0.2396
+        },
+        "medium": {
+          "n_pairs": 96,
+          "median": 0.0667,
+          "mean": 0.0871,
+          "share_above_tail": 0.1979
+        }
+      },
+      "prompt_sigma": {
+        "adm_01": 0.1018,
+        "adm_03": 0.0609,
+        "adm_05": 0.0837,
+        "adm_06": 0.039,
+        "adm_adv_01": 0.1097,
+        "adm_adv_02": 0.0858,
+        "adm_hard_01": 0.0713,
+        "adm_hard_02": 0.0562,
+        "ana_01": 0.1246,
+        "ana_04": 0.0681,
+        "ana_05": 0.1584,
+        "ana_06": 0.087,
+        "ana_adv_01": 0.117,
+        "ana_adv_02": 0.0522,
+        "ana_hard_01": 0.2193,
+        "ana_hard_02": 0.0887,
+        "cod_01": 0.0439,
+        "cod_03": 0.0321,
+        "cod_05": 0.0619,
+        "cod_06": 0.0451,
+        "cod_adv_01": 0.131,
+        "cod_adv_02": 0.0401,
+        "cod_hard_01": 0.1196,
+        "cod_hard_02": 0.1029,
+        "gen_01": 0.1102,
+        "gen_02": 0.0896,
+        "gen_05": 0.1294,
+        "gen_06": 0.1536,
+        "gen_adv_01": 0.1244,
+        "gen_adv_02": 0.1296,
+        "gen_hard_01": 0.1645,
+        "gen_hard_02": 0.1234,
+        "sum_01": 0.0883,
+        "sum_04": 0.1218,
+        "sum_05": 0.0839,
+        "sum_06": 0.0933,
+        "sum_adv_01": 0.1128,
+        "sum_adv_02": 0.0466,
+        "sum_hard_01": 0.1393,
+        "sum_hard_02": 0.1583,
+        "tra_01": 0.0412,
+        "tra_04": 0.0463,
+        "tra_05": 0.0288,
+        "tra_06": 0.0807,
+        "tra_adv_01": 0.053,
+        "tra_adv_02": 0.0381,
+        "tra_hard_01": 0.1319,
+        "tra_hard_02": 0.0521
+      }
+    },
+    "centred_without_lfm": {
+      "top10_prompts": [
+        [
+          "ana_hard_01",
+          0.2221
+        ],
+        [
+          "ana_05",
+          0.1664
+        ],
+        [
+          "gen_hard_01",
+          0.1455
+        ],
+        [
+          "sum_hard_02",
+          0.1416
+        ],
+        [
+          "gen_06",
+          0.1277
+        ],
+        [
+          "tra_hard_01",
+          0.1277
+        ],
+        [
+          "ana_01",
+          0.1251
+        ],
+        [
+          "sum_hard_01",
+          0.1235
+        ],
+        [
+          "cod_adv_01",
+          0.119
+        ],
+        [
+          "ana_adv_01",
+          0.1183
+        ]
+      ],
+      "by_difficulty": {
+        "adversarial": {
+          "n_pairs": 96,
+          "median": 0.0702,
+          "mean": 0.0814,
+          "share_above_tail": 0.125
+        },
+        "easy": {
+          "n_pairs": 96,
+          "median": 0.0629,
+          "mean": 0.0724,
+          "share_above_tail": 0.0312
+        },
+        "hard": {
+          "n_pairs": 96,
+          "median": 0.0932,
+          "mean": 0.108,
+          "share_above_tail": 0.1979
+        },
+        "medium": {
+          "n_pairs": 96,
+          "median": 0.0733,
+          "mean": 0.0841,
+          "share_above_tail": 0.1146
+        }
+      },
+      "prompt_sigma": {
+        "adm_01": 0.1157,
+        "adm_03": 0.0748,
+        "adm_05": 0.0938,
+        "adm_06": 0.0467,
+        "adm_adv_01": 0.1124,
+        "adm_adv_02": 0.0787,
+        "adm_hard_01": 0.0519,
+        "adm_hard_02": 0.051,
+        "ana_01": 0.1251,
+        "ana_04": 0.0717,
+        "ana_05": 0.1664,
+        "ana_06": 0.0788,
+        "ana_adv_01": 0.1183,
+        "ana_adv_02": 0.0471,
+        "ana_hard_01": 0.2221,
+        "ana_hard_02": 0.0769,
+        "cod_01": 0.0307,
+        "cod_03": 0.0342,
+        "cod_05": 0.0722,
+        "cod_06": 0.0385,
+        "cod_adv_01": 0.119,
+        "cod_adv_02": 0.0413,
+        "cod_hard_01": 0.1026,
+        "cod_hard_02": 0.1056,
+        "gen_01": 0.0854,
+        "gen_02": 0.0715,
+        "gen_05": 0.1065,
+        "gen_06": 0.1277,
+        "gen_adv_01": 0.1062,
+        "gen_adv_02": 0.1138,
+        "gen_hard_01": 0.1455,
+        "gen_hard_02": 0.0996,
+        "sum_01": 0.0766,
+        "sum_04": 0.091,
+        "sum_05": 0.0758,
+        "sum_06": 0.0841,
+        "sum_adv_01": 0.0918,
+        "sum_adv_02": 0.0446,
+        "sum_hard_01": 0.1235,
+        "sum_hard_02": 0.1416,
+        "tra_01": 0.045,
+        "tra_04": 0.0472,
+        "tra_05": 0.0443,
+        "tra_06": 0.0739,
+        "tra_adv_01": 0.053,
+        "tra_adv_02": 0.051,
+        "tra_hard_01": 0.1277,
+        "tra_hard_02": 0.0474
+      }
+    }
+  },
+  "robustness_top10_centred_all": {
+    "top": [
+      {
+        "prompt": "ana_hard_01",
+        "difficulty": "hard",
+        "rank": 1,
+        "sigma_centred": 0.2307,
+        "mad_centred": 0.0595,
+        "mad_over_sigma": 0.258,
+        "single_judge_share": 0.595,
+        "dominant_judge": "phi4-mini",
+        "dominant_in_n_generators": 4,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 1,
+          "gemma4-e4b": 1,
+          "granite4": 1,
+          "lfm2.5-1.2b-thinking": 1,
+          "ministral-3-8b": 1,
+          "mistral-7b": 1,
+          "phi4-mini": 37,
+          "qwen3-1.7b": 1
+        },
+        "loo_rank_worst": 37,
+        "loo_sigma_min": 0.0988
+      },
+      {
+        "prompt": "ana_05",
+        "difficulty": "medium",
+        "rank": 2,
+        "sigma_centred": 0.212,
+        "mad_centred": 0.127,
+        "mad_over_sigma": 0.599,
+        "single_judge_share": 0.402,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 2,
+          "gemma4-e4b": 2,
+          "granite4": 2,
+          "lfm2.5-1.2b-thinking": 2,
+          "ministral-3-8b": 2,
+          "mistral-7b": 2,
+          "phi4-mini": 2,
+          "qwen3-1.7b": 2
+        },
+        "loo_rank_worst": 2,
+        "loo_sigma_min": 0.1664
+      },
+      {
+        "prompt": "tra_hard_01",
+        "difficulty": "hard",
+        "rank": 3,
+        "sigma_centred": 0.1789,
+        "mad_centred": 0.0776,
+        "mad_over_sigma": 0.433,
+        "single_judge_share": 0.406,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 3,
+          "gemma4-e4b": 4,
+          "granite4": 3,
+          "lfm2.5-1.2b-thinking": 6,
+          "ministral-3-8b": 4,
+          "mistral-7b": 3,
+          "phi4-mini": 1,
+          "qwen3-1.7b": 3
+        },
+        "loo_rank_worst": 6,
+        "loo_sigma_min": 0.1277
+      },
+      {
+        "prompt": "ana_adv_01",
+        "difficulty": "adversarial",
+        "rank": 4,
+        "sigma_centred": 0.171,
+        "mad_centred": 0.0807,
+        "mad_over_sigma": 0.472,
+        "single_judge_share": 0.484,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 4,
+          "gemma4-e4b": 3,
+          "granite4": 4,
+          "lfm2.5-1.2b-thinking": 10,
+          "ministral-3-8b": 3,
+          "mistral-7b": 7,
+          "phi4-mini": 13,
+          "qwen3-1.7b": 4
+        },
+        "loo_rank_worst": 13,
+        "loo_sigma_min": 0.1183
+      },
+      {
+        "prompt": "gen_hard_01",
+        "difficulty": "hard",
+        "rank": 5,
+        "sigma_centred": 0.1625,
+        "mad_centred": 0.1394,
+        "mad_over_sigma": 0.858,
+        "single_judge_share": 0.197,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 3,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 7,
+          "gemma4-e4b": 8,
+          "granite4": 5,
+          "lfm2.5-1.2b-thinking": 3,
+          "ministral-3-8b": 10,
+          "mistral-7b": 6,
+          "phi4-mini": 6,
+          "qwen3-1.7b": 7
+        },
+        "loo_rank_worst": 10,
+        "loo_sigma_min": 0.1455
+      },
+      {
+        "prompt": "cod_hard_01",
+        "difficulty": "hard",
+        "rank": 6,
+        "sigma_centred": 0.1584,
+        "mad_centred": 0.0529,
+        "mad_over_sigma": 0.334,
+        "single_judge_share": 0.454,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 4,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 8,
+          "gemma4-e4b": 5,
+          "granite4": 6,
+          "lfm2.5-1.2b-thinking": 17,
+          "ministral-3-8b": 8,
+          "mistral-7b": 4,
+          "phi4-mini": 3,
+          "qwen3-1.7b": 18
+        },
+        "loo_rank_worst": 18,
+        "loo_sigma_min": 0.1026
+      },
+      {
+        "prompt": "cod_hard_02",
+        "difficulty": "hard",
+        "rank": 7,
+        "sigma_centred": 0.1558,
+        "mad_centred": 0.0597,
+        "mad_over_sigma": 0.383,
+        "single_judge_share": 0.445,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 4,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 11,
+          "gemma4-e4b": 7,
+          "granite4": 20,
+          "lfm2.5-1.2b-thinking": 16,
+          "ministral-3-8b": 6,
+          "mistral-7b": 9,
+          "phi4-mini": 5,
+          "qwen3-1.7b": 5
+        },
+        "loo_rank_worst": 20,
+        "loo_sigma_min": 0.1056
+      },
+      {
+        "prompt": "sum_hard_02",
+        "difficulty": "hard",
+        "rank": 8,
+        "sigma_centred": 0.1554,
+        "mad_centred": 0.0953,
+        "mad_over_sigma": 0.613,
+        "single_judge_share": 0.297,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 3,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 13,
+          "gemma4-e4b": 11,
+          "granite4": 7,
+          "lfm2.5-1.2b-thinking": 4,
+          "ministral-3-8b": 7,
+          "mistral-7b": 15,
+          "phi4-mini": 16,
+          "qwen3-1.7b": 8
+        },
+        "loo_rank_worst": 16,
+        "loo_sigma_min": 0.1416
+      },
+      {
+        "prompt": "tra_hard_02",
+        "difficulty": "hard",
+        "rank": 9,
+        "sigma_centred": 0.1547,
+        "mad_centred": 0.0415,
+        "mad_over_sigma": 0.268,
+        "single_judge_share": 0.686,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 8,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 5,
+          "gemma4-e4b": 6,
+          "granite4": 9,
+          "lfm2.5-1.2b-thinking": 38,
+          "ministral-3-8b": 5,
+          "mistral-7b": 5,
+          "phi4-mini": 4,
+          "qwen3-1.7b": 6
+        },
+        "loo_rank_worst": 38,
+        "loo_sigma_min": 0.0474
+      },
+      {
+        "prompt": "adm_05",
+        "difficulty": "medium",
+        "rank": 10,
+        "sigma_centred": 0.1538,
+        "mad_centred": 0.0311,
+        "mad_over_sigma": 0.202,
+        "single_judge_share": 0.553,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 9,
+          "gemma4-e4b": 9,
+          "granite4": 8,
+          "lfm2.5-1.2b-thinking": 19,
+          "ministral-3-8b": 9,
+          "mistral-7b": 18,
+          "phi4-mini": 7,
+          "qwen3-1.7b": 12
+        },
+        "loo_rank_worst": 19,
+        "loo_sigma_min": 0.0938
+      }
+    ],
+    "top10_overlap_after_drop": {
+      "gemma3-4b": 8,
+      "gemma4-e4b": 9,
+      "granite4": 9,
+      "lfm2.5-1.2b-thinking": 6,
+      "ministral-3-8b": 10,
+      "mistral-7b": 8,
+      "phi4-mini": 7,
+      "qwen3-1.7b": 8
+    },
+    "leader_after_drop": {
+      "gemma3-4b": "ana_hard_01",
+      "gemma4-e4b": "ana_hard_01",
+      "granite4": "ana_hard_01",
+      "lfm2.5-1.2b-thinking": "ana_hard_01",
+      "ministral-3-8b": "ana_hard_01",
+      "mistral-7b": "ana_hard_01",
+      "phi4-mini": "tra_hard_01",
+      "qwen3-1.7b": "ana_hard_01"
+    }
+  }
+}
