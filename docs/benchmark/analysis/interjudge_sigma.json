@@ -502,5 +502,269 @@
         "tra_hard_02": 0.0474
       }
     }
+  },
+  "robustness_top10_centred_all": {
+    "top": [
+      {
+        "prompt": "ana_hard_01",
+        "difficulty": "hard",
+        "rank": 1,
+        "sigma_centred": 0.2307,
+        "mad_centred": 0.0595,
+        "mad_over_sigma": 0.258,
+        "single_judge_share": 0.595,
+        "dominant_judge": "phi4-mini",
+        "dominant_in_n_generators": 4,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 1,
+          "gemma4-e4b": 1,
+          "granite4": 1,
+          "lfm2.5-1.2b-thinking": 1,
+          "ministral-3-8b": 1,
+          "mistral-7b": 1,
+          "phi4-mini": 37,
+          "qwen3-1.7b": 1
+        },
+        "loo_rank_worst": 37,
+        "loo_sigma_min": 0.0988
+      },
+      {
+        "prompt": "ana_05",
+        "difficulty": "medium",
+        "rank": 2,
+        "sigma_centred": 0.212,
+        "mad_centred": 0.127,
+        "mad_over_sigma": 0.599,
+        "single_judge_share": 0.402,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 2,
+          "gemma4-e4b": 2,
+          "granite4": 2,
+          "lfm2.5-1.2b-thinking": 2,
+          "ministral-3-8b": 2,
+          "mistral-7b": 2,
+          "phi4-mini": 2,
+          "qwen3-1.7b": 2
+        },
+        "loo_rank_worst": 2,
+        "loo_sigma_min": 0.1664
+      },
+      {
+        "prompt": "tra_hard_01",
+        "difficulty": "hard",
+        "rank": 3,
+        "sigma_centred": 0.1789,
+        "mad_centred": 0.0776,
+        "mad_over_sigma": 0.433,
+        "single_judge_share": 0.406,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 3,
+          "gemma4-e4b": 4,
+          "granite4": 3,
+          "lfm2.5-1.2b-thinking": 6,
+          "ministral-3-8b": 4,
+          "mistral-7b": 3,
+          "phi4-mini": 1,
+          "qwen3-1.7b": 3
+        },
+        "loo_rank_worst": 6,
+        "loo_sigma_min": 0.1277
+      },
+      {
+        "prompt": "ana_adv_01",
+        "difficulty": "adversarial",
+        "rank": 4,
+        "sigma_centred": 0.171,
+        "mad_centred": 0.0807,
+        "mad_over_sigma": 0.472,
+        "single_judge_share": 0.484,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 4,
+          "gemma4-e4b": 3,
+          "granite4": 4,
+          "lfm2.5-1.2b-thinking": 10,
+          "ministral-3-8b": 3,
+          "mistral-7b": 7,
+          "phi4-mini": 13,
+          "qwen3-1.7b": 4
+        },
+        "loo_rank_worst": 13,
+        "loo_sigma_min": 0.1183
+      },
+      {
+        "prompt": "gen_hard_01",
+        "difficulty": "hard",
+        "rank": 5,
+        "sigma_centred": 0.1625,
+        "mad_centred": 0.1394,
+        "mad_over_sigma": 0.858,
+        "single_judge_share": 0.197,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 3,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 7,
+          "gemma4-e4b": 8,
+          "granite4": 5,
+          "lfm2.5-1.2b-thinking": 3,
+          "ministral-3-8b": 10,
+          "mistral-7b": 6,
+          "phi4-mini": 6,
+          "qwen3-1.7b": 7
+        },
+        "loo_rank_worst": 10,
+        "loo_sigma_min": 0.1455
+      },
+      {
+        "prompt": "cod_hard_01",
+        "difficulty": "hard",
+        "rank": 6,
+        "sigma_centred": 0.1584,
+        "mad_centred": 0.0529,
+        "mad_over_sigma": 0.334,
+        "single_judge_share": 0.454,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 4,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 8,
+          "gemma4-e4b": 5,
+          "granite4": 6,
+          "lfm2.5-1.2b-thinking": 17,
+          "ministral-3-8b": 8,
+          "mistral-7b": 4,
+          "phi4-mini": 3,
+          "qwen3-1.7b": 18
+        },
+        "loo_rank_worst": 18,
+        "loo_sigma_min": 0.1026
+      },
+      {
+        "prompt": "cod_hard_02",
+        "difficulty": "hard",
+        "rank": 7,
+        "sigma_centred": 0.1558,
+        "mad_centred": 0.0597,
+        "mad_over_sigma": 0.383,
+        "single_judge_share": 0.445,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 4,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 11,
+          "gemma4-e4b": 7,
+          "granite4": 20,
+          "lfm2.5-1.2b-thinking": 16,
+          "ministral-3-8b": 6,
+          "mistral-7b": 9,
+          "phi4-mini": 5,
+          "qwen3-1.7b": 5
+        },
+        "loo_rank_worst": 20,
+        "loo_sigma_min": 0.1056
+      },
+      {
+        "prompt": "sum_hard_02",
+        "difficulty": "hard",
+        "rank": 8,
+        "sigma_centred": 0.1554,
+        "mad_centred": 0.0953,
+        "mad_over_sigma": 0.613,
+        "single_judge_share": 0.297,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 3,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 13,
+          "gemma4-e4b": 11,
+          "granite4": 7,
+          "lfm2.5-1.2b-thinking": 4,
+          "ministral-3-8b": 7,
+          "mistral-7b": 15,
+          "phi4-mini": 16,
+          "qwen3-1.7b": 8
+        },
+        "loo_rank_worst": 16,
+        "loo_sigma_min": 0.1416
+      },
+      {
+        "prompt": "tra_hard_02",
+        "difficulty": "hard",
+        "rank": 9,
+        "sigma_centred": 0.1547,
+        "mad_centred": 0.0415,
+        "mad_over_sigma": 0.268,
+        "single_judge_share": 0.686,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 8,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 5,
+          "gemma4-e4b": 6,
+          "granite4": 9,
+          "lfm2.5-1.2b-thinking": 38,
+          "ministral-3-8b": 5,
+          "mistral-7b": 5,
+          "phi4-mini": 4,
+          "qwen3-1.7b": 6
+        },
+        "loo_rank_worst": 38,
+        "loo_sigma_min": 0.0474
+      },
+      {
+        "prompt": "adm_05",
+        "difficulty": "medium",
+        "rank": 10,
+        "sigma_centred": 0.1538,
+        "mad_centred": 0.0311,
+        "mad_over_sigma": 0.202,
+        "single_judge_share": 0.553,
+        "dominant_judge": "lfm2.5-1.2b-thinking",
+        "dominant_in_n_generators": 5,
+        "n_generators": 8,
+        "loo_rank": {
+          "gemma3-4b": 9,
+          "gemma4-e4b": 9,
+          "granite4": 8,
+          "lfm2.5-1.2b-thinking": 19,
+          "ministral-3-8b": 9,
+          "mistral-7b": 18,
+          "phi4-mini": 7,
+          "qwen3-1.7b": 12
+        },
+        "loo_rank_worst": 19,
+        "loo_sigma_min": 0.0938
+      }
+    ],
+    "top10_overlap_after_drop": {
+      "gemma3-4b": 8,
+      "gemma4-e4b": 9,
+      "granite4": 9,
+      "lfm2.5-1.2b-thinking": 6,
+      "ministral-3-8b": 10,
+      "mistral-7b": 8,
+      "phi4-mini": 7,
+      "qwen3-1.7b": 8
+    },
+    "leader_after_drop": {
+      "gemma3-4b": "ana_hard_01",
+      "gemma4-e4b": "ana_hard_01",
+      "granite4": "ana_hard_01",
+      "lfm2.5-1.2b-thinking": "ana_hard_01",
+      "ministral-3-8b": "ana_hard_01",
+      "mistral-7b": "ana_hard_01",
+      "phi4-mini": "tra_hard_01",
+      "qwen3-1.7b": "ana_hard_01"
+    }
   }
 }
