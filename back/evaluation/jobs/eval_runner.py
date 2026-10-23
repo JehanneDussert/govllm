@@ -21,6 +21,19 @@ EVAL_RESULT_HOT_TTL = 3600  # eval:result:{trace_id} — hot cache for frontend 
 EVAL_SCORES_ROLLING_TTL = 3600 * 24 * 7  # eval:scores:{model}:{use_case} — rolling cache read by /matrix
 
 
+def same_model(a: str | None, b: str | None) -> bool:
+    """True if two model ids designate the same model (provider prefix ignored)."""
+    if not a or not b:
+        return False
+    norm = lambda m: m.strip().lower().removeprefix("ollama/")  # noqa: E731
+    return norm(a) == norm(b)
+
+
+def self_judged_criteria(judge_of: dict[str, str], generator: str) -> list[str]:
+    """Criteria scored by the model that generated the answer (self-judging)."""
+    return sorted(cid for cid, judge in judge_of.items() if same_model(judge, generator))
+
+
 def _compute_composite(
     scores: list[CriterionScore],
     criteria: list[JudgeCriterion],
@@ -141,6 +154,7 @@ async def evaluate_trace(
         return result
 
     criteria_scores: list[CriterionScore] = []
+    judge_of: dict[str, str] = {}  # criterion_id -> judge model actually used
 
     active_panel = next(
         (p for p in config.panels if p.profile_id == config.active_profile_id), None
@@ -157,6 +171,7 @@ async def evaluate_trace(
             if not member_criteria:
                 continue
             covered_ids |= {c.id for c in member_criteria}
+            judge_of.update({c.id: member.model for c in member_criteria})
             sys_prompt = (
                 "\n".join(filter(None, [uc_prompt, member.persona_prompt])) or None
             )
@@ -166,11 +181,22 @@ async def evaluate_trace(
         # Fallback to global judge for any criteria not covered by the panel
         uncovered = [c for c in active_criteria if c.id not in covered_ids]
         if uncovered:
+            judge_of.update({c.id: config.judge_model for c in uncovered})
             fallback = await _score_with_judge(uncovered, config.judge_model, uc_prompt)
             criteria_scores.extend(fallback)
     else:
+        judge_of = {c.id: config.judge_model for c in active_criteria}
         criteria_scores = await _score_with_judge(
             active_criteria, config.judge_model, uc_prompt
+        )
+
+    # A model must not judge its own answers: the result is kept (and shown) but
+    # flagged, and left out of every aggregate (rolling cache -> Matrix, routing, SAS).
+    self_judged = self_judged_criteria(judge_of, model)
+    if self_judged:
+        logger.warning(
+            f"[eval] self-judged result — generator={model} judged its own answer on "
+            f"{self_judged}; excluded from aggregates (trace={trace_id})"
         )
 
     if not criteria_scores:
@@ -204,6 +230,8 @@ async def evaluate_trace(
         composite_score=composite,
         criteria_scores=criteria_scores,
         evaluated_at=datetime.now(timezone.utc).isoformat(),
+        self_judged=bool(self_judged),
+        self_judged_criteria=self_judged,
     )
 
     r_client = await aioredis.from_url(settings.redis_url, decode_responses=True)
@@ -211,7 +239,7 @@ async def evaluate_trace(
         await r_client.setex(
             f"eval:result:{trace_id}", EVAL_RESULT_HOT_TTL, result.model_dump_json()
         )
-        if config.active_use_case_id:
+        if config.active_use_case_id and not self_judged:
             key = f"eval:scores:{model}:{config.active_use_case_id}"
             existing_raw = await r_client.get(key)
             existing = json.loads(existing_raw) if existing_raw else []
@@ -226,8 +254,9 @@ async def evaluate_trace(
         async with pool.acquire() as conn:
             await conn.execute(
                 """INSERT INTO eval_results
-                   (trace_id, model, use_case_id, profile_id, composite_score, criteria_scores, evaluated_at)
-                   VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)""",
+                   (trace_id, model, use_case_id, profile_id, composite_score, criteria_scores,
+                    evaluated_at, self_judged)
+                   VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)""",
                 trace_id,
                 model,
                 config.active_use_case_id,
@@ -235,6 +264,7 @@ async def evaluate_trace(
                 composite,
                 json.dumps([cs.model_dump() for cs in criteria_scores]),
                 datetime.fromisoformat(result.evaluated_at),
+                bool(self_judged),
             )
     except Exception as exc:
         logger.warning(f"[eval] PostgreSQL dual-write failed for {trace_id}: {exc}")
@@ -252,6 +282,8 @@ async def evaluate_trace(
             "use_case_id": config.active_use_case_id,
             "profile_id": config.active_profile_id,
             "judge_model": config.judge_model,
+            "self_judged": bool(self_judged),
+            "self_judged_criteria": self_judged,
         },
     )
     await push_score(trace_id, composite, name="composite")

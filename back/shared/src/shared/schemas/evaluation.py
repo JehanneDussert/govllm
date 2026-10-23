@@ -19,3 +19,8 @@ class EvalResult(BaseModel):
     composite_score: float
     criteria_scores: list[CriterionScore]
     evaluated_at: str
+    # True when at least one criterion was scored by the model that generated the
+    # answer. Such results are kept and shown, but excluded from the aggregates
+    # (Matrix rolling cache, routing, SAS) because of measured self-preference.
+    self_judged: bool = False
+    self_judged_criteria: list[str] = []

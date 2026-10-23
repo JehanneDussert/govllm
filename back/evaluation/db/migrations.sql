@@ -117,6 +117,10 @@ CREATE TABLE IF NOT EXISTS eval_results (
     evaluated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- self_judged: at least one criterion scored by the generating model itself;
+-- kept for audit, excluded from the aggregates (see jobs/eval_runner.py).
+ALTER TABLE eval_results ADD COLUMN IF NOT EXISTS self_judged BOOLEAN NOT NULL DEFAULT false;
+
 CREATE INDEX IF NOT EXISTS idx_eval_results_trace   ON eval_results(trace_id);
 CREATE INDEX IF NOT EXISTS idx_eval_results_model   ON eval_results(model, use_case_id);
 CREATE INDEX IF NOT EXISTS idx_eval_results_created ON eval_results(evaluated_at);
