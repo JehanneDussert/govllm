@@ -99,6 +99,12 @@ ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS raw_response TEXT;
 ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS parse_fallback TEXT;
 ALTER TABLE groundtruth_results ALTER COLUMN score DROP NOT NULL;
 ALTER TABLE groundtruth_results ALTER COLUMN agreement DROP NOT NULL;
+-- run_label: 'main' = the runs every analysis reads; other labels (test-retest
+-- repetitions such as 'retest-r1') are stored alongside but excluded from them.
+-- model_digest: Ollama digest of the model behind the call (version traceability).
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS run_label TEXT NOT NULL DEFAULT 'main';
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS model_digest TEXT;
+CREATE INDEX IF NOT EXISTS idx_gt_results_run_label ON groundtruth_results(run_label);
 
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion  ON groundtruth_cases(criterion);
 CREATE INDEX IF NOT EXISTS idx_gt_results_case     ON groundtruth_results(case_id);

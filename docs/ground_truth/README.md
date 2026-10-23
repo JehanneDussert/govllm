@@ -171,6 +171,12 @@ python scripts/plot_order_sensitivity.py                    # every judge with 3
 - Order effects are tested as one family of 12 comparisons: the 6 judges run in three orderings × {reversed, permuted} (choice made on 2026-10-16). The largest effect, phi4-mini permuted (−11.2 pp), is **not significant** after correction (Bonferroni CI [−24.5, 0.0], Holm p = 0.058); no other effect comes close. For reference only, restricted to the 4 paper judges (family of 8) it would have been significant (Holm p = 0.04) — which is why the family is always stated.
 - Historical `*_original/reversed/permuted.json` files were exported from the DB in May. The current results API returns neither `score` nor `created_at`, so the exporter recomputes `score` from the answers and leaves `created_at` null; use `--judges` to avoid rewriting those files.
 
+## Repeated runs (`run_label`)
+
+Every stored result carries a `run_label`. `main` is the set every analysis reads (validity, best judges, order sensitivity, incoherence, `GET /groundtruth/results` by default, hence the exports and statistics). Any other label is a separate repetition, stored alongside and excluded from those analyses: pass `run_label` to `POST /groundtruth/run/{case_id}` and `GET /groundtruth/results/{case_id}` (`all` returns every run), or `--run-label` to `groundtruth.py run` (the per-judge skip is per label, so a labelled run resumes where it stopped). Each row also records the Ollama digest of the model that answered (`model_digest`), with `created_at`, `latency_ms` and the raw response.
+
+**Test-retest run** (protocol of 2026-10-23): `back/evaluation/scripts/retest.py` runs the 8 judges on the 49 cases at temperature 0 under nine labels: `retest-orig-r1..r5` (original order, K = 5), `retest-rev-r1..r2` and `retest-perm-r1..r2` (order control, same permutation q2→q4→q1→q3 as the main runs), interleaved, unloading each judge from Ollama at the end of its block. Safe to interrupt and relaunch (`python scripts/retest.py` in the container; `--dry-run` prints the plan; last line `ALL_DONE`).
+
 ## Reproducibility
 
 The unified entry point is `back/evaluation/scripts/groundtruth.py`. Run from inside the evaluation container or via `make gt-*` targets from the project root.
