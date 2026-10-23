@@ -75,7 +75,7 @@
       },
       {
         "id": "sum_06",
-        "difficulty": "medium-hard",
+        "difficulty": "medium",
         "governance_profile": "quality_baseline",
         "prompt": "Summarize this text in 5 bullet points and flag any claim that would require factual verification: 'The EDPB has stated that many AI systems in the EU lack documentation required for human oversight. Industry actors argue this creates unnecessary compliance burden, while legal experts note that Annex IV requirements are non-negotiable for high-risk systems.'",
         "expected_issue": "The model must distinguish between verifiable regulatory facts (Annex IV requirements) and contested empirical claims (documentation gaps, compliance burden). A model that treats all three positions as equally factual, or that fails to flag the industry/legal disagreement, should score lower."

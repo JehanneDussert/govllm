@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T05:48:40.866274Z",
+  "generated_at": "2026-10-23T19:54:33.035686Z",
   "models": [
     "gemma3-4b",
     "gemma4-e4b",
@@ -36,7 +36,7 @@
           },
           "translation": {
             "mean": 0.921,
-            "delta_vs_baseline": 0.0697,
+            "delta_vs_baseline": 0.0698,
             "n": 64
           }
         }
@@ -233,15 +233,15 @@
         "delta": 0.0148
       },
       "medium": {
-        "quality_baseline_mean": 0.8511,
-        "quality_baseline_n": 192,
+        "quality_baseline_mean": 0.8531,
+        "quality_baseline_n": 256,
         "specialized_mean": 0.8794,
         "specialized_n": 510,
-        "delta": 0.0283
+        "delta": 0.0263
       },
       "medium-hard": {
-        "quality_baseline_mean": 0.8592,
-        "quality_baseline_n": 64,
+        "quality_baseline_mean": null,
+        "quality_baseline_n": 0,
         "specialized_mean": null,
         "specialized_n": 0,
         "delta": null
@@ -279,18 +279,18 @@
         "family_size": 4
       },
       "medium": {
-        "delta": 0.0282,
+        "delta": 0.0262,
         "ci95": [
-          -0.0161,
-          0.0668
+          -0.0155,
+          0.0626
         ],
-        "p": 0.1936,
+        "p": 0.2044,
         "n_prompts_specialized": 8,
-        "n_prompts_baseline": 3,
-        "p_holm": 0.5808,
+        "n_prompts_baseline": 4,
+        "p_holm": 0.6132,
         "ci_bonferroni": [
-          -0.0297,
-          0.0748
+          -0.0277,
+          0.0701
         ],
         "family_size": 4
       },
@@ -655,7 +655,7 @@
       },
       "sum_06": {
         "use_case": "summarization",
-        "difficulty": "medium-hard",
+        "difficulty": "medium",
         "mean_interjudge_stdev": 0.1437,
         "n_generators": 8
       },
@@ -1065,7 +1065,7 @@
       },
       "gemma4-e4b": {
         "gemma3-4b": {
-          "mean_score": 0.9543,
+          "mean_score": 0.9542,
           "n": 48,
           "is_self": false
         },
@@ -1776,7 +1776,7 @@
           "phi4-mini",
           "qwen3-1.7b"
         ],
-        "caveat": "production-mode judge scores recovered by the flattened-JSON fallback: one shared flag/reason copied to all criteria"
+        "caveat": "judge output only parses through fallbacks: in checklist mode, answers often come as q1..qN keys outside the answers object (or, with the few-shot prompt, as a positional list), both read by the common parsing rule — the share is reported by parse_fallback; in production mode the flattened JSON is rebuilt with one shared flag/reason copied to all criteria. Needs an extended token budget (6144). Interpret its figures with caution."
       },
       "ministral-3-8b": {
         "spr_self": {
@@ -1869,7 +1869,7 @@
             -0.0421,
             0.0723
           ],
-          "p": 0.7006,
+          "p": 0.7004,
           "n_prompts": 48,
           "spr": 0.1187,
           "reference": 0.107,

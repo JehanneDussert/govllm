@@ -15,7 +15,10 @@ Outputs:
     docs/benchmark/analysis/adversarial_sigma.md    adversarial (prompt, generator) rows sorted by centred sigma,
                                                     with the answer (300 chars) and every judge's score
 
-Usage: python scripts/interjudge_sigma.py [--models all]
+    docs/benchmark/figures/interjudge_sigma_centred.png               Figure 6 of the v2 (all judges)
+    docs/benchmark/figures/interjudge_sigma_centred_without_lfm.png   sensitivity variant (appendix)
+
+Usage: python scripts/interjudge_sigma.py [--models all] [--no-figure]
 """
 
 import argparse
@@ -32,6 +35,40 @@ OUT_JSON = Path("docs/benchmark/analysis/interjudge_sigma.json")
 OUT_MD = Path("docs/benchmark/analysis/adversarial_sigma.md")
 LOW_JUDGE = "lfm2.5-1.2b-thinking"
 TAIL = 0.15  # sigma threshold used in the paper (Finding 5)
+OUT_FIG = Path("docs/benchmark/figures")
+DIFF_ORDER = ["easy", "medium", "adversarial", "hard"]
+
+
+def boxplot(prompt_sigma: dict, meta: dict, path: Path, subtitle: str) -> None:
+    """Per-prompt sigma (averaged over generators) by difficulty tier, same style as generate_figures.py."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from generate_figures import CB, DPI, FIGSIZE_SINGLE, base_style
+
+    base_style()
+    groups = {d: [v for p, v in prompt_sigma.items() if meta[p]["difficulty"] == d] for d in DIFF_ORDER}
+    fig, ax = plt.subplots(figsize=FIGSIZE_SINGLE)
+    bp = ax.boxplot([groups[d] for d in DIFF_ORDER], patch_artist=True,
+                    medianprops={"color": "white", "linewidth": 2},
+                    flierprops={"marker": "o", "markersize": 4, "markeredgecolor": "#888888", "alpha": 0.6})
+    for patch, c in zip(bp["boxes"], [CB["green"], CB["sky"], CB["orange"], CB["vermil"]]):
+        patch.set_facecolor(c)
+        patch.set_alpha(0.75)
+    ax.set_xticks(range(1, len(DIFF_ORDER) + 1), [d.capitalize() for d in DIFF_ORDER])
+    ax.axhline(TAIL, color="#888888", linestyle=":", linewidth=1)
+    ax.set_xlabel("Difficulty tier")
+    ax.set_ylabel("Inter-judge σ (judge-centred scores)")
+    ax.set_title(f"Judge disagreement by difficulty — {subtitle}")
+    ax.grid(axis="y")
+    for i, d in enumerate(DIFF_ORDER, 1):
+        ax.annotate(f"n={len(groups[d])}", (i, ax.get_ylim()[0]), ha="center", va="bottom", fontsize=8, color="#666666")
+    fig.tight_layout()
+    OUT_FIG.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=DPI, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"  Saved: {path}")
 
 
 def sd(v):
@@ -56,6 +93,7 @@ def median(v):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", default="all")
+    ap.add_argument("--no-figure", action="store_true")
     args = ap.parse_args()
     models = set(select(args.models))
 
@@ -156,6 +194,11 @@ def main():
             print(f"  {d:<12} pairs={s['n_pairs']:<4} median={s['median']:.3f} mean={s['mean']:.3f} "
                   f"share>{TAIL}={s['share_above_tail']:.1%}")
     print(f"written {OUT_JSON}, {OUT_MD} ({len(adv)} adversarial pairs, {n_prompts} prompts)")
+    if not args.no_figure:
+        boxplot(variants["centred_all"][1], meta, OUT_FIG / "interjudge_sigma_centred.png",
+                f"{len(judges)} judges")
+        boxplot(variants["centred_without_lfm"][1], meta, OUT_FIG / "interjudge_sigma_centred_without_lfm.png",
+                f"{len(judges) - 1} judges (without lfm2.5)")
 
 
 if __name__ == "__main__":
