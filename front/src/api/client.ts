@@ -199,6 +199,7 @@ export interface JudgeConfig {
   routing_strategy: string
   alpha: number
   variance_threshold: number
+  score_window?: number // aggregates: last N evaluations per (model, use case)
   latency_threshold_ms: number | null
   score_threshold: number | null
   error_rate_threshold: number | null

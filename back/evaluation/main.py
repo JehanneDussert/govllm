@@ -16,6 +16,7 @@ from routers.groundtruth import router as groundtruth_router
 from routers.identity_access import router as identity_access_router
 from shared.config import get_evaluation_settings
 from db.database import run_migrations, close_pool
+from services.scores import rebuild_cache
 from services.judge_config import DEFAULT_JUDGE_MODEL, get_judge_config
 
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +61,11 @@ async def _warn_if_judge_drifted() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await run_migrations()
+    try:
+        # Redis is a cache of eval_results: rebuild it so the aggregates never start empty
+        await rebuild_cache()
+    except Exception as e:
+        logger.warning(f"[scores] cache rebuild at startup failed (served from the DB on demand): {e}")
     await _warn_if_judge_drifted()
     drift_task = asyncio.create_task(_drift_watcher_loop())
     yield
