@@ -147,12 +147,16 @@ export interface ModelRoutingScore {
   sample_size: number
   trend: 'up' | 'down' | 'stable' | null
   criteria_scores: Record<string, number | null>
-  meets_threshold: boolean | null // null = no threshold set or no data
+  meets_threshold: boolean | null // same as eligible (kept for compatibility)
+  eligible?: boolean // passes the compliance gate
+  exclusion_reasons?: string[] // why the gate excludes it (insufficient data, score < θ…)
   is_judge?: boolean // effective judge of the active profile: excluded from AUTO routing
 }
 
 export interface RoutingResult {
   recommended: string | null
+  reason?: string | null // "no_eligible_model" when the gate leaves no model: no silent fallback
+  min_evaluations?: number
   excluded_judges?: string[]
   judge_exclusion_fallback?: boolean // true: excluding the judges left nothing, usual choice kept
   use_case_id: string
@@ -200,6 +204,7 @@ export interface JudgeConfig {
   alpha: number
   variance_threshold: number
   score_window?: number // aggregates: last N evaluations per (model, use case)
+  min_evaluations?: number // compliance gate: fewer evaluations = excluded (insufficient data)
   latency_threshold_ms: number | null
   score_threshold: number | null
   error_rate_threshold: number | null

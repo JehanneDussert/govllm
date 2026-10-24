@@ -385,18 +385,19 @@ def _merge_config(saved: JudgeConfig, defaults: JudgeConfig) -> JudgeConfig:
     """Fill gaps in a saved (Redis) config with anything new in DEFAULT_CONFIG,
     without touching what's already saved (custom weights, panels, etc.)."""
     saved_criteria_ids = {c.id for c in saved.criteria}
+    # Deep copies: callers may modify the returned config, which must never alter DEFAULT_CONFIG
     merged_criteria = saved.criteria + [
-        c for c in defaults.criteria if c.id not in saved_criteria_ids
+        c.model_copy(deep=True) for c in defaults.criteria if c.id not in saved_criteria_ids
     ]
 
     saved_profile_ids = {p.id for p in saved.profiles}
     merged_profiles = saved.profiles + [
-        p for p in defaults.profiles if p.id not in saved_profile_ids
+        p.model_copy(deep=True) for p in defaults.profiles if p.id not in saved_profile_ids
     ]
 
     saved_uc_ids = {u.id for u in saved.use_cases}
     merged_use_cases = saved.use_cases + [
-        u for u in defaults.use_cases if u.id not in saved_uc_ids
+        u.model_copy(deep=True) for u in defaults.use_cases if u.id not in saved_uc_ids
     ]
 
     return saved.model_copy(
@@ -414,7 +415,7 @@ async def get_judge_config() -> JudgeConfig:
         raw = await r.get(JUDGE_CONFIG_KEY)
         if raw:
             return _merge_config(JudgeConfig.model_validate_json(raw), DEFAULT_CONFIG)
-        return DEFAULT_CONFIG
+        return DEFAULT_CONFIG.model_copy(deep=True)  # never hand out the shared default
     finally:
         await r.aclose()
 

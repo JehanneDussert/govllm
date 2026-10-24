@@ -86,5 +86,8 @@ class JudgeConfig(BaseModel):
     # per (model, use case), self-judged results excluded. A count, not an age, so an idle
     # period never empties the aggregates. Larger = more stable, slower to react.
     score_window: int = Field(default=100, ge=5, le=1000)
+    # Compliance gate: a model (or a criterion of a model) scored on fewer evaluations
+    # than this is excluded from AUTO routing with the reason "insufficient data".
+    min_evaluations: int = Field(default=5, ge=1, le=1000)
     error_rate_threshold: float | None = None
     policy_rules: str = ""
