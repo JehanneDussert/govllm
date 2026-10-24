@@ -143,3 +143,17 @@ async def test_drift_is_detected_on_persisted_data_after_a_cache_loss():
     assert model in await check_drift()
     status = {s.model: s.zone for s in await get_status([model])}
     assert status[model] == "quarantine"
+
+
+async def test_window_follows_the_configuration():
+    """score_window (Settings > Routing) sets how many evaluations the aggregates use."""
+    from routers.matrix import _get_scores_for_model
+    from services.judge_config import get_judge_config, save_judge_config
+
+    for i in range(30):
+        await _insert(MODEL, "general", 0.2 if i < 20 else 1.0, minutes_ago=30 - i)
+    config = await get_judge_config()
+    assert (await _get_scores_for_model(MODEL, "general"))["sample_size"] == 30  # default 100
+    await save_judge_config(config.model_copy(update={"score_window": 10}))
+    cell = await _get_scores_for_model(MODEL, "general")
+    assert cell["sample_size"] == 10 and cell["avg_score"] == 1.0  # only the 10 most recent

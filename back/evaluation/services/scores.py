@@ -31,7 +31,8 @@ from shared.config import get_evaluation_settings
 logger = logging.getLogger(__name__)
 settings = get_evaluation_settings()
 
-WINDOW = 100  # last N evaluations per (model, use case) — same size as the former rolling cache
+WINDOW = 100  # default window (JudgeConfig.score_window), same size as the former rolling cache
+CACHE_MAX = 1000  # entries kept per key: serves any configured window (score_window <= 1000)
 CACHE_TTL = 3600 * 24 * 7  # memory bound only; a miss is served from PostgreSQL
 
 
@@ -76,7 +77,7 @@ async def _recent(model: str, use_case_id: str, criterion_id: str | None, n: int
             logger.warning(f"[scores] cache read failed for {key}: {e}")
         if raw is not None:
             return json.loads(raw)[-n:]
-        entries = await _from_db(model, use_case_id, criterion_id, WINDOW)
+        entries = await _from_db(model, use_case_id, criterion_id, CACHE_MAX)
         try:
             await r.setex(key, CACHE_TTL, json.dumps(entries))
         except Exception as e:
@@ -86,16 +87,26 @@ async def _recent(model: str, use_case_id: str, criterion_id: str | None, n: int
         await r.aclose()
 
 
-async def recent_scores(model: str, use_case_id: str, n: int = WINDOW) -> list[float]:
-    """Last n composite scores (oldest first), self-judged results excluded."""
-    return [e["score"] for e in await _recent(model, use_case_id, None, n)]
+async def _window(n: int | None) -> int:
+    if n is not None:
+        return n
+    from services.judge_config import get_judge_config
+
+    return (await get_judge_config()).score_window
+
+
+async def recent_scores(model: str, use_case_id: str, n: int | None = None) -> list[float]:
+    """Last n composite scores (oldest first; default: the configured score_window),
+    self-judged results excluded."""
+    return [e["score"] for e in await _recent(model, use_case_id, None, await _window(n))]
 
 
 async def recent_criterion_scores(
-    model: str, use_case_id: str, criterion_id: str, n: int = WINDOW
+    model: str, use_case_id: str, criterion_id: str, n: int | None = None
 ) -> list[float]:
-    """Last n scores on one criterion (oldest first), self-judged results excluded."""
-    return [e["score"] for e in await _recent(model, use_case_id, criterion_id, n)]
+    """Last n scores on one criterion (oldest first; default: the configured score_window),
+    self-judged results excluded."""
+    return [e["score"] for e in await _recent(model, use_case_id, criterion_id, await _window(n))]
 
 
 async def append_to_cache(
@@ -117,7 +128,7 @@ async def append_to_cache(
                 continue
             entries = json.loads(raw)
             entries.append({"score": score, "ts": ts})
-            await r.setex(key, CACHE_TTL, json.dumps(entries[-WINDOW:]))
+            await r.setex(key, CACHE_TTL, json.dumps(entries[-CACHE_MAX:]))
     except Exception as e:
         logger.warning(f"[scores] cache write-through failed for {model}/{use_case_id}: {e}")
     finally:
@@ -143,11 +154,11 @@ async def rebuild_cache() -> int:
     written = 0
     try:
         for p in pairs:
-            entries = await _from_db(p["model"], p["use_case_id"], None, WINDOW)
+            entries = await _from_db(p["model"], p["use_case_id"], None, CACHE_MAX)
             await r.setex(_key(p["model"], p["use_case_id"]), CACHE_TTL, json.dumps(entries))
             written += 1
         for c in crit_rows:
-            entries = await _from_db(c["model"], c["use_case_id"], c["criterion_id"], WINDOW)
+            entries = await _from_db(c["model"], c["use_case_id"], c["criterion_id"], CACHE_MAX)
             await r.setex(
                 _key(c["model"], c["use_case_id"], c["criterion_id"]), CACHE_TTL, json.dumps(entries)
             )
