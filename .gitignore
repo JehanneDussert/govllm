@@ -46,3 +46,6 @@ CLAUDE.md
 audit/
 docs/arxiv/draft
 docs/paper*
+
+# LMSYS-Chat-1M subset (scripts/fetch_lmsys.py): its licence forbids redistribution
+back/evaluation/data/lmsys_regulatory_subset.json
