@@ -28,7 +28,7 @@ async def main() -> None:
         rows = await conn.fetch(
             """SELECT model, use_case_id, composite_score, evaluated_at
                FROM eval_results
-               WHERE use_case_id IS NOT NULL
+               WHERE use_case_id IS NOT NULL AND NOT self_judged
                ORDER BY model, use_case_id, evaluated_at"""
         )
     finally:
