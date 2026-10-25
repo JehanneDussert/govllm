@@ -27,6 +27,10 @@ async def get_pool() -> asyncpg.Pool:
     if _pool is None:
         _pool = await asyncpg.create_pool(
             dsn=settings.arena_db_url,
+            # search_path as a connection (startup) parameter: the pool runs RESET ALL when a
+            # connection is released, which would otherwise fall back to the database default
+            # schema (govllm) after the first query. init alone is not enough.
+            server_settings={"search_path": SCHEMA},
             init=_init_conn,
             min_size=2,
             max_size=10,
