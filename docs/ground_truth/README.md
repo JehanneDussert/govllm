@@ -180,6 +180,7 @@ Every stored result carries a `run_label`. `main` is the set every analysis read
 **Test-retest analysis**: `python scripts/test_retest.py gt_all.csv` reads a read-only CSV export of `groundtruth_results` (the `COPY (SELECT …)` command is in the script's docstring) and writes `analysis/test_retest.json`. Sections:
 - `protocol`: unusable answers, then per judge the flip rate, Krippendorff's α and the dispersion of validity over the 5 original-order repetitions. Family 1 compares order with repetition and family 2 compares a majority vote with a single call, each with Holm and Bonferroni.
 - `validity`: agreement from the repeated runs only (with model digest), per ordering and pooled.
+- `chance_corrected`: Cohen's κ (judge vs expected answers, over sub-questions) per judge and ordering, with CI; family of 8 tests "better than a constant compliant judge" (51.5 %), Holm and Bonferroni.
 - `exploratory`: the paper's May runs vs the repetitions, per-criterion order deltas, signed order effects.
 
 Results of the run of 2026-10-23/25 (Ollama 0.32.15):
@@ -187,6 +188,7 @@ Results of the run of 2026-10-23/25 (Ollama 0.32.15):
 - Changing the question order moves per-case validity beyond repetition for every judge except mistral:7b (Holm p < 0.001), but no signed global effect is significant.
 - A majority vote over 5 calls brings nothing.
 - mistral:7b answers "compliant" to every sub-question, so its 51.5 % equals the base rate.
+- Three judges do no better than answering "compliant" everywhere: mistral:7b (κ = 0), qwen3:1.7b (κ = −0.00 [−0.11, 0.11]) and lfm2.5 (κ = −0.02 [−0.10, 0.05]). Their pooled validity minus the constant judge has a Bonferroni CI containing 0, Holm p = 1. granite4 passes only just (+17.2 pp, Bonferroni CI [+0.2, +36.1]). ministral-3:8b (κ = 0.67) and gemma4:e4b (0.66) lead.
 - The May runs of phi4-mini, gemma3:4b and qwen3:1.7b don't reproduce on the current inference server: 7, 17 and 40 of 49 cases differ, with the same model files and prompts. The family-1 statistic was fixed after data collection.
 
 ## Reproducibility

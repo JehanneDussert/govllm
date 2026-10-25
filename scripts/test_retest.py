@@ -41,6 +41,10 @@ repeated runs only (they carry the model digest), per judge and ordering = mean 
 repetitions of that ordering (5 original, 2 reversed, 2 permuted), then pooled over the
 three orderings per case; unusable answers excluded, worst case (unusable = 0) reported.
 
+Chance-corrected agreement (section "chance_corrected"): Cohen's kappa of judge answers
+vs expected answers per judge and ordering, and a family of 8 tests "better than a
+constant compliant judge" (Holm, Bonferroni).
+
 Writes docs/ground_truth/analysis/test_retest.json. Stdlib only.
 """
 
@@ -193,6 +197,68 @@ def validity(data, judges, B):
         jr["pooled"] = pooled
         res[label(j)] = jr
     return res
+
+
+def cohen_kappa(tt, tf, ft, ff):
+    """Cohen's kappa of judge vs ground truth from (judge, truth) counts: tt = (True, True)…"""
+    n = tt + tf + ft + ff
+    if n == 0:
+        return None
+    po = (tt + ff) / n
+    pe = ((tt + tf) / n) * ((tt + ft) / n) + ((ft + ff) / n) * ((tf + ff) / n)
+    return None if pe == 1 else (po - pe) / (1 - pe)
+
+
+def chance_corrected(data, judges, B):
+    """Cohen's kappa (judge answer vs expected, over sub-questions) per judge and ordering,
+    and the comparison with a constant "compliant" judge.
+
+    Counts are averaged over the repetitions of an ordering; pooled = the three orderings
+    with equal weight. Kappa CIs: case bootstrap, unadjusted (estimates, not tests).
+    Family "better than constant compliant" (8 tests): per case, pooled validity minus the
+    validity of answering true everywhere (share of compliant expected answers of the
+    case); Holm p and Bonferroni CI.
+    """
+    kappas, vs_const = {}, {}
+    for j in judges:
+        runs = {o: [data[(j, r)] for r in rr] for o, rr in RUNS_BY_ORDER.items()}
+        cases = sorted(runs["original"][0])
+        counts = {o: {} for o in runs}
+        for o, rs in runs.items():
+            for c in cases:
+                usable = [run[c] for run in rs if run[c]["answers"] is not None]
+                if not usable:
+                    continue
+                acc = [0.0, 0.0, 0.0, 0.0]
+                for row in usable:
+                    for q, truth in row["expected"].items():
+                        ans = row["answers"].get(q) is True
+                        acc[(0 if ans else 2) + (0 if truth else 1)] += 1 / len(usable)
+                counts[o][c] = tuple(acc)
+        jk = {}
+        for o in runs:
+            jk[o] = bootstrap_ratio(counts[o], B, f"kappa:{j}:{o}", cohen_kappa)
+        pooled = {c: tuple(sum(counts[o][c][i] for o in runs if c in counts[o]) for i in range(4))
+                  for c in cases}
+        jk["pooled"] = bootstrap_ratio(pooled, B, f"kappa:{j}:pooled", cohen_kappa)
+        kappas[label(j)] = jk
+
+        diff = {}
+        for c in cases:
+            expected = runs["original"][0][c]["expected"]
+            const = sum(1 for v in expected.values() if v is True) / len(expected)
+            v = [statistics.mean(run[c]["agreement"] for run in rs if run[c]["agreement"] is not None)
+                 for rs in runs.values() if any(run[c]["agreement"] is not None for run in rs)]
+            diff[c] = [statistics.mean(v) - const]
+        vs_const[label(j)] = cluster_bootstrap(diff, B, f"vs_constant:{j}")
+    holm(vs_const)
+    for v in vs_const.values():
+        v["better_than_constant"] = v["ci_bonferroni"][0] > 0
+    const_validity = statistics.mean(
+        sum(1 for x in row["expected"].values() if x is True) / len(row["expected"])
+        for row in data[(judges[0], ORIG[0])].values())
+    return {"constant_compliant_validity": round(const_validity, 6), "kappa": kappas,
+            "validity_minus_constant": vs_const}
 
 
 def main():
@@ -371,6 +437,7 @@ def main():
     E["d_family1_on_subquestion_flips"] = e_flip_fam
 
     out["validity"] = validity(data, judges, B)
+    out["chance_corrected"] = chance_corrected(data, judges, B)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")

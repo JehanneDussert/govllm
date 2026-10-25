@@ -2731,5 +2731,428 @@
         }
       }
     }
+  },
+  "chance_corrected": {
+    "constant_compliant_validity": 0.515306,
+    "kappa": {
+      "gemma3:4b": {
+        "original": {
+          "estimate": 0.368877,
+          "ci95": [
+            0.206274,
+            0.528736
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.337208,
+          "ci95": [
+            0.190572,
+            0.470551
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": 0.345235,
+          "ci95": [
+            0.217203,
+            0.469187
+          ],
+          "n_cases": 46
+        },
+        "pooled": {
+          "estimate": 0.350612,
+          "ci95": [
+            0.233813,
+            0.463428
+          ],
+          "n_cases": 49
+        }
+      },
+      "gemma4:e4b": {
+        "original": {
+          "estimate": 0.671726,
+          "ci95": [
+            0.525839,
+            0.795727
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.661361,
+          "ci95": [
+            0.525806,
+            0.780175
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": 0.640838,
+          "ci95": [
+            0.501764,
+            0.763583
+          ],
+          "n_cases": 49
+        },
+        "pooled": {
+          "estimate": 0.657976,
+          "ci95": [
+            0.518546,
+            0.776093
+          ],
+          "n_cases": 49
+        }
+      },
+      "granite4": {
+        "original": {
+          "estimate": 0.435956,
+          "ci95": [
+            0.263548,
+            0.584922
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.396073,
+          "ci95": [
+            0.219369,
+            0.553318
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": 0.280092,
+          "ci95": [
+            0.107918,
+            0.436293
+          ],
+          "n_cases": 49
+        },
+        "pooled": {
+          "estimate": 0.370808,
+          "ci95": [
+            0.224824,
+            0.503969
+          ],
+          "n_cases": 49
+        }
+      },
+      "lfm2.5:1.2b-thinking": {
+        "original": {
+          "estimate": 0.067963,
+          "ci95": [
+            -0.024671,
+            0.182377
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": -0.103346,
+          "ci95": [
+            -0.249231,
+            0.038318
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": -0.038689,
+          "ci95": [
+            -0.160089,
+            0.081719
+          ],
+          "n_cases": 48
+        },
+        "pooled": {
+          "estimate": -0.024598,
+          "ci95": [
+            -0.09679,
+            0.050588
+          ],
+          "n_cases": 49
+        }
+      },
+      "ministral-3:8b": {
+        "original": {
+          "estimate": 0.600042,
+          "ci95": [
+            0.451971,
+            0.728005
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.693399,
+          "ci95": [
+            0.579908,
+            0.793336
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": 0.702968,
+          "ci95": [
+            0.582415,
+            0.80588
+          ],
+          "n_cases": 49
+        },
+        "pooled": {
+          "estimate": 0.665517,
+          "ci95": [
+            0.546934,
+            0.76942
+          ],
+          "n_cases": 49
+        }
+      },
+      "mistral:7b": {
+        "original": {
+          "estimate": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n_cases": 49
+        },
+        "pooled": {
+          "estimate": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "n_cases": 49
+        }
+      },
+      "phi4-mini": {
+        "original": {
+          "estimate": 0.28247,
+          "ci95": [
+            0.105775,
+            0.454883
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.319379,
+          "ci95": [
+            0.15508,
+            0.481809
+          ],
+          "n_cases": 48
+        },
+        "permuted": {
+          "estimate": 0.206393,
+          "ci95": [
+            0.081817,
+            0.340998
+          ],
+          "n_cases": 49
+        },
+        "pooled": {
+          "estimate": 0.268902,
+          "ci95": [
+            0.149964,
+            0.383644
+          ],
+          "n_cases": 49
+        }
+      },
+      "qwen3:1.7b": {
+        "original": {
+          "estimate": -0.054314,
+          "ci95": [
+            -0.193878,
+            0.091877
+          ],
+          "n_cases": 49
+        },
+        "reversed": {
+          "estimate": 0.100443,
+          "ci95": [
+            -0.030374,
+            0.221622
+          ],
+          "n_cases": 49
+        },
+        "permuted": {
+          "estimate": -0.05102,
+          "ci95": [
+            -0.193616,
+            0.095791
+          ],
+          "n_cases": 49
+        },
+        "pooled": {
+          "estimate": -0.002024,
+          "ci95": [
+            -0.113441,
+            0.108346
+          ],
+          "n_cases": 49
+        }
+      }
+    },
+    "validity_minus_constant": {
+      "gemma3:4b": {
+        "estimate": 0.168367,
+        "ci95": [
+          0.083333,
+          0.260204
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0008,
+        "ci_bonferroni": [
+          0.05102,
+          0.29932
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": true
+      },
+      "gemma4:e4b": {
+        "estimate": 0.314626,
+        "ci95": [
+          0.19898,
+          0.433673
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0008,
+        "ci_bonferroni": [
+          0.151361,
+          0.488095
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": true
+      },
+      "granite4": {
+        "estimate": 0.171769,
+        "ci95": [
+          0.045918,
+          0.304422
+        ],
+        "p_two_sided_vs_0": 0.0056,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0224,
+        "ci_bonferroni": [
+          0.001701,
+          0.360544
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": true
+      },
+      "lfm2.5:1.2b-thinking": {
+        "estimate": -0.015306,
+        "ci95": [
+          -0.062925,
+          0.032313
+        ],
+        "p_two_sided_vs_0": 0.5194,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 1.0,
+        "ci_bonferroni": [
+          -0.081633,
+          0.05102
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": false
+      },
+      "ministral-3:8b": {
+        "estimate": 0.318027,
+        "ci95": [
+          0.19932,
+          0.443537
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0008,
+        "ci_bonferroni": [
+          0.152721,
+          0.496259
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": true
+      },
+      "mistral:7b": {
+        "estimate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p_two_sided_vs_0": 1.0,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 1.0,
+        "ci_bonferroni": [
+          0.0,
+          0.0
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": false
+      },
+      "phi4-mini": {
+        "estimate": 0.128401,
+        "ci95": [
+          0.056122,
+          0.205782
+        ],
+        "p_two_sided_vs_0": 0.0001,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 0.0008,
+        "ci_bonferroni": [
+          0.033163,
+          0.243197
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": true
+      },
+      "qwen3:1.7b": {
+        "estimate": -0.013605,
+        "ci95": [
+          -0.122449,
+          0.10034
+        ],
+        "p_two_sided_vs_0": 0.81,
+        "n_cases": 49,
+        "n_case_runs": 49,
+        "p_holm": 1.0,
+        "ci_bonferroni": [
+          -0.163265,
+          0.147959
+        ],
+        "ci_bonferroni_level": 0.9938,
+        "family_size": 8,
+        "better_than_constant": false
+      }
+    }
   }
 }
