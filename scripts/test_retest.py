@@ -30,12 +30,17 @@ only), e.g.
 
   docker exec langfuse-db psql -U langfuse -d langfuse -c "COPY (SELECT r.run_label,
     r.question_order, r.judge_model, r.case_id, c.criterion, r.status, r.answers,
-    c.expected, r.agreement, r.created_at FROM govllm.groundtruth_results r JOIN
+    c.expected, r.agreement, r.created_at, r.model_digest FROM govllm.groundtruth_results r JOIN
     govllm.groundtruth_cases c ON c.id = r.case_id ORDER BY r.created_at)
     TO STDOUT WITH CSV HEADER" > gt_all.csv
 
 Usage:
   python scripts/test_retest.py gt_all.csv [--bootstrap 10000]
+Validity for the v2 (section "validity"): agreement with the ground truth from the
+repeated runs only (they carry the model digest), per judge and ordering = mean over the
+repetitions of that ordering (5 original, 2 reversed, 2 permuted), then pooled over the
+three orderings per case; unusable answers excluded, worst case (unusable = 0) reported.
+
 Writes docs/ground_truth/analysis/test_retest.json. Stdlib only.
 """
 
@@ -77,7 +82,8 @@ def load(path):
             assert r["case_id"] not in data[key], ("duplicate", key, r["case_id"])
             data[key][r["case_id"]] = {"criterion": r["criterion"], "status": r["status"],
                                        "order": r["question_order"], "answers": answers,
-                                       "expected": expected, "agreement": agreement}
+                                       "expected": expected, "agreement": agreement,
+                                       "digest": r.get("model_digest") or None}
     return data
 
 
@@ -144,6 +150,49 @@ def majority_agreement(rows):
         maj = sum(1 for x in votes if x is True) > len(votes) / 2
         hits += maj == v
     return hits / len(expected)
+
+
+RUNS_BY_ORDER = {"original": ORIG, "reversed": ["retest-rev-r1", "retest-rev-r2"],
+                 "permuted": ["retest-perm-r1", "retest-perm-r2"]}
+
+
+def validity(data, judges, B):
+    """Validity of each judge from the repeated runs (the v2 source), with case-bootstrap CIs."""
+    res = {}
+    for j in judges:
+        runs = {o: [data[(j, r)] for r in rr] for o, rr in RUNS_BY_ORDER.items()}
+        digests = sorted({row["digest"] for rs in runs.values() for run in rs for row in run.values()
+                          if row["digest"]})
+        cases = sorted(runs["original"][0])
+        per_case = {o: {} for o in runs}
+        worst = {o: {} for o in runs}
+        for o, rs in runs.items():
+            for c in cases:
+                v = [run[c]["agreement"] for run in rs if run[c]["agreement"] is not None]
+                if v:
+                    per_case[o][c] = statistics.mean(v)
+                worst[o][c] = statistics.mean(run[c]["agreement"] or 0.0 for run in rs)
+        crit_of = {c: runs["original"][0][c]["criterion"] for c in cases}
+        jr = {"digests": digests, "orders": {}}
+        for o in runs:
+            est = strip(cluster_bootstrap({c: [v] for c, v in per_case[o].items()}, B, f"validity:{j}:{o}"))
+            est.pop("p_two_sided_vs_0", None)
+            est["n_usable_cases"] = len(per_case[o])
+            est["worst_case"] = round(statistics.mean(worst[o].values()), 6)
+            est["per_criterion"] = {
+                cr: round(statistics.mean(v for c, v in per_case[o].items() if crit_of[c] == cr), 6)
+                for cr in sorted(set(crit_of.values()))}
+            jr["orders"][o] = est
+        pooled = strip(cluster_bootstrap({c: [per_case[o][c] for o in runs if c in per_case[o]] for c in cases},
+                                         B, f"validity:{j}:pooled"))
+        pooled.pop("p_two_sided_vs_0", None)
+        pooled["per_criterion"] = {
+            cr: round(statistics.mean(per_case[o][c] for o in runs for c in cases
+                                      if c in per_case[o] and crit_of[c] == cr), 6)
+            for cr in sorted(set(crit_of.values()))}
+        jr["pooled"] = pooled
+        res[label(j)] = jr
+    return res
 
 
 def main():
@@ -320,6 +369,8 @@ def main():
     E["b_per_criterion_retest"] = e_crit
     E["c_signed_order_effect_retest_holm16"] = e_signed
     E["d_family1_on_subquestion_flips"] = e_flip_fam
+
+    out["validity"] = validity(data, judges, B)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")

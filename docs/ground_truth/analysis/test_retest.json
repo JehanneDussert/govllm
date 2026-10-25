@@ -2113,5 +2113,623 @@
         "family_size": 8
       }
     }
+  },
+  "validity": {
+    "gemma3:4b": {
+      "digests": [
+        "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.688776,
+          "ci95": [
+            0.596939,
+            0.77551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.688776,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.525,
+            "non_manipulation": 0.825,
+            "prompt_injection": 0.75,
+            "transparency": 0.825
+          }
+        },
+        "reversed": {
+          "estimate": 0.673469,
+          "ci95": [
+            0.596939,
+            0.744898
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.673469,
+          "per_criterion": {
+            "data_privacy": 0.575,
+            "human_oversight": 0.675,
+            "non_manipulation": 0.8,
+            "prompt_injection": 0.666667,
+            "transparency": 0.65
+          }
+        },
+        "permuted": {
+          "estimate": 0.679348,
+          "ci95": [
+            0.592391,
+            0.76087
+          ],
+          "n_cases": 46,
+          "n_case_runs": 46,
+          "n_usable_cases": 46,
+          "worst_case": 0.637755,
+          "per_criterion": {
+            "data_privacy": 0.555556,
+            "human_oversight": 0.694444,
+            "non_manipulation": 0.75,
+            "prompt_injection": 0.8125,
+            "transparency": 0.6
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.680556,
+        "ci95": [
+          0.607639,
+          0.753425
+        ],
+        "n_cases": 49,
+        "n_case_runs": 144,
+        "per_criterion": {
+          "data_privacy": 0.551724,
+          "human_oversight": 0.62931,
+          "non_manipulation": 0.791667,
+          "prompt_injection": 0.740385,
+          "transparency": 0.691667
+        }
+      }
+    },
+    "gemma4:e4b": {
+      "digests": [
+        "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.836735,
+          "ci95": [
+            0.765306,
+            0.897959
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.836735,
+          "per_criterion": {
+            "data_privacy": 0.825,
+            "human_oversight": 0.775,
+            "non_manipulation": 0.85,
+            "prompt_injection": 0.833333,
+            "transparency": 0.9
+          }
+        },
+        "reversed": {
+          "estimate": 0.831633,
+          "ci95": [
+            0.765306,
+            0.892857
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.831633,
+          "per_criterion": {
+            "data_privacy": 0.8,
+            "human_oversight": 0.8,
+            "non_manipulation": 0.8,
+            "prompt_injection": 0.833333,
+            "transparency": 0.925
+          }
+        },
+        "permuted": {
+          "estimate": 0.821429,
+          "ci95": [
+            0.755102,
+            0.882653
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.821429,
+          "per_criterion": {
+            "data_privacy": 0.75,
+            "human_oversight": 0.775,
+            "non_manipulation": 0.85,
+            "prompt_injection": 0.833333,
+            "transparency": 0.9
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.829932,
+        "ci95": [
+          0.763605,
+          0.891156
+        ],
+        "n_cases": 49,
+        "n_case_runs": 147,
+        "per_criterion": {
+          "data_privacy": 0.791667,
+          "human_oversight": 0.783333,
+          "non_manipulation": 0.833333,
+          "prompt_injection": 0.833333,
+          "transparency": 0.908333
+        }
+      }
+    },
+    "granite4": {
+      "digests": [
+        "4235724a127c0f86dcc0247d67c20148705d6dd2319164014d92f71d607f4773"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.719388,
+          "ci95": [
+            0.637755,
+            0.795918
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.719388,
+          "per_criterion": {
+            "data_privacy": 0.75,
+            "human_oversight": 0.625,
+            "non_manipulation": 0.8,
+            "prompt_injection": 0.583333,
+            "transparency": 0.825
+          }
+        },
+        "reversed": {
+          "estimate": 0.69898,
+          "ci95": [
+            0.617347,
+            0.780612
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.69898,
+          "per_criterion": {
+            "data_privacy": 0.75,
+            "human_oversight": 0.625,
+            "non_manipulation": 0.75,
+            "prompt_injection": 0.75,
+            "transparency": 0.625
+          }
+        },
+        "permuted": {
+          "estimate": 0.642857,
+          "ci95": [
+            0.561224,
+            0.72449
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.642857,
+          "per_criterion": {
+            "data_privacy": 0.75,
+            "human_oversight": 0.5,
+            "non_manipulation": 0.8,
+            "prompt_injection": 0.611111,
+            "transparency": 0.55
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.687075,
+        "ci95": [
+          0.620748,
+          0.753401
+        ],
+        "n_cases": 49,
+        "n_case_runs": 147,
+        "per_criterion": {
+          "data_privacy": 0.75,
+          "human_oversight": 0.583333,
+          "non_manipulation": 0.783333,
+          "prompt_injection": 0.648148,
+          "transparency": 0.666667
+        }
+      }
+    },
+    "lfm2.5:1.2b-thinking": {
+      "digests": [
+        "c1f3e0033aa77e2c30b350dd9f7d11aed34aaad509b8b0f2cf6b12d97545f6df"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.545918,
+          "ci95": [
+            0.438776,
+            0.653061
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.545918,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.4,
+            "non_manipulation": 0.625,
+            "prompt_injection": 0.833333,
+            "transparency": 0.375
+          }
+        },
+        "reversed": {
+          "estimate": 0.459184,
+          "ci95": [
+            0.357143,
+            0.561224
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.459184,
+          "per_criterion": {
+            "data_privacy": 0.4,
+            "human_oversight": 0.4,
+            "non_manipulation": 0.5,
+            "prompt_injection": 0.583333,
+            "transparency": 0.425
+          }
+        },
+        "permuted": {
+          "estimate": 0.484375,
+          "ci95": [
+            0.380208,
+            0.588542
+          ],
+          "n_cases": 48,
+          "n_case_runs": 48,
+          "n_usable_cases": 48,
+          "worst_case": 0.47449,
+          "per_criterion": {
+            "data_privacy": 0.472222,
+            "human_oversight": 0.3,
+            "non_manipulation": 0.6,
+            "prompt_injection": 0.638889,
+            "transparency": 0.425
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.496575,
+        "ci95": [
+          0.407534,
+          0.586735
+        ],
+        "n_cases": 49,
+        "n_case_runs": 146,
+        "per_criterion": {
+          "data_privacy": 0.465517,
+          "human_oversight": 0.366667,
+          "non_manipulation": 0.575,
+          "prompt_injection": 0.685185,
+          "transparency": 0.408333
+        }
+      }
+    },
+    "ministral-3:8b": {
+      "digests": [
+        "1922accd5827ebe6829e536369195db25eaf664528dc66206d646ea3bb386b71"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.80102,
+          "ci95": [
+            0.729592,
+            0.866327
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.80102,
+          "per_criterion": {
+            "data_privacy": 0.665,
+            "human_oversight": 0.785,
+            "non_manipulation": 0.845,
+            "prompt_injection": 0.811111,
+            "transparency": 0.9
+          }
+        },
+        "reversed": {
+          "estimate": 0.846939,
+          "ci95": [
+            0.795918,
+            0.897959
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.846939,
+          "per_criterion": {
+            "data_privacy": 0.9,
+            "human_oversight": 0.8,
+            "non_manipulation": 0.775,
+            "prompt_injection": 0.861111,
+            "transparency": 0.9
+          }
+        },
+        "permuted": {
+          "estimate": 0.852041,
+          "ci95": [
+            0.795918,
+            0.903061
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.852041,
+          "per_criterion": {
+            "data_privacy": 0.875,
+            "human_oversight": 0.8,
+            "non_manipulation": 0.825,
+            "prompt_injection": 0.861111,
+            "transparency": 0.9
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.833333,
+        "ci95": [
+          0.77619,
+          0.885374
+        ],
+        "n_cases": 49,
+        "n_case_runs": 147,
+        "per_criterion": {
+          "data_privacy": 0.813333,
+          "human_oversight": 0.795,
+          "non_manipulation": 0.815,
+          "prompt_injection": 0.844444,
+          "transparency": 0.9
+        }
+      }
+    },
+    "mistral:7b": {
+      "digests": [
+        "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.515306,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.4,
+            "non_manipulation": 0.525,
+            "prompt_injection": 0.722222,
+            "transparency": 0.425
+          }
+        },
+        "reversed": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.622449
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.515306,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.4,
+            "non_manipulation": 0.525,
+            "prompt_injection": 0.722222,
+            "transparency": 0.425
+          }
+        },
+        "permuted": {
+          "estimate": 0.515306,
+          "ci95": [
+            0.403061,
+            0.627551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.515306,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.4,
+            "non_manipulation": 0.525,
+            "prompt_injection": 0.722222,
+            "transparency": 0.425
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.515306,
+        "ci95": [
+          0.403061,
+          0.627551
+        ],
+        "n_cases": 49,
+        "n_case_runs": 147,
+        "per_criterion": {
+          "data_privacy": 0.525,
+          "human_oversight": 0.4,
+          "non_manipulation": 0.525,
+          "prompt_injection": 0.722222,
+          "transparency": 0.425
+        }
+      }
+    },
+    "phi4-mini": {
+      "digests": [
+        "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.647959,
+          "ci95": [
+            0.545918,
+            0.744898
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.647959,
+          "per_criterion": {
+            "data_privacy": 0.675,
+            "human_oversight": 0.575,
+            "non_manipulation": 0.725,
+            "prompt_injection": 0.805556,
+            "transparency": 0.475
+          }
+        },
+        "reversed": {
+          "estimate": 0.671875,
+          "ci95": [
+            0.578125,
+            0.760417
+          ],
+          "n_cases": 48,
+          "n_case_runs": 48,
+          "n_usable_cases": 48,
+          "worst_case": 0.658163,
+          "per_criterion": {
+            "data_privacy": 0.725,
+            "human_oversight": 0.55,
+            "non_manipulation": 0.7,
+            "prompt_injection": 0.8125,
+            "transparency": 0.6
+          }
+        },
+        "permuted": {
+          "estimate": 0.612245,
+          "ci95": [
+            0.515306,
+            0.709184
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.612245,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.625,
+            "non_manipulation": 0.675,
+            "prompt_injection": 0.722222,
+            "transparency": 0.525
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.643836,
+        "ci95": [
+          0.559932,
+          0.726027
+        ],
+        "n_cases": 49,
+        "n_case_runs": 146,
+        "per_criterion": {
+          "data_privacy": 0.641667,
+          "human_oversight": 0.583333,
+          "non_manipulation": 0.7,
+          "prompt_injection": 0.778846,
+          "transparency": 0.533333
+        }
+      }
+    },
+    "qwen3:1.7b": {
+      "digests": [
+        "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7"
+      ],
+      "orders": {
+        "original": {
+          "estimate": 0.47449,
+          "ci95": [
+            0.403061,
+            0.545918
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.47449,
+          "per_criterion": {
+            "data_privacy": 0.425,
+            "human_oversight": 0.55,
+            "non_manipulation": 0.525,
+            "prompt_injection": 0.444444,
+            "transparency": 0.425
+          }
+        },
+        "reversed": {
+          "estimate": 0.556122,
+          "ci95": [
+            0.484694,
+            0.627551
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.556122,
+          "per_criterion": {
+            "data_privacy": 0.525,
+            "human_oversight": 0.5,
+            "non_manipulation": 0.675,
+            "prompt_injection": 0.611111,
+            "transparency": 0.475
+          }
+        },
+        "permuted": {
+          "estimate": 0.47449,
+          "ci95": [
+            0.403061,
+            0.55102
+          ],
+          "n_cases": 49,
+          "n_case_runs": 49,
+          "n_usable_cases": 49,
+          "worst_case": 0.47449,
+          "per_criterion": {
+            "data_privacy": 0.5,
+            "human_oversight": 0.45,
+            "non_manipulation": 0.65,
+            "prompt_injection": 0.361111,
+            "transparency": 0.4
+          }
+        }
+      },
+      "pooled": {
+        "estimate": 0.501701,
+        "ci95": [
+          0.445578,
+          0.559524
+        ],
+        "n_cases": 49,
+        "n_case_runs": 147,
+        "per_criterion": {
+          "data_privacy": 0.483333,
+          "human_oversight": 0.5,
+          "non_manipulation": 0.616667,
+          "prompt_injection": 0.472222,
+          "transparency": 0.433333
+        }
+      }
+    }
   }
 }
