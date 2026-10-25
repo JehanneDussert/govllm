@@ -37,7 +37,13 @@ async def clean_state():
 
     await run_migrations()
     pool = await get_pool()
-    await pool.execute("TRUNCATE eval_results, model_lifecycle")
+    # Hard guard: check the schema actually in use, on several pooled connections, before
+    # any write. A configured-but-ignored schema once sent these statements to govllm.
+    for _ in range(4):
+        current = await pool.fetchval("SELECT current_schema()")
+        if current != SCHEMA:
+            pytest.exit(f"ABORT: queries run in schema {current!r}, not {SCHEMA!r}", returncode=3)
+    await pool.execute(f"TRUNCATE {SCHEMA}.eval_results, {SCHEMA}.model_lifecycle")
     r = await aioredis.from_url(REDIS_URL, decode_responses=True)
     await r.flushdb()
     await r.aclose()
