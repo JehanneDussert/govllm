@@ -46,6 +46,7 @@ class JudgeChecklistResult(BaseModel):
     parse_fallback: str | None = None  # positional_list | top_level_keys | None
     run_label: str = "main"  # "main" = the analysed runs; anything else (e.g. retest-r1) is excluded
     model_digest: str | None = None  # Ollama digest of the model that answered
+    ollama_version: str | None = None  # Ollama server version that answered
 
 
 class GroundTruthRunResult(BaseModel):

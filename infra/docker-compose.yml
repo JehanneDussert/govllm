@@ -12,7 +12,10 @@ services:
     restart: unless-stopped
 
   ollama:
-    image: ollama/ollama:latest
+    # Pinned by digest: Ollama 0.32.15, the server of the test-retest and of every run
+    # since 2026-08-22. Another release gave different judge answers with the same model
+    # files (docs/inference_stack.md). Change only together with a full re-run.
+    image: ollama/ollama@sha256:57d60e686821ea81a7748a3ec8141308c8b8f95b27105713954abf7a6529e700
     init: true
     container_name: ollama
     ports:
@@ -22,7 +25,8 @@ services:
     restart: unless-stopped
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    # Pinned by digest: LiteLLM 1.82.1 (image of 2026-03-10), see docs/inference_stack.md.
+    image: ghcr.io/berriai/litellm@sha256:d2bc536b3459e58f62bfc8f286a9c2882038b14ce7309c3991845bebc2e3c4fa
     container_name: litellm
     depends_on: [ollama]
     ports:

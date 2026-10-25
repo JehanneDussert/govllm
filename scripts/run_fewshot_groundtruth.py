@@ -395,12 +395,29 @@ def _load_baseline(judge: str) -> list[dict]:
     return data.get("results", [])
 
 
+def _inference_stack(judge: str) -> dict | None:
+    """Ollama version + judge digest (GET /config/inference-stack), recorded with each call."""
+    try:
+        r = httpx.get(f"{EVAL_URL}/config/inference-stack", params={"models": judge}, timeout=15)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        print(f"WARN inference stack unavailable: {e}")
+        return None
+
+
 def _save_fewshot_results(judge: str, results: list[dict]) -> Path:
     path = RESULTS_DIR / f"{_slug(judge)}_fewshot.json"
+    stacks = []
+    for r in results:
+        s = r.get("inference_stack")
+        if s is not None and s not in stacks:
+            stacks.append(s)
     payload = {
         "judge_model": judge,
         "mode": "fewshot",
         "n": len(results),
+        "inference_stacks": stacks,  # one expected: the run stops if the stack changes
         "results": results,
     }
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -541,6 +558,7 @@ def main() -> None:
 
     # -- Run evaluation ----------------------------
     fewshot_results: dict[str, list[dict]] = {j: [] for j in judges}
+    stacks_by_judge: dict[str, dict | None] = {}  # first inference stack seen per judge
     baseline_by_judge: dict[str, list[dict]] = {j: _load_baseline(j) for j in judges}
 
     # Group cases by criterion for progress display
@@ -565,6 +583,13 @@ def main() -> None:
 
             for judge in judges:
                 print(f"  [{case_id[:8]}] {judge.split('/')[-1]}…", end=" ", flush=True)
+                stack = None if args.dry_run else _inference_stack(judge)
+                first = stacks_by_judge.setdefault(judge, stack)
+                if first is not None and stack != first:
+                    for j, res in fewshot_results.items():
+                        if res:
+                            _save_fewshot_results(j, res)
+                    raise SystemExit(f"Inference stack changed during the run for {judge}: {first} -> {stack}")
                 answers, reason, latency_ms = call_judge(prompt, judge, dry_run=args.dry_run)
 
                 if answers:
@@ -588,6 +613,7 @@ def main() -> None:
                     "score":     score,
                     "reason":    reason,
                     "latency_ms": latency_ms,
+                    "inference_stack": stack,
                 })
 
     # -- Save results per judge -------------------

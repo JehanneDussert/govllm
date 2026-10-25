@@ -9,7 +9,9 @@ from services.judge_config import (
     get_judge_config,
     save_judge_config,
 )
+from services.inference_stack import get_inference_stack
 from shared.config import get_evaluation_settings
+from shared.schemas.inference import InferenceStack
 
 router = APIRouter(prefix="/config", tags=["config"])
 _settings = get_evaluation_settings()
@@ -18,6 +20,15 @@ _settings = get_evaluation_settings()
 @router.get("/models/available")
 async def get_available_models() -> dict:
     return {"models": _settings.benchmark_models}
+
+
+@router.get("/inference-stack", response_model=InferenceStack)
+async def inference_stack(models: str | None = None) -> InferenceStack:
+    """Ollama version + model digests (comma-separated LiteLLM ids, or every installed model).
+
+    Read by the benchmark and few-shot scripts, which store it in their result files.
+    """
+    return await get_inference_stack(models.split(",") if models else None)
 
 
 @router.get("/judge", response_model=JudgeConfig)

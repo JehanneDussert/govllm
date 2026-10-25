@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS groundtruth_results (
     parse_fallback        TEXT,
     run_label             TEXT    NOT NULL DEFAULT 'main',
     model_digest          TEXT,
+    ollama_version        TEXT,
     created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion ON groundtruth_cases(criterion);
