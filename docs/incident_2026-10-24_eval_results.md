@@ -63,7 +63,7 @@ A second rehearsal (2026-10-26, on a restore of the 09:08 dump, with the provena
 - **`GET /matrix`:** the 8 models have data in all 6 use cases.
 - **`GET /matrix/routing`** (`analysis`, `ai_act_compliance`): returns a recommendation, and the judge `ministral-3:8b` is excluded.
 
-**Remaining gap — old use-case IDs.** The May rows carry the use-case IDs of the time, `summary` and `legal`. The configuration has since renamed them `summarization` and `administrative_writing`. Their 24 rows per model and use case therefore sit under orphan cache keys. For the four original models, the Matrix shows only the 32 August rows on those two use cases, instead of 56. The restoration kept the IDs as they were written; the renaming needs a separate decision (`UPDATE` of the `use_case_id` of the 192 May rows concerned, as on 2026-08-22 for the Redis keys).
+**Remaining gap — old use-case IDs.** The May rows carry the use-case IDs of the time, `summary` and `legal`. The configuration has since renamed them `summarization` and `administrative_writing`. Their 24 rows per model and use case therefore sit under orphan cache keys. For the four original models, the Matrix shows only the 32 August rows on those two use cases, instead of 56. The restoration kept the IDs as they were written; the renaming needs a separate decision (`UPDATE` of the `use_case_id` of the 255 May rows concerned, 128 `summary` and 127 `legal`, as on 2026-08-22 for the Redis keys).
 
 **The Redis cache keeps a 7-day TTL on `main`.** Without evaluation activity, it will expire again; PR #42 makes `eval_results` the source the Matrix and routing read.
 
