@@ -65,6 +65,21 @@ A second rehearsal (2026-10-26, on a restore of the 09:08 dump, with the provena
 
 **Remaining gap — old use-case IDs.** The May rows carry the use-case IDs of the time, `summary` and `legal`. The configuration has since renamed them `summarization` and `administrative_writing`. Their 24 rows per model and use case therefore sit under orphan cache keys. For the four original models, the Matrix shows only the 32 August rows on those two use cases, instead of 56. The restoration kept the IDs as they were written; the renaming needs a separate decision (`UPDATE` of the `use_case_id` of the 255 May rows concerned, 128 `summary` and 127 `legal`, as on 2026-08-22 for the Redis keys).
 
+**Renaming done on 2026-10-26** (author's approval, conditions checked first):
+- **Mapping:** `summary` → `summarization` (128 rows) and `legal` → `administrative_writing` (127 rows); 255 rows, all from May. The original values remain in the dump of 2026-10-26 09:08 (SHA-256 `4EB8DDDA…3B123D6F`).
+- **Evidence of a pure rename:**
+  - in commit `488b662` (2026-05-19), only the `id` changes: label, description and judge prompt are identical (the `default_profile_id` of `summary` changes only through the renaming of the profile `accessibility` to `accessibility_inclusion`);
+  - in the benchmark files, the same 8 prompts (same IDs, same text) were evaluated under both IDs with the same profile (`quality_baseline`, `data_protection`);
+  - the Redis keys had already been renamed the same way on 2026-08-22.
+- **Transaction:** a single one.
+  - Before: `summary` 128, `summarization` 383, `legal` 127, `administrative_writing` 381.
+  - After: `summarization` 511, `administrative_writing` 508, no old ID left. Total unchanged (3,064).
+- **Cache rebuilt:** 2,685 rows, 48 keys, no `summary` or `legal` key.
+- **Matrix:** 8 models × 6 use cases. Each cell holds 56 evaluations (8 prompts × 7 judges other than the generator), except three cells at 55, which are benchmark evaluations with nothing to restore:
+  - phi4-mini on `summarization` (`sum_01`) and on `analysis` (`ana_hard_01`): judged by lfm2.5, TIMEOUT;
+  - gemma3:4b on `administrative_writing` (`adm_hard_02`): scored by hand in May (`score_missing_entry.py`), without the `eval` field.
+- **Redis:** persistent (RDB snapshots on the `infra_redis_data` volume, `BGSAVE` after the rebuild). The cache survives a Docker restart.
+
 **The Redis cache keeps a 7-day TTL on `main`.** Without evaluation activity, it will expire again; PR #42 makes `eval_results` the source the Matrix and routing read.
 
 ## Prevention
