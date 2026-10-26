@@ -20,6 +20,35 @@ The only change was a newer Ollama release, and 7 and 17 of the 49 cases changed
 
 These are the images of the test-retest run (2026-10-23/25) and of every run since 2026-08-22. A run on any other version is a different experiment: change the pin only together with a full re-run.
 
+## CPU threads (`infra/litellm_config.yaml`: `num_thread: 10`)
+
+On CPU, Ollama's thread count is part of the stack: it changes the order of floating-point additions, hence greedy outputs.
+- **Before 2026-10-26:** every run used 10 threads (`n_threads = 10 / 20` in the logs, VM with 20 logical processors).
+- **After the `.wslconfig` of 2026-10-26** (`processors=16`), the default fell to 8.
+
+The pinned image (0.32.15) and the current call code were tested on 12 cases × 4 judges (phi4-mini, gemma3:4b, qwen3:1.7b, granite4) against the test-retest answers:
+
+| Threads | Same verdicts | Same raw responses |
+|---|---|---|
+| 10 | 46/48 | 44/48 |
+| 8 | 40/48 | 15/48 |
+
+`num_thread: 10` is therefore set for every judge in the LiteLLM configuration, whatever the number of processors the VM gets. The small residual at 10 threads (2 verdicts, 4 raw responses) is not explained.
+
+## May 2026 runs: reproduced on Ollama 0.23.4
+
+The May 2026 runs used Ollama **0.23.4**, the `latest` image on Docker Hub on 2026-05-14. The 0.24.0 image was pushed at 23:03 that day and 0.30.0 only on 2026-06-01. They were replayed on 0.23.4:
+- **Setup:** a separate container on an internal network, the same model files read-only, the May 14 code and LiteLLM configuration, results written to a file only.
+- **gemma3:4b:** 22/22 cases with identical verdicts *and* reasons, including the 17 that differ today.
+- **qwen3:1.7b:** 49/49 identical (May configuration: `/no_think` without `think: False`).
+- **phi4-mini: not reproduced** (1–3/49), whatever was tried:
+  - 8 or 10 threads;
+  - May call order with a cold cache;
+  - memory cap of 10 or 30 GB;
+  - Ollama 0.23.3.
+
+  It is the only one of the three that 0.23.4 runs on the llama.cpp engine; the cause is not determined.
+
 ## Judge models
 
 Ollama model ID = sha256 of the manifest (first 12 characters in `ollama list`). These files are the ones every reported run used: none has been downloaded again since its first pull.
