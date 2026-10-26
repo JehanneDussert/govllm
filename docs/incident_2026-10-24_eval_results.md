@@ -52,7 +52,20 @@ A second rehearsal (2026-10-26, on a restore of the 09:08 dump, with the provena
 - 0 test rows;
 - `mark_self_judged` dry run: 379 rows.
 
-The production run waits for the author's approval of the migration.
+**Production run (2026-10-26, after approval):**
+- **Migration:** two `ALTER TABLE` statements via `psql`.
+- **`restore_eval_results.py --apply`:**
+  - 30 → 3,064 rows, 0 test rows, 3,064 distinct trace_ids;
+  - all rows `restored_from = 'benchmark_files'`, with a single `restored_at` of 2026-10-26 12:13:06 UTC;
+  - `evaluated_at` from 2026-05-15 to 2026-08-27.
+- **`mark_self_judged.py`:** dry run with 379 rows shown to the author, then `--apply` (UPDATE 379; 2,685 rows not self-judged).
+- **Redis cache:** rebuilt with `backfill_matrix_cache.py`, which excludes self-judged rows (56 keys).
+- **`GET /matrix`:** the 8 models have data in all 6 use cases.
+- **`GET /matrix/routing`** (`analysis`, `ai_act_compliance`): returns a recommendation, and the judge `ministral-3:8b` is excluded.
+
+**Remaining gap — old use-case IDs.** The May rows carry the use-case IDs of the time, `summary` and `legal`. The configuration has since renamed them `summarization` and `administrative_writing`. Their 24 rows per model and use case therefore sit under orphan cache keys. For the four original models, the Matrix shows only the 32 August rows on those two use cases, instead of 56. The restoration kept the IDs as they were written; the renaming needs a separate decision (`UPDATE` of the `use_case_id` of the 192 May rows concerned, as on 2026-08-22 for the Redis keys).
+
+**The Redis cache keeps a 7-day TTL on `main`.** Without evaluation activity, it will expire again; PR #42 makes `eval_results` the source the Matrix and routing read.
 
 ## Prevention
 
