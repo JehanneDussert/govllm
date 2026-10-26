@@ -37,15 +37,22 @@ No figure of the paper (v1 or v2) depends on `eval_results` or `model_lifecycle`
 ## Restoration (option b, decision of 2026-10-25)
 
 1. **Backup first**: `pg_dumpall` of 2026-10-25 15:39, 15,260,316 bytes, SHA-256 `64336E34…88BE16`, kept on the PC and as an encrypted copy off the PC. Restore test on 2026-10-26 in a throwaway instance (`postgres:16-alpine`, `--network none`, `--memory 512m`): no error, 56 tables, identical row counts and identical checksum of `groundtruth_results` against the live database.
-2. `scripts/restore_eval_results.py`: deletes the 30 test rows and inserts the 3,064 benchmark evaluations, in one transaction. Dry run by default; idempotent.
-3. `scripts/mark_self_judged.py`: flags self-judged rows (generator = judge). Then `backfill_matrix_cache.py` rebuilds the Redis cache.
+   A second dump was taken right before the restoration, to allow a rollback: `pg_dumpall_20261026_0908.sql`, 15,260,316 bytes, SHA-256 `4EB8DDDA3ACFA9B848383800DDA6B4E9704148404D8A5C5D917BF4973B123D6F`. Its contents were checked by counting the rows of each table in the file (54 tables with data): `groundtruth_results` 4,704, `groundtruth_cases` 49, `eval_results` 30, `model_lifecycle` 0, `traces` 3,912, `scores` 4,552, all equal to the live database.
+2. **Provenance**: two nullable columns, `eval_results.restored_from` (`'benchmark_files'`) and `restored_at` (time of the restoration, the same for the whole batch), added by migration (`migrations.sql`). They are NULL for every row written by `eval_runner`. No code reads `eval_results` with `SELECT *`.
+3. `scripts/restore_eval_results.py`: deletes the 30 test rows and inserts the 3,064 benchmark evaluations, with their provenance, in one transaction. Dry run by default; idempotent. It refuses to run without the provenance columns.
+4. `scripts/mark_self_judged.py`: flags self-judged rows (generator = judge). Then `backfill_matrix_cache.py` rebuilds the Redis cache.
 
 Rehearsal on the throwaway restore (2026-10-26):
 - 30 → 3,064 rows;
 - second run: nothing to insert;
 - `mark_self_judged`: 379 flagged, judge unknown 0. 384 before the incident: the 5 missing rows are diagonal evaluations that finished after the benchmark poll timed out, so they are not in the files.
 
-The production run waits for the author's approval.
+A second rehearsal (2026-10-26, on a restore of the 09:08 dump, with the provenance migration) gave:
+- 3,064 rows `restored_from = 'benchmark_files'`, evaluated between 2026-05-15 and 2026-08-27, with a single `restored_at`;
+- 0 test rows;
+- `mark_self_judged` dry run: 379 rows.
+
+The production run waits for the author's approval of the migration.
 
 ## Prevention
 

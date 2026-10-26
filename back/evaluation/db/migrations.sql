@@ -127,6 +127,12 @@ CREATE TABLE IF NOT EXISTS eval_results (
 -- kept for audit, excluded from the aggregates (see jobs/eval_runner.py).
 ALTER TABLE eval_results ADD COLUMN IF NOT EXISTS self_judged BOOLEAN NOT NULL DEFAULT false;
 
+-- Provenance of rows rebuilt after the 2026-10-24 loss (docs/incident_2026-10-24_eval_results.md):
+-- restored_from = 'benchmark_files' and restored_at = time of the restoration. NULL for every
+-- row written by eval_runner.
+ALTER TABLE eval_results ADD COLUMN IF NOT EXISTS restored_from TEXT;
+ALTER TABLE eval_results ADD COLUMN IF NOT EXISTS restored_at   TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS idx_eval_results_trace   ON eval_results(trace_id);
 CREATE INDEX IF NOT EXISTS idx_eval_results_model   ON eval_results(model, use_case_id);
 CREATE INDEX IF NOT EXISTS idx_eval_results_created ON eval_results(evaluated_at);

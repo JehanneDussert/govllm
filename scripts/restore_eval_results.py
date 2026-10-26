@@ -14,7 +14,9 @@ runs) cannot be rebuilt exactly and are not restored (decision of 2026-10-25, op
 Steps (one transaction):
   1. delete the integration-test rows (model = 'ollama/test-generator');
   2. insert every benchmark evaluation whose trace_id is not already in the table
-     (idempotent), self_judged = false. Run mark_self_judged.py afterwards.
+     (idempotent), self_judged = false, restored_from = 'benchmark_files' and
+     restored_at = now() (same timestamp for the whole batch). Run mark_self_judged.py
+     afterwards. The provenance columns must exist (migrations.sql); the script checks.
 
 Dry run by default. --container selects the PostgreSQL container, so the whole
 procedure can first be rehearsed on a throwaway restore of the dump.
@@ -32,6 +34,7 @@ from pathlib import Path
 
 RESULTS = Path("docs/benchmark/results")
 TEST_MODEL = "ollama/test-generator"
+RESTORED_FROM = "benchmark_files"
 
 
 def psql(args, sql: str) -> str:
@@ -72,6 +75,10 @@ def main() -> None:
     args = ap.parse_args()
 
     rows = benchmark_rows()
+    cols = set(psql(args, "SELECT column_name FROM information_schema.columns WHERE table_schema = 'govllm' "
+                          "AND table_name = 'eval_results';").split())
+    if not {"restored_from", "restored_at"} <= cols:
+        raise SystemExit("eval_results has no restored_from/restored_at columns: apply the migration first")
     present = set(psql(args, "SELECT trace_id FROM govllm.eval_results;").split())
     n_test = int(psql(args, f"SELECT count(*) FROM govllm.eval_results WHERE model = {lit(TEST_MODEL)};"))
     n_before = int(psql(args, "SELECT count(*) FROM govllm.eval_results;"))
@@ -90,7 +97,7 @@ def main() -> None:
         "(" + ", ".join([
             lit(e["trace_id"]), lit(e["model"]), lit(e.get("use_case_id")), lit(e.get("profile_id")),
             repr(float(e["composite_score"])), lit(json.dumps(e.get("criteria_scores") or [])) + "::jsonb",
-            lit(e["evaluated_at"]) + "::timestamptz", "false",
+            lit(e["evaluated_at"]) + "::timestamptz", "false", lit(RESTORED_FROM), "now()",
         ]) + ")"
         for e in todo
     )
@@ -99,7 +106,8 @@ def main() -> None:
         f"DELETE FROM govllm.eval_results WHERE model = {lit(TEST_MODEL)};\n"
         + (
             "INSERT INTO govllm.eval_results (trace_id, model, use_case_id, profile_id, composite_score, "
-            f"criteria_scores, evaluated_at, self_judged) VALUES\n{values};\n" if todo else ""
+            f"criteria_scores, evaluated_at, self_judged, restored_from, restored_at) VALUES\n{values};\n"
+            if todo else ""
         )
         + "COMMIT;\n"
     )
