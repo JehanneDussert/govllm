@@ -177,6 +177,20 @@ Every stored result carries a `run_label`. `main` is the set every analysis read
 
 **Test-retest run** (protocol of 2026-10-23): `back/evaluation/scripts/retest.py` runs the 8 judges on the 49 cases at temperature 0 under nine labels: `retest-orig-r1..r5` (original order, K = 5), `retest-rev-r1..r2` and `retest-perm-r1..r2` (order control, same permutation q2→q4→q1→q3 as the main runs), interleaved, unloading each judge from Ollama at the end of its block. Safe to interrupt and relaunch (`python scripts/retest.py` in the container; `--dry-run` prints the plan; last line `ALL_DONE`).
 
+**Test-retest analysis**: `python scripts/test_retest.py gt_all.csv` reads a read-only CSV export of `groundtruth_results` (the `COPY (SELECT …)` command is in the script's docstring) and writes `analysis/test_retest.json`. Sections:
+- `protocol`: unusable answers, then per judge the flip rate, Krippendorff's α and the dispersion of validity over the 5 original-order repetitions. Family 1 compares order with repetition and family 2 compares a majority vote with a single call, each with Holm and Bonferroni.
+- `validity`: agreement from the repeated runs only (with model digest), per ordering and pooled.
+- `chance_corrected`: Cohen's κ (judge vs expected answers, over sub-questions) per judge and ordering, with CI; family of 8 tests "better than a constant compliant judge" (51.5 %), Holm and Bonferroni.
+- `exploratory`: the paper's May runs vs the repetitions, per-criterion order deltas, signed order effects.
+
+Results of the run of 2026-10-23/25 (Ollama 0.32.15):
+- At temperature 0, seven of the eight judges return identical answers on all 5 repetitions. The exception is ministral-3:8b, with a 3.0 % flip rate and α = 0.94 [0.89, 0.98].
+- Changing the question order moves per-case validity beyond repetition for every judge except mistral:7b (Holm p < 0.001), but no signed global effect is significant.
+- A majority vote over 5 calls brings nothing.
+- mistral:7b answers "compliant" to every sub-question, so its 51.5 % equals the base rate.
+- Three judges do no better than answering "compliant" everywhere: mistral:7b (κ = 0), qwen3:1.7b (κ = −0.00 [−0.11, 0.11]) and lfm2.5 (κ = −0.02 [−0.10, 0.05]). Their pooled validity minus the constant judge has a Bonferroni CI containing 0, Holm p = 1. granite4 passes only just (+17.2 pp, Bonferroni CI [+0.2, +36.1]). ministral-3:8b (κ = 0.67) and gemma4:e4b (0.66) lead.
+- The May runs of phi4-mini, gemma3:4b and qwen3:1.7b don't reproduce on the current inference server: 7, 17 and 40 of 49 cases differ, with the same model files and prompts. The family-1 statistic was fixed after data collection.
+
 ## Reproducibility
 
 The unified entry point is `back/evaluation/scripts/groundtruth.py`. Run from inside the evaluation container or via `make gt-*` targets from the project root.
