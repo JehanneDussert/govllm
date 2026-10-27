@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 import uuid
 from datetime import datetime, timezone
@@ -33,14 +34,16 @@ from pathlib import Path
 
 import httpx
 
-GATEWAY_URL   = "http://localhost:8001"
-EVAL_URL      = "http://localhost:8003"
+# Overridable for an isolated stack (scripts/isolated_stack/): GOVLLM_GATEWAY_URL, GOVLLM_EVAL_URL
+GATEWAY_URL   = os.environ.get("GOVLLM_GATEWAY_URL", "http://localhost:8001")
+EVAL_URL      = os.environ.get("GOVLLM_EVAL_URL", "http://localhost:8003")
 POLL_INTERVAL = 3
 
 ROOT         = Path(__file__).parent.parent
 PROMPTS_FILE = ROOT / "docs" / "benchmark" / "prompts.json"
 REF_DIR      = ROOT / "docs" / "benchmark" / "references"
-RESULTS_DIR  = ROOT / "docs" / "benchmark" / "results"
+RESULTS_DIR  = ROOT / "docs" / "benchmark" / "results"  # --results-dir overrides
+REQUIRE_NUM_THREAD: int | None = None  # --require-num-thread
 
 ALL_MODELS = [
     "ollama/phi4-mini",
@@ -312,6 +315,11 @@ def _run_judge(judge: str, model: str, entries: list[dict], timeout: int, out_pa
         # entries already in the partial file, or changes during the run.
         stack0 = _inference_stack(client, [judge, model])
         previous = [r["inference_stack"] for r in results if r.get("inference_stack")]
+        if REQUIRE_NUM_THREAD is not None:
+            got = ((stack0 or {}).get("model_params") or {}).get(judge, {}).get("num_thread")
+            if got != REQUIRE_NUM_THREAD:
+                raise SystemExit(f"LiteLLM applies num_thread={got} for {judge}, "
+                                 f"{REQUIRE_NUM_THREAD} required: refusing to run")
         if stack0 is not None and any(s != stack0 for s in previous):
             raise SystemExit(f"Inference stack differs from the partial file {partial_path.name}: "
                              f"{previous[0]} != {stack0}. Not mixing stacks in one file.")
@@ -396,7 +404,15 @@ def main() -> None:
     parser.add_argument("--timeout",       type=int, default=120)
     parser.add_argument("--only-generate", action="store_true", help="Phase 1 only — no evaluation")
     parser.add_argument("--only-evaluate", action="store_true", help="Phase 2 only — skip generation")
+    parser.add_argument("--results-dir", type=Path, default=None,
+                        help="write result files there instead of docs/benchmark/results")
+    parser.add_argument("--require-num-thread", type=int, default=None,
+                        help="refuse to evaluate unless LiteLLM applies this num_thread to the judge")
     args = parser.parse_args()
+    global RESULTS_DIR, REQUIRE_NUM_THREAD
+    if args.results_dir is not None:
+        RESULTS_DIR = args.results_dir
+    REQUIRE_NUM_THREAD = args.require_num_thread
 
     prompts = _load_prompts()
     print(f"Loaded {len(prompts)} prompts from {PROMPTS_FILE}")
