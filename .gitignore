@@ -49,3 +49,6 @@ docs/paper*
 
 # isolated re-run stack: generated config
 scripts/isolated_stack/.state/
+
+# LMSYS-Chat-1M subset (scripts/fetch_lmsys.py): its licence forbids redistribution
+back/evaluation/data/lmsys_regulatory_subset.json
