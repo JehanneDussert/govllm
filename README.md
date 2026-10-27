@@ -294,6 +294,15 @@ Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, m
 
 ---
 
+## Backups
+
+`scripts/backup_db.sh` makes a daily `pg_dump` of the govllm and Langfuse schemas, with hashes and row counts.
+- **Rotation:** 7 daily and 4 weekly copies.
+- **Restore test:** every weekly copy is restore-tested in a throwaway PostgreSQL.
+- **Off-PC copy:** encrypted, made only when the operator configures it.
+
+`scripts/backup_restore_test.sh` checks any backup. Restore and scheduling: [docs/backups.md](docs/backups.md).
+
 ## Development notes
 
 Some documentation and automation scripts were generated with [Claude Code](https://claude.ai/code) — specifically the benchmark pipeline (`scripts/run_full_benchmark.py`) and the ground truth corpus scripts (`back/evaluation/scripts/`). The core architecture, governance framework, and evaluation design are original work.
