@@ -233,6 +233,12 @@ govllm/
 
 A different `judge_model` saved in Redis (for example left over by a benchmark run) is reported in the evaluation service logs at startup and in Settings → Judge (`GET /config/judge/defaults`). `scripts/run_full_benchmark.py` now restores the judge config it found when it ends, even on error.
 
+**Pinned inference stack.** The Ollama (0.32.15) and LiteLLM (1.82.1) images are pinned by digest in `infra/docker-compose.yml`. Re-running our May 2026 ground-truth evaluations on a newer Ollama release, with the same model files and prompts, changed 7 to 17 of 49 verdicts per judge. Every judge call therefore records the inference server version next to the model digest:
+- ground truth: columns `ollama_version` and `model_digest`;
+- benchmark and few-shot result files: an `inference_stack` field per entry, read from `GET /config/inference-stack`.
+
+The scripts stop rather than mix two stacks in one file. Pinned versions, model digests, and the backup and restore of the model files: [docs/inference_stack.md](docs/inference_stack.md).
+
 **Shared schema layer.** All three microservices share `back/shared/src/shared/` for Pydantic schemas and config — single source of truth for data contracts.
 
 **Governance context injection.** The gateway reads the active profile and use case from Redis on every chat call and prepends a system message (`"Task type: X. Governance framework: Y."`) before passing messages to the model. The caller can override this by sending its own `system` message.

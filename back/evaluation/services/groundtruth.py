@@ -14,6 +14,7 @@ from uuid import UUID
 import httpx
 
 from db.database import get_pool
+from services.inference_stack import ollama_tags, ollama_version, resolve_digest
 from services.judge_config import get_judge_config
 from shared.config import get_evaluation_settings
 from shared.schemas.groundtruth import (
@@ -577,28 +578,6 @@ async def list_cases(criterion: str | None = None) -> list[GroundTruthCase]:
     ]
 
 
-def resolve_digest(model: str, tags: list[dict]) -> str | None:
-    """Ollama digest of a LiteLLM model id ('ollama/phi4-mini') from /api/tags entries."""
-    name = model.removeprefix("ollama/")
-    candidates = {name, name if ":" in name.rsplit("/", 1)[-1] else f"{name}:latest"}
-    for tag in tags:
-        if tag.get("name") in candidates or tag.get("model") in candidates:
-            return tag.get("digest")
-    return None
-
-
-async def _ollama_tags() -> list[dict]:
-    """Installed Ollama models (name, digest). Fail-silent: [] if Ollama is unreachable."""
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.get(f"{settings.ollama_base_url}/api/tags")
-            r.raise_for_status()
-            return r.json().get("models", [])
-    except Exception as e:
-        logger.warning(f"[groundtruth] Could not read Ollama model digests: {e}")
-        return []
-
-
 async def run_checklist(
     case_id: str,
     judge_models: list[str] | None = None,
@@ -633,7 +612,8 @@ async def run_checklist(
     )
     logger.info(f"[groundtruth] Checklist prompt: {checklist_prompt}")
 
-    tags = await _ollama_tags()
+    tags = await ollama_tags()
+    server_version = await ollama_version()
 
     async def _run_one(model: str) -> JudgeChecklistResult:
         digest = resolve_digest(model, tags)
@@ -658,8 +638,8 @@ async def run_checklist(
             INSERT INTO groundtruth_results
                 (case_id, judge_model, judge_family, answers, score, agreement, reason,
                  latency_ms, question_order, status, raw_response, parse_fallback,
-                 run_label, model_digest)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                 run_label, model_digest, ollama_version)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             """,
             UUID(case_id),
             model,
@@ -675,6 +655,7 @@ async def run_checklist(
             call.parse_fallback,
             run_label,
             digest,
+            server_version,
         )
         return JudgeChecklistResult(
             judge_model=model,
@@ -688,6 +669,7 @@ async def run_checklist(
             parse_fallback=call.parse_fallback,
             run_label=run_label,
             model_digest=digest,
+            ollama_version=server_version,
         )
 
     # Sequential — Ollama is single-threaded; parallel calls saturate the queue and timeout
@@ -708,7 +690,7 @@ async def get_case_results(
     pool = await get_pool()
     columns = (
         "judge_model, answers, agreement, reason, question_order, status, "
-        "parse_fallback, raw_response, run_label, model_digest, latency_ms, created_at"
+        "parse_fallback, raw_response, run_label, model_digest, ollama_version, latency_ms, created_at"
     )
     where, params = ["case_id = $1"], [UUID(case_id)]
     if question_order:
@@ -733,6 +715,7 @@ async def get_case_results(
             "raw_response": r["raw_response"],
             "run_label": r["run_label"],
             "model_digest": r["model_digest"],
+            "ollama_version": r["ollama_version"],
             "latency_ms": r["latency_ms"],
             "created_at": r["created_at"].isoformat() if r["created_at"] else None,
         }

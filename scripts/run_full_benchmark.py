@@ -163,12 +163,30 @@ def _restore_config(snapshot: dict) -> None:
           f"profile={snapshot.get('active_profile_id')}, use case={snapshot.get('active_use_case_id')}")
 
 
+def _inference_stack(client: httpx.Client, models: list[str]) -> dict | None:
+    """Ollama version + digests of the judge and the generator (GET /config/inference-stack)."""
+    try:
+        r = client.get(f"{EVAL_URL}/config/inference-stack", params={"models": ",".join(models)}, timeout=15)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        print(f"      WARN inference stack unavailable: {e}")
+        return None
+
+
 def _write_results(path: Path, results: list[dict], model: str, judge: str, timeout: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    # Every distinct stack seen in this file (one expected: see _run_judge)
+    stacks = []
+    for r in results:
+        s = r.get("inference_stack")
+        if s is not None and s not in stacks:
+            stacks.append(s)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(
             {"run_at": datetime.now(timezone.utc).isoformat(), "model": model,
              "judge_model": judge, "timeout": timeout, "fixed_outputs": True,
+             "inference_stacks": stacks,
              "total": len(results), "results": results},
             f, indent=2, ensure_ascii=False,
         )
@@ -289,10 +307,22 @@ def _run_judge(judge: str, model: str, entries: list[dict], timeout: int, out_pa
     current_use_case: str | None = None
 
     with httpx.Client() as client:
+        # Every entry records the inference server version and the model digests. A file
+        # never mixes two stacks: the run stops if the stack differs from the one of the
+        # entries already in the partial file, or changes during the run.
+        stack0 = _inference_stack(client, [judge, model])
+        previous = [r["inference_stack"] for r in results if r.get("inference_stack")]
+        if stack0 is not None and any(s != stack0 for s in previous):
+            raise SystemExit(f"Inference stack differs from the partial file {partial_path.name}: "
+                             f"{previous[0]} != {stack0}. Not mixing stacks in one file.")
         for entry in entries:
             pid = entry["id"]
             if pid in done_ids:
                 continue
+            stack = _inference_stack(client, [judge, model])
+            if stack0 is not None and stack != stack0:
+                _write_results(partial_path, results, model, judge, timeout)
+                raise SystemExit(f"Inference stack changed during the run: {stack0} -> {stack}")
 
             profile_id  = entry["governance_profile"]
             use_case_id = entry["use_case"]
@@ -311,6 +341,7 @@ def _run_judge(judge: str, model: str, entries: list[dict], timeout: int, out_pa
                                  "governance_profile": entry["governance_profile"],
                                  "score": None, "status": f"CONFIG_ERROR: {e}",
                                  "prompt": entry["prompt"], "answer": entry["answer"], "eval": None})
+                results[-1]["inference_stack"] = stack
                 _write_results(partial_path, results, model, judge, timeout)
                 continue
 
@@ -324,6 +355,7 @@ def _run_judge(judge: str, model: str, entries: list[dict], timeout: int, out_pa
                                  "score": None, "status": f"EVAL_TRIGGER_ERROR: {e}",
                                  "trace_id": trace_id, "prompt": entry["prompt"],
                                  "answer": entry["answer"], "eval": None})
+                results[-1]["inference_stack"] = stack
                 _write_results(partial_path, results, model, judge, timeout)
                 continue
 
@@ -343,6 +375,7 @@ def _run_judge(judge: str, model: str, entries: list[dict], timeout: int, out_pa
                                  "prompt": entry["prompt"], "answer": entry["answer"],
                                  "eval": eval_result})
 
+            results[-1]["inference_stack"] = stack
             _write_results(partial_path, results, model, judge, timeout)
 
     _write_results(out_path, results, model, judge, timeout)

@@ -104,6 +104,9 @@ ALTER TABLE groundtruth_results ALTER COLUMN agreement DROP NOT NULL;
 -- model_digest: Ollama digest of the model behind the call (version traceability).
 ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS run_label TEXT NOT NULL DEFAULT 'main';
 ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS model_digest TEXT;
+-- ollama_version: inference server version behind the call. The same model files gave
+-- different answers under another Ollama release (docs/inference_stack.md).
+ALTER TABLE groundtruth_results ADD COLUMN IF NOT EXISTS ollama_version TEXT;
 CREATE INDEX IF NOT EXISTS idx_gt_results_run_label ON groundtruth_results(run_label);
 
 CREATE INDEX IF NOT EXISTS idx_gt_cases_criterion  ON groundtruth_cases(criterion);
