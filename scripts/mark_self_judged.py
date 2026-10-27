@@ -17,6 +17,7 @@ Afterwards, rebuild the rolling cache without them:
 Run on the host, from the repository root (needs Docker and the langfuse-db container):
     python scripts/mark_self_judged.py            # dry run
     python scripts/mark_self_judged.py --apply
+    python scripts/mark_self_judged.py --container pg-restore-test --user postgres   # rehearsal
 """
 
 import argparse
@@ -39,7 +40,10 @@ def psql(sql: str) -> list[list[str]]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true", help="write the flags (default: dry run)")
+    ap.add_argument("--container", default="langfuse-db", help="PostgreSQL container (e.g. a throwaway restore)")
+    ap.add_argument("--user", default="langfuse")
     args = ap.parse_args()
+    DB[3], DB[6] = args.container, args.user
 
     bench_judge: dict[str, str] = {}
     for f in sorted(RESULTS.glob("*.json")):
