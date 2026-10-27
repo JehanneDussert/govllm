@@ -5,7 +5,7 @@ from fastapi import APIRouter
 import math
 from shared.config import get_evaluation_settings
 from services.judge_config import get_judge_config
-from services.routing import effective_judges, recommend
+from services.routing import effective_judges, gate_reasons, recommend
 from services.scores import recent_criterion_scores, recent_scores
 
 router = APIRouter(prefix="/matrix", tags=["matrix"])
@@ -69,14 +69,18 @@ async def get_matrix():
 async def get_routing():
     """
     Returns the recommended model for the active profile + use case.
-    Routing strategy is read from config: best_score | progression | stability | strict.
-    Per-criterion min_score thresholds from the active profile act as a compliance gate.
 
-    The effective judges of the active profile (global judge + panel members with
-    active criteria) are excluded from the recommendation, so AUTO routing never
-    picks a model that would judge its own answers. If that leaves nothing to
-    recommend, the unrestricted recommendation is returned with
-    judge_exclusion_fallback=true. Each model carries is_judge for the UI.
+    1. Compliance gate (every strategy): a model is excluded when it has fewer than
+       `min_evaluations` evaluations ("insufficient data"), a composite score under
+       the use-case threshold, or a criterion under its θ (or without enough
+       evaluations). Each model carries `eligible` and `exclusion_reasons`.
+    2. Strategy (best_score | progression | stability | strict) ranks the models;
+       `strict` now ranks like best_score, since the gate applies everywhere.
+    3. The effective judges of the active profile are not recommended (a model never
+       generates answers it would judge); if only judges are eligible, the best one
+       is returned with judge_exclusion_fallback=true.
+    4. No eligible model: recommended=None and reason="no_eligible_model". There is
+       no silent fallback.
     """
     config = await get_judge_config()
     models = settings.benchmark_models
@@ -124,22 +128,25 @@ async def get_routing():
             }
         )
 
-    # ── Per-criterion compliance gate ────────────────────────────────────────
-    def _passes_criterion_gate(m: dict) -> bool:
-        for cid, min_s in criterion_min_scores.items():
-            crit_score = m["criteria_scores"].get(cid)
-            if crit_score is not None and crit_score < min_s:
-                return False
-        return True
-
-    def _passes_global_threshold(m: dict) -> bool:
-        if min_threshold is None:
-            return True
-        return m["avg_score"] is not None and m["avg_score"] >= min_threshold
-
+    # ── Compliance gate: eliminates, in every strategy ──────────────────────
+    # A missing score, or one based on fewer than min_evaluations evaluations, never
+    # counts as passing ("insufficient data").
+    min_evaluations = config.min_evaluations
+    exclusions = {
+        m["model"]: gate_reasons(
+            m,
+            min_evaluations=min_evaluations,
+            min_threshold=min_threshold,
+            criterion_min_scores=criterion_min_scores,
+        )
+        for m in model_scores
+    }
     judges = effective_judges(config)
 
-    # ── Apply routing strategy ───────────────────────────────────────────────
+    # ── Routing strategy: ranks (eligible models are picked from this order) ──
+    def _avg(m: dict) -> float:
+        return m["avg_score"] if m["avg_score"] is not None else -1.0
+
     if strategy == "progression":
 
         def _progression_key(m: dict) -> float:
@@ -148,83 +155,30 @@ async def get_routing():
             return alpha * avg + (1.0 - alpha) * delta
 
         model_scores.sort(key=_progression_key, reverse=True)
-
     elif strategy == "stability":
         model_scores.sort(
             key=lambda m: m["variance"] if m["variance"] is not None else math.inf
         )
+    else:  # best_score (default) and strict (the gate now applies to every strategy)
+        model_scores.sort(key=_avg, reverse=True)
 
-    elif strategy == "strict":
-        eligible = [
-            m
-            for m in model_scores
-            if _passes_global_threshold(m) and _passes_criterion_gate(m)
-        ]
-        eligible.sort(
-            key=lambda m: m["avg_score"] if m["avg_score"] is not None else -1.0,
-            reverse=True,
-        )
-        # Remaining models sorted by avg_score for display
-        model_scores.sort(
-            key=lambda m: m["avg_score"] if m["avg_score"] is not None else -1.0,
-            reverse=True,
-        )
-        for m in model_scores:
-            m["meets_threshold"] = _passes_global_threshold(
-                m
-            ) and _passes_criterion_gate(m)
-        routing = recommend(
-            model_scores,
-            models,
-            judges,
-            strict=True,
-            passes=lambda m: _passes_global_threshold(m) and _passes_criterion_gate(m),
-        )
-        for m in model_scores:
-            m["is_judge"] = m["model"] in judges
-        # Remove internal fields before returning
-        for m in model_scores:
-            m.pop("delta_score", None)
-            m.pop("variance", None)
-        return {
-            **routing,
-            "use_case_id": use_case_id,
-            "profile_id": config.active_profile_id,
-            "min_threshold": min_threshold,
-            "models": model_scores,
-            "active_criteria": [
-                {"id": c.id, "label": c.label} for c in active_criteria
-            ],
-        }
-
-    else:  # best_score (default)
-        model_scores.sort(
-            key=lambda m: m["avg_score"] if m["avg_score"] is not None else -1.0,
-            reverse=True,
-        )
-
-    # ── Flag threshold compliance ─────────────────────────────────────────────
+    routing = recommend(model_scores, models, judges, exclusions)
     for m in model_scores:
-        m["meets_threshold"] = (
-            _passes_global_threshold(m) and _passes_criterion_gate(m)
-            if m["avg_score"] is not None
-            else None
-        )
-
-    routing = recommend(model_scores, models, judges, strict=False, passes=lambda m: True)
-    for m in model_scores:
+        m["eligible"] = not exclusions[m["model"]]
+        m["exclusion_reasons"] = exclusions[m["model"]]
+        m["meets_threshold"] = m["eligible"]  # kept for the existing UI
         m["is_judge"] = m["model"] in judges
-
-    # Remove internal fields before returning
-    for m in model_scores:
         m.pop("delta_score", None)
         m.pop("variance", None)
 
     return {
         **routing,
+        "strategy": strategy,
         "use_case_id": use_case_id,
         "profile_id": config.active_profile_id,
         "min_threshold": min_threshold,
+        "min_evaluations": min_evaluations,
+        "criterion_thresholds": criterion_min_scores,
         "models": model_scores,
         "active_criteria": [{"id": c.id, "label": c.label} for c in active_criteria],
     }

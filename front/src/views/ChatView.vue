@@ -33,21 +33,22 @@ async function fetchRouting(applyModel = true) {
     const res = await api.getRouting()
     routing.value = res.data
     if (!applyModel || !autoRoute.value) return
-    if (res.data?.recommended) {
-      const recommended = res.data.models.find((m) => m.model === res.data.recommended)
-      if (!recommended || recommended.meets_threshold !== false) {
-        store.currentModel = res.data.recommended
-      } else {
-        // Never fall back to a judge of the active profile, unless the backend
-        // already had to (judge_exclusion_fallback).
-        const firstValid = res.data.models.find(
-          (m) => m.meets_threshold === true && (!m.is_judge || res.data.judge_exclusion_fallback),
-        )
-        if (firstValid) store.currentModel = firstValid.model
-      }
-    }
+    // The backend applies the compliance gate: `recommended` is always eligible, or null
+    // with reason "no_eligible_model" (sending is then blocked in AUTO, see send()).
+    if (res.data?.recommended) store.currentModel = res.data.recommended
   } catch {}
 }
+
+// AUTO routing with no eligible model: explicit refusal, nothing is sent
+const noEligibleModel = computed(
+  () => autoRoute.value && routing.value !== null && routing.value.reason === 'no_eligible_model',
+)
+// MANUAL choice of a model the gate excludes: visible warning
+const manualNotEligible = computed(() => {
+  if (autoRoute.value || !routing.value) return null
+  const m = routing.value.models.find((x) => x.model === store.currentModel)
+  return m && m.eligible === false ? m : null
+})
 
 // Self-judging guard: the generator should never be one of the models that will
 // evaluate its output (measured self-preference for some models — see docs/benchmark/README.md).
@@ -71,12 +72,19 @@ onMounted(async () => {
 })
 
 // Refetch routing when profile or use case changes
-watch(() => judgeStore.config?.active_profile_id, fetchRouting)
-watch(() => judgeStore.config?.active_use_case_id, fetchRouting)
+watch(
+  () => judgeStore.config?.active_profile_id,
+  () => fetchRouting(),
+)
+watch(
+  () => judgeStore.config?.active_use_case_id,
+  () => fetchRouting(),
+)
 
 async function send() {
   if (!input.value.trim() || store.isStreaming) return
   if (autoRoute.value) await fetchRouting(true)
+  if (noEligibleModel.value) return // refused: the banner explains why and how to proceed
   const msg = input.value.trim()
   input.value = ''
   if (inputEl.value) {
@@ -177,7 +185,29 @@ watch(
         <RouterLink to="/settings">Settings</RouterLink>.
       </div>
 
-      <div v-if="autoRoute && routing?.judge_exclusion_fallback" class="self-judge-warning" role="status">
+      <div v-if="noEligibleModel" class="self-judge-warning" role="alert">
+        ⛔ No model meets the compliance gate for this use case, so AUTO routing sends nothing.
+        <ul>
+          <li v-for="m in routing?.models ?? []" :key="m.model">
+            {{ modelShortName(m.model) }}: {{ (m.exclusion_reasons ?? []).join('; ') }}
+          </li>
+        </ul>
+        A new installation has no evaluations yet: qualify a model through the test zone and the SAS
+        (Matrix), or switch to MANUAL to evaluate answers yourself (at least
+        {{ routing?.min_evaluations ?? 5 }} per model and use case).
+      </div>
+
+      <div v-if="manualNotEligible" class="self-judge-warning" role="status">
+        ⚠ MANUAL: {{ modelShortName(manualNotEligible.model) }} does not meet the compliance gate
+        ({{ (manualNotEligible.exclusion_reasons ?? []).join('; ') }}). Its answers are still
+        evaluated.
+      </div>
+
+      <div
+        v-if="autoRoute && routing?.judge_exclusion_fallback"
+        class="self-judge-warning"
+        role="status"
+      >
         ⚠ AUTO routing could not exclude the judges of the active profile: no other model in the
         routing pool can be recommended for this use case, so the usual choice was kept.
       </div>
@@ -198,7 +228,10 @@ watch(
             :key="m.model"
             class="score-card"
             :class="{
-              winner: m.model === routing?.recommended && m.avg_score !== null && m.meets_threshold !== false,
+              winner:
+                m.model === routing?.recommended &&
+                m.avg_score !== null &&
+                m.meets_threshold !== false,
               selected: store.currentModel === m.model,
               'below-threshold': m.meets_threshold === false,
             }"

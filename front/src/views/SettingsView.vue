@@ -395,9 +395,7 @@ onMounted(async () => {
                                     weight: criterion.weight,
                                     calibration_notes: '',
                                   }),
-                                  min_score: isNaN(v)
-                                    ? null
-                                    : Math.min(1, Math.max(0, v)),
+                                  min_score: isNaN(v) ? null : Math.min(1, Math.max(0, v)),
                                 }
                               }
                             "
@@ -702,7 +700,8 @@ onMounted(async () => {
               Local Ollama model used to score every response (criteria not covered by a profile's
               judge panel).
               <span v-if="defaultJudgeModel">
-                Versioned default: <strong>{{ defaultJudgeModel.replace('ollama/', '') }}</strong>.
+                Versioned default: <strong>{{ defaultJudgeModel.replace('ollama/', '') }}</strong
+                >.
               </span>
             </div>
           </div>
@@ -710,9 +709,9 @@ onMounted(async () => {
             v-if="defaultJudgeModel && store.config.judge_model !== defaultJudgeModel"
             class="panel-warning"
           >
-            ⚠ The judge in use ({{ store.config.judge_model.replace('ollama/', '') }}) differs from the
-            versioned default ({{ defaultJudgeModel.replace('ollama/', '') }}). If you didn't choose
-            it on purpose (e.g. left over by a benchmark run), select the default and save.
+            ⚠ The judge in use ({{ store.config.judge_model.replace('ollama/', '') }}) differs from
+            the versioned default ({{ defaultJudgeModel.replace('ollama/', '') }}). If you didn't
+            choose it on purpose (e.g. left over by a benchmark run), select the default and save.
           </div>
           <select v-model="store.config.judge_model" class="field-select">
             <option v-for="m in availableModels" :key="m" :value="m">
@@ -877,8 +876,7 @@ onMounted(async () => {
               <label class="field-label"
                 >Score window
                 <span class="field-hint"
-                  >— Matrix, routing and SAS use the last N evaluations per model and use
-                  case</span
+                  >— Matrix, routing and SAS use the last N evaluations per model and use case</span
                 ></label
               >
               <input
@@ -887,6 +885,24 @@ onMounted(async () => {
                 class="field-input"
                 placeholder="100"
                 min="5"
+                max="1000"
+                step="1"
+              />
+            </div>
+            <div class="threshold-field">
+              <label class="field-label"
+                >Minimum evaluations
+                <span class="field-hint"
+                  >— fewer evaluations for a use case (or a criterion): excluded from AUTO routing
+                  as insufficient data</span
+                ></label
+              >
+              <input
+                type="number"
+                v-model.number="store.config.min_evaluations"
+                class="field-input"
+                placeholder="5"
+                min="1"
                 max="1000"
                 step="1"
               />
@@ -904,12 +920,12 @@ onMounted(async () => {
             </div>
           </div>
           <p class="field-hint">
-            The <code>identity_access_governance</code> profile (scope, volume, temporal
-            conformity, session geo-consistency, sensitive export justification) is configurable
-            like any other profile in the Governance profiles tab once available. This dedicated
-            panel — for reviewing flagged access windows and forensic run history — is not yet
-            connected to a backend API and will be built once the ingestion and orchestration
-            layers are stabilized.
+            The <code>identity_access_governance</code> profile (scope, volume, temporal conformity,
+            session geo-consistency, sensitive export justification) is configurable like any other
+            profile in the Governance profiles tab once available. This dedicated panel — for
+            reviewing flagged access windows and forensic run history — is not yet connected to a
+            backend API and will be built once the ingestion and orchestration layers are
+            stabilized.
           </p>
         </section>
       </template>
