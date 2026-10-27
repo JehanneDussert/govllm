@@ -46,3 +46,6 @@ CLAUDE.md
 audit/
 docs/arxiv/draft
 docs/paper*
+
+# isolated re-run stack: generated config
+scripts/isolated_stack/.state/

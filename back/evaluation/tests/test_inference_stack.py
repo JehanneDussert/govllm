@@ -17,15 +17,23 @@ TAGS = [
 ]
 
 
-def _patch(monkeypatch, tags, version):
+PARAMS = {"ollama/phi4-mini": {"num_thread": 10, "num_ctx": 8192},
+          "ollama/gemma3:4b": {"num_thread": 10, "num_ctx": 8192}}
+
+
+def _patch(monkeypatch, tags, version, params=PARAMS):
     async def fake_tags():
         return tags
 
     async def fake_version():
         return version
 
+    async def fake_params():
+        return params
+
     monkeypatch.setattr(stack, "ollama_tags", fake_tags)
     monkeypatch.setattr(stack, "ollama_version", fake_version)
+    monkeypatch.setattr(stack, "litellm_model_params", fake_params)
 
 
 def test_requested_models(monkeypatch):
@@ -33,12 +41,21 @@ def test_requested_models(monkeypatch):
     s = asyncio.run(stack.get_inference_stack(["ollama/phi4-mini", "ollama/gemma3:4b"]))
     assert s.ollama_version == "0.32.15"
     assert s.model_digests == {"ollama/phi4-mini": "78fad5d182a7", "ollama/gemma3:4b": "a2af6cc3eb7f"}
+    assert s.model_params["ollama/phi4-mini"] == {"num_thread": 10, "num_ctx": 8192}
 
 
-def test_all_installed_models(monkeypatch):
+def test_all_models_served_by_litellm(monkeypatch):
     _patch(monkeypatch, TAGS, "0.32.15")
     s = asyncio.run(stack.get_inference_stack())
+    assert s.model_digests == {"ollama/phi4-mini": "78fad5d182a7", "ollama/gemma3:4b": "a2af6cc3eb7f"}
+    assert s.model_params == PARAMS
+
+
+def test_all_installed_models_when_litellm_unreachable(monkeypatch):
+    _patch(monkeypatch, TAGS, "0.32.15", params={})
+    s = asyncio.run(stack.get_inference_stack())
     assert s.model_digests == {"ollama/phi4-mini:latest": "78fad5d182a7", "ollama/gemma3:4b": "a2af6cc3eb7f"}
+    assert s.model_params == {}
 
 
 def test_unknown_model_is_omitted(monkeypatch):
@@ -48,6 +65,6 @@ def test_unknown_model_is_omitted(monkeypatch):
 
 
 def test_ollama_unreachable(monkeypatch):
-    _patch(monkeypatch, [], None)
+    _patch(monkeypatch, [], None, params={})
     s = asyncio.run(stack.get_inference_stack(["ollama/phi4-mini"]))
-    assert s.ollama_version is None and s.model_digests == {}
+    assert s.ollama_version is None and s.model_digests == {} and s.model_params == {}

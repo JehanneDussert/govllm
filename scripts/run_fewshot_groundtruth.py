@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -38,13 +39,16 @@ import httpx
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-EVAL_URL     = "http://localhost:8003"
-LITELLM_URL  = "http://localhost:4000"
-LITELLM_KEY  = "sk-dummy"
+# Overridable for an isolated stack (scripts/isolated_stack/)
+EVAL_URL     = os.environ.get("GOVLLM_EVAL_URL", "http://localhost:8003")
+LITELLM_URL  = os.environ.get("GOVLLM_LITELLM_URL", "http://localhost:4000")
+LITELLM_KEY  = os.environ.get("GOVLLM_LITELLM_KEY", "sk-dummy")
 
 ROOT         = Path(__file__).parent.parent
 EXAMPLES_FILE = ROOT / "docs" / "ground_truth" / "few_shot_examples.json"
-RESULTS_DIR  = ROOT / "docs" / "ground_truth" / "results"
+RESULTS_DIR  = ROOT / "docs" / "ground_truth" / "results"  # baselines are always read here
+OUT_DIR      = RESULTS_DIR  # few-shot results are written here (--results-dir)
+REQUIRE_NUM_THREAD: int | None = None  # --require-num-thread
 
 ALL_JUDGES = [
     "ollama/phi4-mini",
@@ -407,7 +411,7 @@ def _inference_stack(judge: str) -> dict | None:
 
 
 def _save_fewshot_results(judge: str, results: list[dict]) -> Path:
-    path = RESULTS_DIR / f"{_slug(judge)}_fewshot.json"
+    path = OUT_DIR / f"{_slug(judge)}_fewshot.json"
     stacks = []
     for r in results:
         s = r.get("inference_stack")
@@ -523,7 +527,15 @@ def main() -> None:
                         help="Print prompts without calling LiteLLM.")
     parser.add_argument("--compare-only", action="store_true",
                         help="Skip evaluation; load existing fewshot results and print comparison.")
+    parser.add_argument("--results-dir", type=Path, default=None,
+                        help="write few-shot results there instead of docs/ground_truth/results")
+    parser.add_argument("--require-num-thread", type=int, default=None,
+                        help="refuse to call a judge unless LiteLLM applies this num_thread to it")
     args = parser.parse_args()
+    global OUT_DIR, REQUIRE_NUM_THREAD
+    if args.results_dir is not None:
+        OUT_DIR = args.results_dir
+    REQUIRE_NUM_THREAD = args.require_num_thread
 
     judges    = args.judges or ALL_JUDGES
     criteria  = set(args.criterion) if args.criterion else set(CHECKLIST_QUESTIONS)
@@ -539,7 +551,7 @@ def main() -> None:
         fewshot_by_judge: dict[str, list[dict]] = {}
         baseline_by_judge: dict[str, list[dict]] = {}
         for judge in judges:
-            path = RESULTS_DIR / f"{_slug(judge)}_fewshot.json"
+            path = OUT_DIR / f"{_slug(judge)}_fewshot.json"
             if path.exists():
                 data = json.loads(path.read_text(encoding="utf-8"))
                 fewshot_by_judge[judge] = data.get("results", [])
@@ -585,6 +597,11 @@ def main() -> None:
                 print(f"  [{case_id[:8]}] {judge.split('/')[-1]}…", end=" ", flush=True)
                 stack = None if args.dry_run else _inference_stack(judge)
                 first = stacks_by_judge.setdefault(judge, stack)
+                if REQUIRE_NUM_THREAD is not None and not args.dry_run:
+                    got = ((stack or {}).get("model_params") or {}).get(judge, {}).get("num_thread")
+                    if got != REQUIRE_NUM_THREAD:
+                        raise SystemExit(f"LiteLLM applies num_thread={got} for {judge}, "
+                                         f"{REQUIRE_NUM_THREAD} required: refusing to run")
                 if first is not None and stack != first:
                     for j, res in fewshot_results.items():
                         if res:
@@ -618,7 +635,7 @@ def main() -> None:
 
     # -- Save results per judge -------------------
     if not args.dry_run:
-        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
         for judge, results in fewshot_results.items():
             if results:
                 path = _save_fewshot_results(judge, results)
