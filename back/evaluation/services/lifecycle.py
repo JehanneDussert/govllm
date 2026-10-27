@@ -5,7 +5,6 @@ import json
 import logging
 import datetime
 import pathlib
-import redis.asyncio as aioredis
 from db.database import get_pool
 from db.models import (
     ModelLifecycleStatus,
@@ -15,6 +14,7 @@ from db.models import (
 )
 from services.judge_config import get_judge_config
 from services.judge import _call_judge, _build_judge_prompt, _extract_json
+from services.scores import recent_scores
 from shared.config import get_evaluation_settings
 
 logger = logging.getLogger(__name__)
@@ -216,21 +216,14 @@ async def set_zone(
 
 
 async def run_sas(model: str, profile_id: str | None = None) -> SasResult:
-    """Qualification using existing Redis eval history (rolling avg over all stored scores)."""
+    """Qualification on the persisted evaluation history (last WINDOW results per use case)."""
     config = await get_judge_config()
     threshold = config.score_threshold or 0.7
     active_profile = profile_id or config.active_profile_id
 
-    r = await aioredis.from_url(settings.redis_url, decode_responses=True)
     all_scores: list[float] = []
-    try:
-        for use_case in config.use_cases:
-            key = f"eval:scores:{model}:{use_case.id}"
-            raw = await r.get(key)
-            if raw:
-                all_scores.extend(s["score"] for s in json.loads(raw))
-    finally:
-        await r.aclose()
+    for use_case in config.use_cases:
+        all_scores.extend(await recent_scores(model, use_case.id))
 
     avg = round(sum(all_scores) / len(all_scores), 3) if all_scores else None
     sample_size = len(all_scores)
@@ -432,44 +425,36 @@ async def check_drift() -> list[str]:
         return []
 
     quarantined: list[str] = []
-    r = await aioredis.from_url(settings.redis_url, decode_responses=True)
-    try:
-        for model in production_models:
-            recent_scores: list[float] = []
-            for use_case in config.use_cases:
-                key = f"eval:scores:{model}:{use_case.id}"
-                raw = await r.get(key)
-                if raw:
-                    # Rolling window: last DRIFT_WINDOW scores per use case
-                    entries = json.loads(raw)
-                    recent_scores.extend(s["score"] for s in entries[-DRIFT_WINDOW:])
+    for model in production_models:
+        window: list[float] = []
+        for use_case in config.use_cases:
+            # Rolling window on persisted data: last DRIFT_WINDOW scores per use case
+            window.extend(await recent_scores(model, use_case.id, DRIFT_WINDOW))
 
-            if len(recent_scores) < DRIFT_MIN_SAMPLES:
-                continue
+        if len(window) < DRIFT_MIN_SAMPLES:
+            continue
 
-            avg = sum(recent_scores) / len(recent_scores)
-            if avg < threshold:
-                pool = await get_pool()
-                async with pool.acquire() as conn:
-                    await _insert_transition(
-                        conn,
-                        model,
-                        "quarantine",
-                        "drift_watcher",
-                        score=round(avg, 3),
-                        profile_id=config.active_profile_id,
-                        note=(
-                            f"Drift detected: rolling avg={avg:.3f} "
-                            f"< threshold={threshold} "
-                            f"(last {len(recent_scores)} scores)"
-                        ),
-                    )
-                logger.warning(
-                    f"[drift] Auto-quarantined {model}: "
-                    f"rolling avg={avg:.3f} < {threshold}"
+        avg = sum(window) / len(window)
+        if avg < threshold:
+            pool = await get_pool()
+            async with pool.acquire() as conn:
+                await _insert_transition(
+                    conn,
+                    model,
+                    "quarantine",
+                    "drift_watcher",
+                    score=round(avg, 3),
+                    profile_id=config.active_profile_id,
+                    note=(
+                        f"Drift detected: rolling avg={avg:.3f} "
+                        f"< threshold={threshold} "
+                        f"(last {len(window)} scores)"
+                    ),
                 )
-                quarantined.append(model)
-    finally:
-        await r.aclose()
+            logger.warning(
+                f"[drift] Auto-quarantined {model}: "
+                f"rolling avg={avg:.3f} < {threshold}"
+            )
+            quarantined.append(model)
 
     return quarantined

@@ -2,21 +2,20 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 from fastapi import APIRouter
-import json
 import math
-import redis.asyncio as aioredis
 from shared.config import get_evaluation_settings
 from services.judge_config import get_judge_config
 from services.routing import effective_judges, recommend
+from services.scores import recent_criterion_scores, recent_scores
 
 router = APIRouter(prefix="/matrix", tags=["matrix"])
 settings = get_evaluation_settings()
 
 
-async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
-    key = f"eval:scores:{model}:{use_case_id}"
-    raw = await r.get(key)
-    if not raw:
+async def _get_scores_for_model(model: str, use_case_id: str) -> dict:
+    # Persisted scores (eval_results), served through the rebuildable cache
+    values = await recent_scores(model, use_case_id)
+    if not values:
         return {
             "avg_score": None,
             "sample_size": 0,
@@ -25,8 +24,7 @@ async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
             "delta_score": None,
             "variance": None,
         }
-    values = [s["score"] for s in json.loads(raw)]
-    avg = round(sum(values) / len(values), 3) if values else None
+    avg = round(sum(values) / len(values), 3)
 
     trend = None
     delta_score = None
@@ -57,17 +55,13 @@ async def _get_scores_for_model(r, model: str, use_case_id: str) -> dict:
 async def get_matrix():
     config = await get_judge_config()
     models = settings.benchmark_models
-    r = await aioredis.from_url(settings.redis_url, decode_responses=True)
     matrix = {}
-    try:
-        for use_case in config.use_cases:
-            matrix[use_case.id] = {"label": use_case.label, "models": {}}
-            for model in models:
-                matrix[use_case.id]["models"][model] = await _get_scores_for_model(
-                    r, model, use_case.id
-                )
-    finally:
-        await r.aclose()
+    for use_case in config.use_cases:
+        matrix[use_case.id] = {"label": use_case.label, "models": {}}
+        for model in models:
+            matrix[use_case.id]["models"][model] = await _get_scores_for_model(
+                model, use_case.id
+            )
     return matrix
 
 
@@ -105,39 +99,30 @@ async def get_routing():
             if cc.min_score is not None:
                 criterion_min_scores[cid] = cc.min_score
 
-    r = await aioredis.from_url(settings.redis_url, decode_responses=True)
     model_scores = []
+    for model in models:
+        data = await _get_scores_for_model(model, use_case_id)
 
-    try:
-        for model in models:
-            data = await _get_scores_for_model(r, model, use_case_id)
+        # Per-criterion mean scores (persisted per-criterion results)
+        criteria_scores: dict[str, float | None] = {}
+        criteria_sample_sizes: dict[str, int] = {}
+        for criterion in active_criteria:
+            cvals = await recent_criterion_scores(model, use_case_id, criterion.id)
+            criteria_scores[criterion.id] = round(sum(cvals) / len(cvals), 3) if cvals else None
+            criteria_sample_sizes[criterion.id] = len(cvals)
 
-            # Per-criterion composite scores
-            criteria_scores: dict[str, float | None] = {}
-            for criterion in active_criteria:
-                ckey = f"eval:scores:{model}:{use_case_id}:{criterion.id}"
-                craw = await r.get(ckey)
-                if craw:
-                    cvals = [s["score"] for s in json.loads(craw)]
-                    criteria_scores[criterion.id] = (
-                        round(sum(cvals) / len(cvals), 3) if cvals else None
-                    )
-                else:
-                    criteria_scores[criterion.id] = None
-
-            model_scores.append(
-                {
-                    "model": model,
-                    "avg_score": data["avg_score"],
-                    "sample_size": data["sample_size"],
-                    "trend": data["trend"],
-                    "delta_score": data["delta_score"],
-                    "variance": data["variance"],
-                    "criteria_scores": criteria_scores,
-                }
-            )
-    finally:
-        await r.aclose()
+        model_scores.append(
+            {
+                "model": model,
+                "avg_score": data["avg_score"],
+                "sample_size": data["sample_size"],
+                "trend": data["trend"],
+                "delta_score": data["delta_score"],
+                "variance": data["variance"],
+                "criteria_scores": criteria_scores,
+                "criteria_sample_sizes": criteria_sample_sizes,
+            }
+        )
 
     # ── Per-criterion compliance gate ────────────────────────────────────────
     def _passes_criterion_gate(m: dict) -> bool:

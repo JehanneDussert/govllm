@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025-2026 Jehanne Dussert <https://www.linkedin.com/in/jehanne-dussert>
 # SPDX-License-Identifier: EUPL-1.2
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class JudgeCriterion(BaseModel):
@@ -82,5 +82,9 @@ class JudgeConfig(BaseModel):
     latency_threshold_ms: float | None = None
     score_threshold: float | None = None
     variance_threshold: float = 0.1
+    # Aggregates (Matrix, AUTO routing, SAS): mean over the last `score_window` evaluations
+    # per (model, use case), self-judged results excluded. A count, not an age, so an idle
+    # period never empties the aggregates. Larger = more stable, slower to react.
+    score_window: int = Field(default=100, ge=5, le=1000)
     error_rate_threshold: float | None = None
     policy_rules: str = ""

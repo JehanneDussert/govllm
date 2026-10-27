@@ -71,6 +71,18 @@ These are enforced in code review, not by CI (there is currently no CI pipeline 
 
 ---
 
+## Running the evaluation service tests
+
+Unit tests run inside the evaluation container: `docker exec -w /app evaluation python -m pytest tests -q`.
+
+The integration tests in `back/evaluation/tests/integration/` use a real PostgreSQL and a real Redis with a simulated judge (no LLM call). **They never run against the deployment's database**, only against dedicated throwaway instances, and are skipped anywhere else. Run everything with:
+
+```bash
+sh back/evaluation/tests/integration/run.sh
+```
+
+See [back/evaluation/tests/integration/README.md](back/evaluation/tests/integration/README.md) for what it starts, the guards, and how to prove that the real database received no write.
+
 ## Running the ground truth tests
 
 The ground truth corpus (49 annotated cases across 5 regulatory criteria) is the closest thing this project has to a validity test suite — it measures whether judge models actually detect the violations they're supposed to, not just whether they're internally consistent.

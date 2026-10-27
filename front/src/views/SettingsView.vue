@@ -873,6 +873,24 @@ onMounted(async () => {
                 step="0.01"
               />
             </div>
+            <div class="threshold-field">
+              <label class="field-label"
+                >Score window
+                <span class="field-hint"
+                  >— Matrix, routing and SAS use the last N evaluations per model and use
+                  case</span
+                ></label
+              >
+              <input
+                type="number"
+                v-model.number="store.config.score_window"
+                class="field-input"
+                placeholder="100"
+                min="5"
+                max="1000"
+                step="1"
+              />
+            </div>
           </div>
         </section>
       </template>

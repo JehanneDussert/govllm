@@ -216,6 +216,8 @@ govllm/
 
 **Governance from metrics.** Model selection is driven by governance criteria, not performance alone. The score matrix accumulates from real production usage — not synthetic benchmarks.
 
+**Persisted aggregates.** The Matrix, AUTO routing, the SAS and the drift watcher read the evaluation results stored in PostgreSQL (`eval_results`): for each model and use case, the mean over the last `score_window` evaluations (default 100, configurable between 5 and 1,000 in Settings > Routing), self-judged results excluded. The window is a number of evaluations, not an age, so an idle period never empties the aggregates; a larger window gives more stable scores and reacts more slowly to a change in behaviour (the drift watcher uses its own, shorter window of 10). Redis only caches these values and is rebuilt from PostgreSQL on startup and on any cache miss.
+
 **Local evaluation judge.** Scoring runs on Ollama — sovereign and usable in air-gapped or regulated environments (public sector, healthcare, finance). No response data sent to external APIs.
 
 **Profile-driven routing.** Switching a governance profile at runtime updates which criteria are active and their weights. The routing layer reads the active profile from Redis at inference time and recommends the best-scoring model for that profile and use case.

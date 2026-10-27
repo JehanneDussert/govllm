@@ -12,13 +12,13 @@ import redis.asyncio as aioredis
 from shared.config import get_evaluation_settings
 from services.judge import _call_judge, _build_judge_prompt, _extract_json
 from db.database import get_pool
+from services.scores import append_to_cache
 import logging
 
 logger = logging.getLogger(__name__)
 settings = get_evaluation_settings()
 
 EVAL_RESULT_HOT_TTL = 3600  # eval:result:{trace_id} — hot cache for frontend polling only, eval_results (PostgreSQL) is the source of truth
-EVAL_SCORES_ROLLING_TTL = 3600 * 24 * 7  # eval:scores:{model}:{use_case} — rolling cache read by /matrix
 
 
 def same_model(a: str | None, b: str | None) -> bool:
@@ -239,16 +239,12 @@ async def evaluate_trace(
         await r_client.setex(
             f"eval:result:{trace_id}", EVAL_RESULT_HOT_TTL, result.model_dump_json()
         )
-        if config.active_use_case_id and not self_judged:
-            key = f"eval:scores:{model}:{config.active_use_case_id}"
-            existing_raw = await r_client.get(key)
-            existing = json.loads(existing_raw) if existing_raw else []
-            existing.append({"score": composite, "ts": result.evaluated_at})
-            existing = existing[-100:]
-            await r_client.setex(key, EVAL_SCORES_ROLLING_TTL, json.dumps(existing))
     finally:
         await r_client.aclose()
 
+    # eval_results is the source of truth for every aggregate (services/scores.py);
+    # the rolling cache is only extended once the row is stored.
+    stored = False
     try:
         pool = await get_pool()
         async with pool.acquire() as conn:
@@ -266,8 +262,18 @@ async def evaluate_trace(
                 datetime.fromisoformat(result.evaluated_at),
                 bool(self_judged),
             )
+        stored = True
     except Exception as exc:
-        logger.warning(f"[eval] PostgreSQL dual-write failed for {trace_id}: {exc}")
+        logger.warning(f"[eval] PostgreSQL write failed for {trace_id}: {exc}")
+
+    if stored and config.active_use_case_id and not self_judged:
+        await append_to_cache(
+            model,
+            config.active_use_case_id,
+            composite,
+            {cs.criterion_id: cs.score for cs in criteria_scores},
+            result.evaluated_at,
+        )
 
     await create_trace(
         trace_id=trace_id,
