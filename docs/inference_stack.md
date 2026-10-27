@@ -6,7 +6,7 @@ Judge verdicts depend on the exact model files **and** on the inference server v
 - the same parsing rule;
 - temperature 0.
 
-The only change was a newer Ollama release, and 7 and 17 of the 49 cases changed verdict. Repeated calls on a fixed stack are deterministic for 7 of the 8 judges (`scripts/test_retest.py`, `docs/ground_truth/analysis/test_retest.json`). Hence the following rules:
+The only change was a newer Ollama release, and 7 and 17 of the 49 cases changed verdict. On a fixed stack, replaying the same sequence of calls after reloading the model gives identical verdicts for 7 of the 8 judges (`scripts/test_retest.py`, `docs/ground_truth/analysis/test_retest.json`): each repetition reloaded the judge, then ran its 49 calls one after another, in the same order. Hence the following rules:
 - the two images below are pinned by digest;
 - every judge call records the Ollama version and the model digest;
 - the model files are backed up outside Docker.
@@ -30,10 +30,10 @@ The pinned image (0.32.15) and the current call code were tested on 12 cases × 
 
 | Threads | Same verdicts | Same raw responses |
 |---|---|---|
-| 10 | 46/48 | 44/48 |
-| 8 | 40/48 | 15/48 |
+| 10 | 47/48 | 44/48 |
+| 8 | 40/48 | 10/48 |
 
-`num_thread: 10` is therefore set for every judge in the LiteLLM configuration, whatever the number of processors the VM gets. The small residual at 10 threads (2 verdicts, 4 raw responses) is not explained.
+`num_thread: 10` is therefore set for every judge in the LiteLLM configuration, whatever the number of processors the VM gets. The small residual at 10 threads (1 verdict, 4 raw responses) is not explained yet. These 12 cases per judge were not run in the test-retest order, so each one followed a different prompt; Ollama's prompt cache may account for it (experiment pending).
 
 ## May 2026 runs: reproduced on Ollama 0.23.4
 

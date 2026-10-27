@@ -184,7 +184,7 @@ Every stored result carries a `run_label`. `main` is the set every analysis read
 - `exploratory`: the paper's May runs vs the repetitions, per-criterion order deltas, signed order effects.
 
 Results of the run of 2026-10-23/25 (Ollama 0.32.15):
-- At temperature 0, seven of the eight judges return identical answers on all 5 repetitions. The exception is ministral-3:8b, with a 3.0 % flip rate and α = 0.94 [0.89, 0.98].
+- At temperature 0, seven of the eight judges return identical answers on all 5 repetitions. Each repetition reloaded the judge, then ran the 49 cases one after another in the same order: this is determinism for the same sequence of calls, not for any single call (Ollama reuses the previous prompt's computation, see `docs/inference_stack.md`). The exception is ministral-3:8b, with a 3.0 % flip rate and α = 0.94 [0.89, 0.98].
 - Changing the question order moves per-case validity beyond repetition for every judge except mistral:7b (Holm p < 0.001), but no signed global effect is significant.
 - A majority vote over 5 calls brings nothing.
 - mistral:7b answers "compliant" to every sub-question, so its 51.5 % equals the base rate.
